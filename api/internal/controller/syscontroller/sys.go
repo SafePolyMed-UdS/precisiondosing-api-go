@@ -2,15 +2,14 @@ package syscontroller
 
 import (
 	"net/http"
-	"observeddb-go-api/cfg"
-	"observeddb-go-api/internal/handle"
+	"precisiondosing-api-go/cfg"
+	"precisiondosing-api-go/internal/handle"
 
 	"github.com/gin-gonic/gin"
 )
 
 type SysController struct {
-	Meta  cfg.MetaConfig
-	Limit cfg.LimitsConfig
+	Meta cfg.MetaConfig
 }
 
 func NewSysController(resourceHandle *handle.ResourceHandle) *SysController {
@@ -26,11 +25,9 @@ func (sc *SysController) GetPing(c *gin.Context) {
 func (sc *SysController) GetInfo(c *gin.Context) {
 
 	res := struct {
-		API    cfg.MetaConfig   `json:"meta_info"`
-		Limits cfg.LimitsConfig `json:"api_limits"`
+		API cfg.MetaConfig `json:"meta_info"`
 	}{
 		sc.Meta,
-		sc.Limit,
 	}
 
 	c.JSON(http.StatusOK, res)

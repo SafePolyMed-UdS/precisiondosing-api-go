@@ -2,10 +2,10 @@ package database
 
 import (
 	"fmt"
-	"observeddb-go-api/internal/model"
-	"observeddb-go-api/internal/utils/hash"
-	"observeddb-go-api/internal/utils/validate"
 	"os"
+	"precisiondosing-api-go/internal/model"
+	"precisiondosing-api-go/internal/utils/hash"
+	"precisiondosing-api-go/internal/utils/validate"
 
 	"gorm.io/gorm"
 )
@@ -20,6 +20,10 @@ func Migrate(db *gorm.DB) error {
 	// Seed database with default admin user if no active admin user exists
 	if err := seed(db); err != nil {
 		return fmt.Errorf("cannot seed database: %w", err)
+	}
+
+	if err := db.AutoMigrate(&model.Order{}); err != nil {
+		return fmt.Errorf("cannot migrate order model: %w", err)
 	}
 
 	return nil

@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"observeddb-go-api/cfg"
 	"os"
 	"path/filepath"
+	"precisiondosing-api-go/cfg"
 	"time"
 
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -41,6 +41,15 @@ func LogServerError(c *gin.Context, err error) {
 		Int("status", http.StatusInternalServerError).
 		Err(err).
 		Msg("Internal server error")
+}
+
+func LogInternalError(err error) {
+	log.Error().
+		Str("endpoint", "").
+		Str("method", "").
+		Int("status", 0).
+		Err(err).
+		Msg("Internal error")
 }
 
 func LogForbiddenError(c *gin.Context, msg string) {

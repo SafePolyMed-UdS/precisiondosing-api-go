@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"observeddb-go-api/cfg"
-	"observeddb-go-api/internal/server"
-	"observeddb-go-api/internal/utils/logger"
+	"precisiondosing-api-go/cfg"
+	"precisiondosing-api-go/internal/server"
+	"precisiondosing-api-go/internal/utils/logger"
 
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -27,6 +27,7 @@ func main() {
 	// server
 	srv, err := server.New(config, args.DebugMode)
 	if err != nil {
+		logger.LogInternalError(err)
 		panic(fmt.Sprintf("Cannot create server: %v", err))
 	}
 

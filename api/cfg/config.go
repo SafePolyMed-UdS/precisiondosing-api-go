@@ -25,6 +25,15 @@ type DatabaseConfig struct {
 	MaxConnLifetime time.Duration `yaml:"max_conn_lifetime"`
 }
 
+type MongoConfig struct {
+	URI         string        `env:"MONGO_URI, required"`
+	MaxPoolSize uint64        `yaml:"max_pool_size"`
+	MinPoolSize uint64        `yaml:"min_pool_size"`
+	MaxIdletime time.Duration `yaml:"max_idle_time"`
+	Database    string        `yaml:"database"`
+	Collection  string        `yaml:"collection"`
+}
+
 type ServerConfig struct {
 	ReadWriteTimeout time.Duration `yaml:"read_write_timeout"`
 	IdleTimeout      time.Duration `yaml:"idle_timeout"`
@@ -59,10 +68,10 @@ type ResetTokenConfig struct {
 	RetryInterval  time.Duration `yaml:"retry_interval"`
 }
 
-type LimitsConfig struct {
-	InteractionDrugs int `yaml:"interaction_drugs" json:"max_drugs"`
-	BatchQueries     int `yaml:"batch_queries" json:"max_batch_queries"`
-	BatchJobs        int `yaml:"batch_jobs"`
+type ABDATAConfig struct {
+	URL      string `yaml:"url"`
+	Login    string `env:"ABDATA_LOGIN, required"`
+	Password string `env:"ABDATA_PASSWORD, required"`
 }
 
 func (b *Bytes) UnmarshalYAML(unmarshal func(interface{}) error) error {
@@ -78,10 +87,11 @@ type APIConfig struct {
 	Meta       MetaConfig       `yaml:"meta"`
 	Server     ServerConfig     `yaml:"server"`
 	Database   DatabaseConfig   `yaml:"database"`
+	Mongo      MongoConfig      `yaml:"mongo"`
 	Log        LogConfig        `yaml:"log"`
 	AuthToken  AuthTokenConfig  `yaml:"auth_token"`
 	ResetToken ResetTokenConfig `yaml:"reset_token"`
-	Limits     LimitsConfig     `yaml:"limits"`
+	ABDATA     ABDATAConfig     `yaml:"abdata"`
 }
 
 // Read reads the configuration file and environment variables

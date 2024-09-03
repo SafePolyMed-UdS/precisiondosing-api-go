@@ -2,7 +2,7 @@ package database
 
 import (
 	"fmt"
-	"observeddb-go-api/cfg"
+	"precisiondosing-api-go/cfg"
 
 	"github.com/jmoiron/sqlx"
 	"gorm.io/driver/mysql"

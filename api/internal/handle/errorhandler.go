@@ -3,7 +3,7 @@ package handle
 import (
 	"errors"
 	"net/http"
-	"observeddb-go-api/internal/utils/apierr"
+	"precisiondosing-api-go/internal/utils/apierr"
 
 	"github.com/gin-gonic/gin"
 )

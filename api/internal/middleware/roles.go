@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"net/http"
-	"observeddb-go-api/internal/utils/validate"
+	"precisiondosing-api-go/internal/utils/validate"
 
 	"github.com/gin-gonic/gin"
 )

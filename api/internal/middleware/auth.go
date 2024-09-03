@@ -3,8 +3,8 @@ package middleware
 import (
 	"errors"
 	"net/http"
-	"observeddb-go-api/cfg"
-	"observeddb-go-api/internal/utils/tokens"
+	"precisiondosing-api-go/cfg"
+	"precisiondosing-api-go/internal/utils/tokens"
 	"strings"
 
 	"github.com/gin-gonic/gin"

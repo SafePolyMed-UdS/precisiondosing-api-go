@@ -4,12 +4,14 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"observeddb-go-api/cfg"
-	"observeddb-go-api/internal/database"
-	"observeddb-go-api/internal/handle"
-	"observeddb-go-api/internal/middleware"
 	"os"
 	"os/signal"
+	"precisiondosing-api-go/cfg"
+	"precisiondosing-api-go/internal/database"
+	"precisiondosing-api-go/internal/handle"
+	"precisiondosing-api-go/internal/middleware"
+	"precisiondosing-api-go/internal/mongodb"
+	"precisiondosing-api-go/internal/utils/abdata"
 	"strings"
 	"syscall"
 	"time"
@@ -35,18 +37,32 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 	}
 
 	// migrate database
-	// if err = database.Migrate(db); err != nil {
-	// 	return nil, fmt.Errorf("cannot migrate database: %w", err)
-	// }
+	if err = database.Migrate(gorm); err != nil {
+		return nil, fmt.Errorf("cannot migrate database: %w", err)
+	}
+
+	// init mongo db
+	individualsDB, err := mongodb.New(config.Mongo)
+	if err != nil {
+		return nil, fmt.Errorf("cannot connect to mongodb: %w", err)
+	}
+
+	// init abdata
+	abdata, err := initABDATA(&config.ABDATA)
+	if err != nil {
+		return nil, fmt.Errorf("cannot init ABDATA: %w", err)
+	}
 
 	// setup handler
 	resourceHandle := handle.NewResourceHandle(
 		config.Meta,
 		config.AuthToken,
 		config.ResetToken,
-		config.Limits,
 		gorm,
-		sqlx)
+		sqlx,
+		abdata,
+		individualsDB,
+	)
 
 	// setup router
 	r := gin.New()
@@ -106,11 +122,10 @@ func (r *Server) Run() {
 func registerRoutes(r *gin.Engine, resourceHandle *handle.ResourceHandle) {
 	api := r.Group("/api")
 
-	//RegisterSysRoutes(api, resourceHandle)
-	//RegisterUserRoutes(api, resourceHandle)
-	//RegisterAdminRoutes(api, resourceHandle)
-	RegisterFormulationRoutes(api, resourceHandle)
-	RegisterInteractionRoutes(api, resourceHandle)
+	RegisterSysRoutes(api, resourceHandle)
+	RegisterUserRoutes(api, resourceHandle)
+	RegisterAdminRoutes(api, resourceHandle)
+	RegisterDSSRoutes(api, resourceHandle)
 }
 
 func parseTrustedProxies(proxies string) []string {
@@ -118,4 +133,14 @@ func parseTrustedProxies(proxies string) []string {
 		return nil
 	}
 	return strings.Split(proxies, ",")
+}
+
+func initABDATA(config *cfg.ABDATAConfig) (*abdata.API, error) {
+
+	api := abdata.NewJWT(config.URL, config.Login, config.Password)
+	if err := api.Refresh(); err != nil {
+		return nil, fmt.Errorf("cannot login to ABDATA: %w", err)
+	}
+
+	return api, nil
 }

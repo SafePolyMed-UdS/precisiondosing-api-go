@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"observeddb-go-api/internal/utils/logger"
+	"precisiondosing-api-go/internal/utils/logger"
 	"reflect"
 
 	"github.com/gin-gonic/gin"

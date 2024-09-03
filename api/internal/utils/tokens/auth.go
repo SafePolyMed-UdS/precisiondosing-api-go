@@ -3,8 +3,8 @@ package tokens
 import (
 	"errors"
 	"fmt"
-	"observeddb-go-api/cfg"
-	"observeddb-go-api/internal/utils/validate"
+	"precisiondosing-api-go/cfg"
+	"precisiondosing-api-go/internal/utils/validate"
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"

@@ -1,13 +1,12 @@
 package server
 
 import (
-	"observeddb-go-api/internal/controller/admincontroller"
-	"observeddb-go-api/internal/controller/formulationcontroller"
-	"observeddb-go-api/internal/controller/interactioncontroller"
-	"observeddb-go-api/internal/controller/syscontroller"
-	"observeddb-go-api/internal/controller/usercontroller"
-	"observeddb-go-api/internal/handle"
-	"observeddb-go-api/internal/middleware"
+	"precisiondosing-api-go/internal/controller/admincontroller"
+	"precisiondosing-api-go/internal/controller/dsscontroller"
+	"precisiondosing-api-go/internal/controller/syscontroller"
+	"precisiondosing-api-go/internal/controller/usercontroller"
+	"precisiondosing-api-go/internal/handle"
+	"precisiondosing-api-go/internal/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -61,24 +60,12 @@ func RegisterAdminRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHand
 	}
 }
 
-func RegisterFormulationRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
-	c := formulationcontroller.NewFormulationController(resourceHandle)
+func RegisterDSSRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
+	c := dsscontroller.NewDSSController(resourceHandle)
 
-	profiles := r.Group("/formulations")
+	dss := r.Group("/dose")
 	{
-		profiles.GET("/", c.GetFormulations)
-	}
-}
-
-func RegisterInteractionRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
-	c := interactioncontroller.NewInteractionController(resourceHandle)
-
-	profiles := r.Group("/interactions")
-	{
-		profiles.GET("/description", c.GetInterDescription)
-		profiles.GET("/pzns", c.GetInterPZNs)
-		profiles.POST("/pzns", c.PostInterPZNs)
-		profiles.GET("/compounds", c.GetInterCompounds)
-		profiles.POST("/compounds", c.PostInterCompounds)
+		dss.POST("/precheck/", c.PostPrecheck)
+		dss.POST("/adapt/", c.AdaptDose)
 	}
 }

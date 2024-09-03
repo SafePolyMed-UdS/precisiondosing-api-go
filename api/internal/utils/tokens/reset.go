@@ -4,7 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"observeddb-go-api/internal/utils/hash"
+	"precisiondosing-api-go/internal/utils/hash"
 )
 
 type ResetTokenPair struct {
