@@ -1,0 +1,113 @@
+{
+  "patient_id": 73,
+  "patient_characteristics": {
+    "age": 24,
+    "weight": 75,
+    "height": 180,
+    "sex": "male",
+    "ethnicity": "european",
+    "kidney_disease": true,
+    "liver_disease": true
+  },
+  "patient_pgx_profile": [
+    {
+      "gene": "CYP2C19",
+      "allele1": "*1",
+      "allele1_cnv_multiplier": 1,
+      "allele2": "*3",
+      "allele2_cnv_multiplier": 1
+    }
+  ],
+  "drugs": [
+    {
+      "active_substances": [
+        "voriconazole"
+      ],
+      "product": {
+        "product_name": "voriconazol ratiopharm 200 mg filmtabletten",
+        "atc": "J02AC03",
+        "formulation": "FTA"
+      },
+      "intake_cycle": {
+        "intake_mode": "regular",
+        "starting_at": "2021-06-01T00:00:00Z",
+        "frequency": "daily",
+        "frequency_modifier": 2,
+        "intakes": [
+          {
+            "raw_time_str": "08:30",
+            "cron": "0 30 8 ? * *",
+            "dosage": 200,
+            "dosage_unit": "mg"
+          },
+          {
+            "raw_time_str": "18:00",
+            "cron": "0 0 18 ? * *",
+            "dosage": 200,
+            "dosage_unit": "mg"
+          }
+        ]
+      }
+    },
+    {
+      "active_substances": [
+        "cimetidine"
+      ],
+      "product": {
+        "product_name": "Cimetidin acis 400 mg",
+        "atc": "A02BA01",
+        "formulation": "FTA"
+      },
+      "intake_cycle": {
+        "intake_mode": "regular",
+        "starting_at": "2022-12-08T00:00:00Z",
+        "frequency": "daily",
+        "frequency_modifier": 3,
+        "intakes": [
+          {
+            "raw_time_str": "08:30",
+            "cron": "0 30 8 ? * *",
+            "dosage": 400,
+            "dosage_unit": "mg"
+          },
+          {
+            "raw_time_str": "12:00",
+            "cron": "0 0 12 ? * *",
+            "dosage": 400,
+            "dosage_unit": "mg"
+          },
+          {
+            "raw_time_str": "18:00",
+            "cron": "0 0 18 ? * *",
+            "dosage": 400,
+            "dosage_unit": "mg"
+          }
+        ]
+      }
+    },
+    {
+      "active_substances": [
+        "omeprazole"
+      ],
+      "product": {
+        "product_name": "Omeprazol AL 20 mg magensaftresistente Hartkapseln",
+        "atc": "A02BC01",
+        "formulation": "HKM"
+      },
+      "intake_cycle": {
+        "intake_mode": "regular",
+        "starting_at": "2024-01-05T00:00:00Z",
+        "frequency": "daily",
+        "frequency_modifier": 1,
+        "intakes": [
+          {
+            "raw_time_str": "08:30",
+            "cron": "0 30 8 ? * *",
+            "dosage": 20,
+            "dosage_unit": "mg"
+          }
+        ]
+      }
+    }
+  ]
+}
