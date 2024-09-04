@@ -11,6 +11,7 @@ require (
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
 	github.com/rs/zerolog v1.33.0
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/sethvargo/go-envconfig v1.1.0
 	go.mongodb.org/mongo-driver v1.16.1
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1

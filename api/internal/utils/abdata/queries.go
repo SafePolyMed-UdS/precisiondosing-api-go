@@ -3,6 +3,7 @@ package abdata
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"precisiondosing-api-go/internal/utils/queryerr"
 	"strings"
 )
@@ -40,8 +41,10 @@ func (j *API) GetCommpoundInteractions(compounds []string) (*Interactions, *quer
 		}
 	}
 
+	compoundStr := strings.Join(compounds, ",")
+	compoundStr = url.QueryEscape(compoundStr)
 	url := fmt.Sprintf("%s/interactions/compounds/", j.BaseURL)
-	url += fmt.Sprintf("?compounds=%s", strings.Join(compounds, ","))
+	url += fmt.Sprintf("?compounds=%s", compoundStr)
 
 	j.Mutex.Lock()
 	authHeader := bearerHeader(j.AccessToken)

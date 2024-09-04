@@ -74,6 +74,10 @@ type ABDATAConfig struct {
 	Password string `env:"ABDATA_PASSWORD, required"`
 }
 
+type SchemaConfig struct {
+	PreCheck string `yaml:"precheck"`
+}
+
 func (b *Bytes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var secret string
 	if err := unmarshal(&secret); err != nil {
@@ -92,6 +96,7 @@ type APIConfig struct {
 	AuthToken  AuthTokenConfig  `yaml:"auth_token"`
 	ResetToken ResetTokenConfig `yaml:"reset_token"`
 	ABDATA     ABDATAConfig     `yaml:"abdata"`
+	Schema     SchemaConfig     `yaml:"schema"`
 }
 
 // Read reads the configuration file and environment variables

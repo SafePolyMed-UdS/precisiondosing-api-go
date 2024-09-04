@@ -19,9 +19,9 @@ type DSSController struct {
 func NewDSSController(resourceHandle *handle.ResourceHandle) *DSSController {
 	return &DSSController{
 		Meta:          resourceHandle.MetaCfg,
-		DB:            resourceHandle.Gorm,
+		DB:            resourceHandle.Databases.GormDB,
 		ABDATA:        resourceHandle.ABDATA,
-		IndibidualsDB: resourceHandle.IndibidualsDB,
+		IndibidualsDB: resourceHandle.Databases.MongoDB,
 	}
 }
 

@@ -40,11 +40,6 @@ func (sc *DSSController) PostPrecheck(c *gin.Context) {
 func preCheck(data *PatientData, abdata *abdata.API, idb *mongodb.MongoConnection) (*PreCheckResponse, error) {
 	response := &PreCheckResponse{}
 
-	// Drug count check
-	if !drugCountCheck(response, data) {
-		return response, nil
-	}
-
 	// Impairment check
 	if !impairmentCheck(response, data) {
 		return response, nil
@@ -96,6 +91,8 @@ func virtualIndividualCheck(resp *PreCheckResponse, data *PatientData, m *mongod
 func abdataCheck(resp *PreCheckResponse, data *PatientData, api *abdata.API) (bool, error) {
 	compounds := drugCompounds(data)
 
+	// only for 2+ compounds
+
 	interactions, err := api.GetCommpoundInteractions(compounds)
 	if err != nil {
 		if err.IsHTTPError() {
@@ -115,16 +112,6 @@ func abdataCheck(resp *PreCheckResponse, data *PatientData, api *abdata.API) (bo
 	}
 
 	return true, nil
-}
-
-func drugCountCheck(resp *PreCheckResponse, data *PatientData) bool {
-	if len(data.Drugs) < 2 {
-		resp.Message = "Patient takes less than 2 drugs"
-		resp.Code = "PC-ERR-DC"
-		return false
-	}
-
-	return true
 }
 
 func impairmentCheck(resp *PreCheckResponse, data *PatientData) bool {

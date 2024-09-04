@@ -11,31 +11,25 @@ import (
 
 // Central struct to hold all the configurations and database connection pool.
 type ResourceHandle struct {
-	MetaCfg       cfg.MetaConfig
-	AuthCfg       cfg.AuthTokenConfig
-	ResetCfg      cfg.ResetTokenConfig
-	Gorm          *gorm.DB
-	SQLX          *sqlx.DB
-	ABDATA        *abdata.API
-	IndibidualsDB *mongodb.MongoConnection
+	MetaCfg   cfg.MetaConfig
+	AuthCfg   cfg.AuthTokenConfig
+	ResetCfg  cfg.ResetTokenConfig
+	Databases Databases
+	ABDATA    *abdata.API
 }
 
-func NewResourceHandle(
-	metaCfg cfg.MetaConfig,
-	authCfg cfg.AuthTokenConfig,
-	resetCfg cfg.ResetTokenConfig,
-	gorm *gorm.DB,
-	sqlx *sqlx.DB,
-	abdata *abdata.API,
-	individualsDB *mongodb.MongoConnection,
-) *ResourceHandle {
+type Databases struct {
+	GormDB  *gorm.DB
+	SqlxDB  *sqlx.DB
+	MongoDB *mongodb.MongoConnection
+}
+
+func NewResourceHandle(apiCfg *cfg.APIConfig, databases Databases, abdata *abdata.API) *ResourceHandle {
 	return &ResourceHandle{
-		MetaCfg:       metaCfg,
-		AuthCfg:       authCfg,
-		ResetCfg:      resetCfg,
-		Gorm:          gorm,
-		SQLX:          sqlx,
-		ABDATA:        abdata,
-		IndibidualsDB: individualsDB,
+		MetaCfg:   apiCfg.Meta,
+		AuthCfg:   apiCfg.AuthToken,
+		ResetCfg:  apiCfg.ResetToken,
+		Databases: databases,
+		ABDATA:    abdata,
 	}
 }

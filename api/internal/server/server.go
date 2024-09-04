@@ -30,61 +30,39 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
-	// create database
-	gorm, sqlx, err := database.New(config.Database)
+	databases, err := initDatabases(config)
 	if err != nil {
-		return nil, fmt.Errorf("cannot create database: %w", err)
-	}
-
-	// migrate database
-	if err = database.Migrate(gorm); err != nil {
-		return nil, fmt.Errorf("cannot migrate database: %w", err)
-	}
-
-	// init mongo db
-	individualsDB, err := mongodb.New(config.Mongo)
-	if err != nil {
-		return nil, fmt.Errorf("cannot connect to mongodb: %w", err)
+		return nil, fmt.Errorf("error initializing databases: %w", err)
 	}
 
 	// init abdata
-	abdata, err := initABDATA(&config.ABDATA)
+	abdata, err := initABDATA(config)
 	if err != nil {
 		return nil, fmt.Errorf("cannot init ABDATA: %w", err)
 	}
 
-	// setup handler
-	resourceHandle := handle.NewResourceHandle(
-		config.Meta,
-		config.AuthToken,
-		config.ResetToken,
-		gorm,
-		sqlx,
-		abdata,
-		individualsDB,
-	)
-
 	// setup router
-	r := gin.New()
+	router := gin.New()
 
 	// trusted proxies
 	trusedProxies := parseTrustedProxies(config.Server.TrustedProxies)
-	if err = r.SetTrustedProxies(trusedProxies); err != nil {
+	if err = router.SetTrustedProxies(trusedProxies); err != nil {
 		return nil, fmt.Errorf("cannot set trusted proxies: %w", err)
 	}
 
 	// middleware
-	r.Use(gin.CustomRecovery(middleware.RecoveryHandler))
+	router.Use(gin.CustomRecovery(middleware.RecoveryHandler))
 	if debug {
-		r.Use(gin.Logger())
+		router.Use(gin.Logger())
 	}
 
 	// routes
-	registerRoutes(r, resourceHandle)
+	resourceHandle := handle.NewResourceHandle(config, databases, abdata)
+	registerRoutes(router, resourceHandle)
 
 	// server
 	srv := &Server{
-		Engine:       r,
+		Engine:       router,
 		ServerConfig: config.Server,
 	}
 
@@ -135,9 +113,34 @@ func parseTrustedProxies(proxies string) []string {
 	return strings.Split(proxies, ",")
 }
 
-func initABDATA(config *cfg.ABDATAConfig) (*abdata.API, error) {
+func initDatabases(config *cfg.APIConfig) (handle.Databases, error) {
+	dbs := handle.Databases{}
+	// init sql database
+	gorm, sqlx, err := database.New(config.Database)
+	if err != nil {
+		return dbs, fmt.Errorf("cannot create SQL database: %w", err)
+	}
+	dbs.GormDB = gorm
+	dbs.SqlxDB = sqlx
 
-	api := abdata.NewJWT(config.URL, config.Login, config.Password)
+	// migrate database
+	if err = database.Migrate(gorm); err != nil {
+		return dbs, fmt.Errorf("cannot migrate SQL database: %w", err)
+	}
+
+	// init mongo db
+	individualsDB, err := mongodb.New(config.Mongo)
+	if err != nil {
+		return dbs, fmt.Errorf("cannot connect to mongodb: %w", err)
+	}
+	dbs.MongoDB = individualsDB
+
+	return dbs, nil
+}
+
+func initABDATA(config *cfg.APIConfig) (*abdata.API, error) {
+	aCfg := config.ABDATA
+	api := abdata.NewJWT(aCfg.URL, aCfg.Login, aCfg.Password)
 	if err := api.Refresh(); err != nil {
 		return nil, fmt.Errorf("cannot login to ABDATA: %w", err)
 	}

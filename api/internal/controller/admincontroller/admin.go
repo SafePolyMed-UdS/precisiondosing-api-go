@@ -22,7 +22,7 @@ type AdminController struct {
 
 func NewAdminController(resourceHandle *handle.ResourceHandle) *AdminController {
 	return &AdminController{
-		DB:       resourceHandle.Gorm,
+		DB:       resourceHandle.Databases.GormDB,
 		ResetCfg: resourceHandle.ResetCfg,
 	}
 }

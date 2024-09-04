@@ -24,7 +24,7 @@ type UserController struct {
 
 func NewUserController(resourceHandle *handle.ResourceHandle) *UserController {
 	return &UserController{
-		DB:       resourceHandle.Gorm,
+		DB:       resourceHandle.Databases.GormDB,
 		AuthCfg:  resourceHandle.AuthCfg,
 		ResetCfg: resourceHandle.ResetCfg,
 	}
