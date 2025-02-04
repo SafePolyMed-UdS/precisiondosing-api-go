@@ -1,0 +1,36 @@
+meta:
+  api_name: "SafePolymed Precision Dosing API"
+  api_description: "A REST-like API for SafePolymed Precision Dosing System"
+  api_version: "0.0.1"
+  api_url: "https://doseadjustservice.precisiondosing.de/"
+server:
+  read_write_timeout: "120s"
+  idle_timeout: "30s"
+  address: ":3333"
+log:
+  file_name: "./tmp/spm_dss_api.log"
+  level: "INFO"
+  max_size: 50
+  max_backups: 3
+database:
+  db_name: "abda"
+  max_open_conns: 50
+  max_idle_conns: 10
+  max_conn_lifetime: "1h"
+mongo:
+  max_pool_size: 50
+  min_pool_size: 10
+  max_idle_time: "10m"
+  database: "individuals_db"
+  collection: "characteristics"
+auth_token:
+  access_expiration_time: "15m"
+  refresh_expiration_time: "24h"
+  issuer: "https://doseadjustservice.precisiondosing.de/"
+reset_token:
+  expiration_time: "48h"
+  retry_interval: "24h"
+abdata:
+  url: "mariadb.precisiondosing.de"
+schema:
+  precheck: "file:///schemas/precheck_input.schema.json"

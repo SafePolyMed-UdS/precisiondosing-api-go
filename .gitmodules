@@ -1,0 +1,3 @@
+[submodule "rbase-dockerfiles"]
+	path = rbase-dockerfiles
+	url = git@github.com:Clinical-Pharmacy-Saarland-University/rbase-dockerfiles.git

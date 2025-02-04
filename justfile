@@ -16,15 +16,10 @@ build:
     @ cd api && go mod tidy
     @ cd api && go build -ldflags="-s -w -X main.versionTag=$(git rev-parse --short HEAD)" -trimpath -o tmp/api.exe ./cmd/api
 
-# Runs SQL server container
-[group('dev')]
-up:
-    @ docker-compose up --build
-
-# Stops and removes SQL server container
-[group('dev')]
-down:
-    @ docker-compose down -v --remove-orphans
+[group('deploy')]
+deploy-build:
+    @ docker build --no-cache \
+    -t ghcr.io/safepolymed-uds/precisiondosing-api-go:latest .
 
 # Deletes feature branch after merging
 [group('git')]
