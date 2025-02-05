@@ -21,7 +21,7 @@ mongo:
   max_pool_size: 50
   min_pool_size: 10
   max_idle_time: "10m"
-  database: "individuals_db"
+  database: "test"
   collection: "characteristics"
 auth_token:
   access_expiration_time: "15m"
