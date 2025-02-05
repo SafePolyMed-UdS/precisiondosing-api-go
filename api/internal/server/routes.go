@@ -66,6 +66,6 @@ func RegisterDSSRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle
 	dss := r.Group("/dose")
 	{
 		dss.POST("/precheck/", c.PostPrecheck)
-		dss.POST("/adapt/", c.AdaptDose)
+		dss.POST("/adjust/", c.AdaptDose)
 	}
 }
