@@ -98,7 +98,7 @@ func (r *Server) Run() {
 }
 
 func registerRoutes(r *gin.Engine, resourceHandle *handle.ResourceHandle) {
-	api := r.Group("/api")
+	api := r.Group("/api/v1")
 
 	RegisterSysRoutes(api, resourceHandle)
 	RegisterUserRoutes(api, resourceHandle)
