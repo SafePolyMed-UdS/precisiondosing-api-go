@@ -8,7 +8,7 @@ server:
   idle_timeout: "30s"
   address: ":3333"
 log:
-  file_name: "./tmp/spm_dss_api.log"
+  file_name: "/logs/dss_api.log"
   level: "INFO"
   max_size: 50
   max_backups: 3
