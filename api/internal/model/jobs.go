@@ -13,6 +13,8 @@ type Order struct {
 	OrderID     string           `gorm:"type:char(36);not null"`
 	Order       json.RawMessage  `gorm:"type:json;not null"`
 	Output      *json.RawMessage `gorm:"type:json"`
+	CreatedAt   *time.Time       `gorm:"type:timestamp"`
+	StartedAt   *time.Time       `gorm:"type:timestamp"`
 	CompletedAt *time.Time       `gorm:"type:timestamp"`
 }
 

@@ -17,7 +17,7 @@ Dose Adjustment Endpoints:
 - https://doseadjustservice.precisiondosing.de/api/v1/dose/precheck
 - https://doseadjustservice.precisiondosing.de/api/v1/dose/adjust
 
-# Input: 
+# Input:
 ```json
 {
   "patient_id": 2,
@@ -206,3 +206,13 @@ Dose Adjustment Endpoints:
   ]
 }
 ```
+
+# TODO:
+
+- [ ] Log to console option
+- [ ] User management
+- [ ] Input JSON validation
+- [ ] JSON structured reading
+- [ ] Precheck endpoint
+- [ ] Task database
+- [ ] Job queue handler
