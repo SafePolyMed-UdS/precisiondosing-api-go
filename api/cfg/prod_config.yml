@@ -13,7 +13,7 @@ log:
   max_size: 50
   max_backups: 3
 database:
-  db_name: "abda"
+  db_name: "doseadjustservice"
   max_open_conns: 50
   max_idle_conns: 10
   max_conn_lifetime: "1h"
@@ -31,6 +31,6 @@ reset_token:
   expiration_time: "48h"
   retry_interval: "24h"
 abdata:
-  url: "https://medinfo.precisiondosing.de/api/v1"
+  url: "https://medinfoxxx.precisiondosing.de/api/v1"
 schema:
   precheck: "file:///schemas/precheck_input.schema.json"
