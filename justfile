@@ -34,4 +34,4 @@ git-done branch=`git rev-parse --abbrev-ref HEAD`:
 [group('init')]
 init:
     @ go install github.com/air-verse/air@latest
-    @ cp api/config/default_env api/.env
+    @ cp api/cfg/default_env api/.env
