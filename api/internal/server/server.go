@@ -140,6 +140,7 @@ func initDatabases(config *cfg.APIConfig) (handle.Databases, error) {
 
 func initABDATA(config *cfg.APIConfig) (*abdata.API, error) {
 	aCfg := config.ABDATA
+	fmt.Println(aCfg)
 	api := abdata.NewJWT(aCfg.URL, aCfg.Login, aCfg.Password)
 	if err := api.Refresh(); err != nil {
 		return nil, fmt.Errorf("cannot login to ABDATA: %w", err)
