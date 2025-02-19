@@ -47,4 +47,4 @@ USER appuser
 WORKDIR /app
 ENTRYPOINT ["/app/api", "--config", "/app/config.yml"]
 
-EXPOSE 3333
+EXPOSE 3332
