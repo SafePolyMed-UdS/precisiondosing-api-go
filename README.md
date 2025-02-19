@@ -18,6 +18,7 @@ Dose Adjustment Endpoints:
 - https://doseadjustservice.precisiondosing.de/api/v1/dose/adjust
 
 # Input:
+
 ```json
 {
   "patient_id": 2,
@@ -72,9 +73,7 @@ Dose Adjustment Endpoints:
         "strength": 95,
         "strength_unit": "milligram"
       },
-      "active_substance": [
-        "Metoprolol"
-      ],
+      "active_substance": ["Metoprolol"],
       "intake_cycle": {
         "starting_at": "2024-11-03",
         "frequency": "days",
@@ -102,9 +101,7 @@ Dose Adjustment Endpoints:
         "strength": 2,
         "strength_unit": "milligram"
       },
-      "active_substance": [
-        "Siponimod"
-      ],
+      "active_substance": ["Siponimod"],
       "intake_cycle": {
         "starting_at": "2024-09-16",
         "frequency": "days",
@@ -126,9 +123,7 @@ Dose Adjustment Endpoints:
         "strength": 200,
         "strength_unit": "milligram"
       },
-      "active_substance": [
-        "Amiodaron"
-      ],
+      "active_substance": ["Amiodaron"],
       "intake_cycle": {
         "starting_at": "2024-12-01",
         "frequency": "days",
@@ -162,9 +157,7 @@ Dose Adjustment Endpoints:
         "strength": 100,
         "strength_unit": "milligram"
       },
-      "active_substance": [
-        "Fluvoxamin"
-      ],
+      "active_substance": ["Fluvoxamin"],
       "intake_cycle": {
         "starting_at": "2024-12-01",
         "frequency": "days",
@@ -186,9 +179,7 @@ Dose Adjustment Endpoints:
         "strength": 20,
         "strength_unit": "milligram"
       },
-      "active_substance": [
-        "Esomeprazol"
-      ],
+      "active_substance": ["Esomeprazol"],
       "intake_cycle": {
         "starting_at": "2024-12-01",
         "frequency": "weeks",
@@ -209,7 +200,7 @@ Dose Adjustment Endpoints:
 
 # TODO:
 
-- [ ] Log to console option
+- [x] Log to console option
 - [ ] User management
 - [ ] Input JSON validation
 - [ ] JSON structured reading

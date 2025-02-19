@@ -50,6 +50,7 @@ type MetaConfig struct {
 }
 
 type LogConfig struct {
+	ConsoleLog bool   `yaml:"console_log"`
 	FileName   string `yaml:"file_name"`
 	Level      string `yaml:"level"`
 	MaxSize    int    `yaml:"max_size"`

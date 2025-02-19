@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"net/http/httputil"
 	"os"
 	"os/signal"
 	"precisiondosing-api-go/cfg"
@@ -141,12 +140,6 @@ func initDatabases(config *cfg.APIConfig) (handle.Databases, error) {
 
 func initABDATA(config *cfg.APIConfig) (*abdata.API, error) {
 	aCfg := config.ABDATA
-	fmt.Println(aCfg)
-
-	req, _ := http.NewRequest("GET", "http://medinfo.precisiondose.de", nil)
-	dump, _ := httputil.DumpRequestOut(req, true)
-	fmt.Println(string(dump))
-
 	api := abdata.NewJWT(aCfg.URL, aCfg.Login, aCfg.Password)
 	if err := api.Refresh(); err != nil {
 		return nil, fmt.Errorf("cannot login to ABDATA: %w", err)

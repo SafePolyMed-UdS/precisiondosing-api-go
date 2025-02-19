@@ -80,7 +80,7 @@ func writer(logConfig cfg.LogConfig, debug bool) (io.Writer, error) {
 
 	// Setup Logger
 	var writers io.Writer
-	if debug {
+	if debug || logConfig.ConsoleLog {
 		consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
 		writers = io.MultiWriter(logFile, consoleWriter)
 	} else {
