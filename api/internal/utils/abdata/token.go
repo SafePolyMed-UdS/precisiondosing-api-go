@@ -88,7 +88,7 @@ func login(j *API) *queryerr.Error {
 	body := []byte(fmt.Sprintf(`{"login": "%s", "password": "%s"}`, j.Login, j.Password))
 	body, err := post(url, body, nil)
 	if err != nil {
-		return err
+		return queryerr.NewInternal(fmt.Errorf("failed to login: %w", err))
 	}
 
 	if err := json.Unmarshal(body, j); err != nil { //nolint:musttag // need additional non-json fields

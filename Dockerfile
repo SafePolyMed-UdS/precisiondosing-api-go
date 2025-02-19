@@ -15,7 +15,7 @@ LABEL org.opencontainers.image.description="Safepolymed Precisiondosing API"
 LABEL org.opencontainers.image.licenses=MIT
 
 ARG DOCKERBASE=rbase-dockerfiles
-ARG INSTALL_OSP=false
+ARG INSTALL_OSP=true
 ARG PROD_BUILD=true
 
 WORKDIR /

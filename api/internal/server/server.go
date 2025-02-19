@@ -124,9 +124,9 @@ func initDatabases(config *cfg.APIConfig) (handle.Databases, error) {
 	dbs.SqlxDB = sqlx
 
 	// migrate database
-	//if err = database.Migrate(gorm); err != nil {
-	//	return dbs, fmt.Errorf("cannot migrate SQL database: %w", err)
-	//}
+	if err = database.Migrate(gorm); err != nil {
+		return dbs, fmt.Errorf("cannot migrate SQL database: %w", err)
+	}
 
 	// init mongo db
 	individualsDB, err := mongodb.New(config.Mongo)
