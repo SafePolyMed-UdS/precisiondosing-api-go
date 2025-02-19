@@ -2,7 +2,7 @@ meta:
   api_name: "SafePolymed Precision Dosing API"
   api_description: "A REST-like API for SafePolymed Precision Dosing System"
   api_version: "0.0.1"
-  api_url: "https://doseadjustservice.clinicalpharmacy.me/"
+  api_url: "https://doseadjustservice.precisiondosing.de/"
 server:
   read_write_timeout: "120s"
   idle_timeout: "30s"
@@ -13,7 +13,7 @@ log:
   max_size: 50
   max_backups: 3
 database:
-  db_name: "spm_dss"
+  db_name: "doseadjustservice"
   max_open_conns: 50
   max_idle_conns: 10
   max_conn_lifetime: "1h"
@@ -26,11 +26,11 @@ mongo:
 auth_token:
   access_expiration_time: "15m"
   refresh_expiration_time: "24h"
-  issuer: "https://doseadjustservice.clinicalpharmacy.me/"
+  issuer: "https://doseadjustservice.precisiondosing.de/"
 reset_token:
   expiration_time: "48h"
   retry_interval: "24h"
 abdata:
-  url: "http://127.0.0.1:4444/api"
+  url: "https://medinfo.precisiondosing.de/api/v1"
 schema:
   precheck: "file:///schemas/precheck_input.schema.json"

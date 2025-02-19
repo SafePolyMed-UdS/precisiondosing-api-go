@@ -31,6 +31,6 @@ reset_token:
   expiration_time: "48h"
   retry_interval: "24h"
 abdata:
-  url: "https://medinfoxxx.precisiondosing.de/api/v1"
+  url: "https://medinfo.precisiondosing.de/api/v1"
 schema:
   precheck: "file:///schemas/precheck_input.schema.json"
