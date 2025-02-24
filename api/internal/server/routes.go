@@ -64,6 +64,7 @@ func RegisterDSSRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle
 	c := dsscontroller.NewDSSController(resourceHandle)
 
 	dss := r.Group("/dose")
+	dss.Use(middleware.Authentication(&resourceHandle.AuthCfg))
 	{
 		dss.POST("/precheck/", c.PostPrecheck)
 		dss.POST("/adjust/", c.AdaptDose)
