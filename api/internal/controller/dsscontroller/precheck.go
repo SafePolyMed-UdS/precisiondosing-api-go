@@ -8,6 +8,7 @@ import (
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/mongodb"
 	"precisiondosing-api-go/internal/utils/abdata"
+	"precisiondosing-api-go/internal/utils/validate"
 
 	"github.com/gin-gonic/gin"
 )
@@ -20,13 +21,32 @@ type PreCheckResponse struct {
 }
 
 func (sc *DSSController) PostPrecheck(c *gin.Context) {
-	query := PatientData{}
+	// Define the struct for the JSON body (use map[string]interface{} to accept any JSON object)
+	var jsonBody map[string]interface{}
 
-	if !handle.JSONBind(c, &query) {
+	// Bind the JSON body from the request
+	if err := c.BindJSON(&jsonBody); err != nil {
+		handle.BadRequestError(c, "Invalid JSON body")
 		return
 	}
 
-	// TODO: Validate JSON
+	// Create a JSON validator
+	jV, err := validate.NewJSONValidator("schemas/precheck_input_adjusted.schema.json")
+	if err != nil {
+		handle.ServerError(c, err)
+		return
+	}
+
+	err = jV.Validate(jsonBody) // Pass jsonBody directly (without &)
+	if err != nil {
+		handle.BadRequestError(c, err.Error())
+		return
+	}
+
+	query := PatientData{}
+	if !handle.JSONBind(c, &query) {
+		return
+	}
 
 	result, err := preCheck(&query, sc.ABDATA, sc.IndibidualsDB)
 	if err != nil {
