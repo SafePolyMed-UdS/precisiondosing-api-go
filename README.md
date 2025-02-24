@@ -1,4 +1,31 @@
-# precisiondosing-api-go
+# SafePolyMed doseadjustservice API
+
+# API Testing with Bruno
+
+This repository uses [Bruno](https://www.usebruno.com/) for API testing. The API request collection is located in the `/bruno` directory.
+
+## Setup
+
+To use Bruno with this project, you need to create a `.env` file in the `/bruno` directory with the following structure.
+
+```
+LOGIN=YOUR_EMAIL_HERE
+PASSWORD="your_password_here"
+URL=127.0.0.1:3333
+
+LOGIN_PROD=YOUR_EMAIL_HERE
+PASSWORD_PROD="your_production_password_here"
+URL_PROD=https://doseadjustservice.precisiondosing.de/
+```
+
+## Usage
+
+Make sure to use the appropriate environment in Bruno when running tests:
+
+- **Local environment**: Uses `LOGIN`, `PASSWORD`, and `URL`.
+- **Production environment**: Uses `LOGIN_PROD`, `PASSWORD_PROD`, and `URL_PROD`.
+
+Select the correct environment in Bruno before executing API requests.
 
 # Endpoints:
 

@@ -1,0 +1,27 @@
+meta {
+  name: login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/api/v1/user/login
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "login": "{{login}}",
+    "password": "{{password}}",
+    "user": null
+  }
+}
+
+script:post-response {
+  const body = res.getBody();
+  const token = body.access_token;  // Adjust based on your API response 
+  if (token) {
+      bru.setVar("access_token", token);
+  }
+}

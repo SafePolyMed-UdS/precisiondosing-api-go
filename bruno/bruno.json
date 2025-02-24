@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "doseadjustservice",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
