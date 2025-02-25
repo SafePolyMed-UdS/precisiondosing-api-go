@@ -3,6 +3,7 @@ meta:
   api_description: "A REST-like API for SafePolymed Precision Dosing System"
   api_version: "0.0.1"
   api_url: "https://doseadjustservice.clinicalpharmacy.me/"
+  group: "/api/v1"
 server:
   read_write_timeout: "120s"
   idle_timeout: "30s"

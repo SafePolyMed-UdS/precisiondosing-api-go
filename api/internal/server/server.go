@@ -11,6 +11,7 @@ import (
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/middleware"
 	"precisiondosing-api-go/internal/mongodb"
+	"precisiondosing-api-go/internal/responder"
 	"precisiondosing-api-go/internal/utils/abdata"
 	"strings"
 	"syscall"
@@ -56,8 +57,11 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 		router.Use(gin.Logger())
 	}
 
+	// create Mailer
+	mailer := responder.NewMailer(config.Mailer, config.Meta, debug)
+
 	// routes
-	resourceHandle := handle.NewResourceHandle(config, databases, abdata)
+	resourceHandle := handle.NewResourceHandle(config, databases, abdata, mailer, debug)
 	registerRoutes(router, resourceHandle)
 
 	// server
@@ -98,8 +102,9 @@ func (r *Server) Run() {
 }
 
 func registerRoutes(r *gin.Engine, resourceHandle *handle.ResourceHandle) {
-	api := r.Group("/api/v1")
+	api := r.Group(resourceHandle.MetaCfg.Group)
 
+	RegistgerSwaggerRoutes(r, api, resourceHandle)
 	RegisterSysRoutes(api, resourceHandle)
 	RegisterUserRoutes(api, resourceHandle)
 	RegisterAdminRoutes(api, resourceHandle)

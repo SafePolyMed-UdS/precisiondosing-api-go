@@ -1,6 +1,7 @@
 package server
 
 import (
+	"precisiondosing-api-go/docs"
 	"precisiondosing-api-go/internal/controller/admincontroller"
 	"precisiondosing-api-go/internal/controller/dsscontroller"
 	"precisiondosing-api-go/internal/controller/syscontroller"
@@ -9,6 +10,8 @@ import (
 	"precisiondosing-api-go/internal/middleware"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func RegisterSysRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
@@ -69,4 +72,37 @@ func RegisterDSSRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle
 		dss.POST("/precheck/", c.PostPrecheck)
 		dss.POST("/adjust/", c.AdaptDose)
 	}
+}
+
+func RegistgerSwaggerRoutes(r *gin.Engine, api *gin.RouterGroup, handle *handle.ResourceHandle) {
+
+	hostURL := handle.MetaCfg.URL
+	if handle.DebugMode {
+		hostURL = handle.ServerCfg.Address
+	}
+
+	basePath := api.BasePath()
+	docs.SwaggerInfo.BasePath = basePath
+	docs.SwaggerInfo.Host = hostURL
+	docs.SwaggerInfo.Title = handle.MetaCfg.Name
+	docs.SwaggerInfo.Description = handle.MetaCfg.Description
+	docs.SwaggerInfo.Version = handle.MetaCfg.Version
+
+	swaggerURL := basePath + "/swagger/"
+	swaggerIndex := swaggerURL + "index.html"
+
+	r.GET("/", func(c *gin.Context) {
+		c.Redirect(302, swaggerIndex)
+	})
+
+	handlerFn := ginSwagger.WrapHandler(swaggerFiles.Handler,
+		ginSwagger.DefaultModelsExpandDepth(-1))
+
+	api.GET("/swagger/*any", func(c *gin.Context) {
+		if c.Request.RequestURI == swaggerURL {
+			c.Redirect(302, swaggerIndex)
+		} else {
+			handlerFn(c)
+		}
+	})
 }

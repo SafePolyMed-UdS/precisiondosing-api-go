@@ -47,6 +47,7 @@ type MetaConfig struct {
 	Version     string `yaml:"api_version" json:"version"`
 	VersionTag  string `json:"version_tag"`
 	URL         string `yaml:"api_url" json:"url"`
+	Group       string `yaml:"group" json:"-"`
 }
 
 type LogConfig struct {
@@ -79,6 +80,11 @@ type SchemaConfig struct {
 	PreCheck string `yaml:"precheck"`
 }
 
+type MailerConfig struct {
+	SendEmail string `env:"SEND_EMAIL, required"`
+	APIKey    string `env:"SEND_EMAIL_API_KEY, required"`
+}
+
 func (b *Bytes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var secret string
 	if err := unmarshal(&secret); err != nil {
@@ -98,6 +104,7 @@ type APIConfig struct {
 	ResetToken ResetTokenConfig `yaml:"reset_token"`
 	ABDATA     ABDATAConfig     `yaml:"abdata"`
 	Schema     SchemaConfig     `yaml:"schema"`
+	Mailer     MailerConfig
 }
 
 // Read reads the configuration file and environment variables
@@ -151,7 +158,6 @@ type CmdLineArgs struct {
 }
 
 func ParseCmdLineArgs() CmdLineArgs {
-
 	var args CmdLineArgs
 	flag.BoolVar(&args.DebugMode, "debug", false, "Enable debug mode")
 	flag.StringVar(&args.ConfigFile, "config", "config.yml", "Config file path")
