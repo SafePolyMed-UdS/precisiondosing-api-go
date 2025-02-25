@@ -20,8 +20,8 @@ body:json {
 
 script:post-response {
   const body = res.getBody();
-  const token = body.access_token;  // Adjust based on your API response 
-  if (token) {
-      bru.setVar("access_token", token);
-  }
+  const token = body.data.access_token;
+  const refresh_token = body.data.refresh_token;
+  bru.setVar("access_token", token);
+  bru.setVar("refresh_token", refresh_token)
 }
