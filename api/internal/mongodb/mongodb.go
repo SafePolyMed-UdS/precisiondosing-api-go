@@ -3,6 +3,7 @@ package mongodb
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"precisiondosing-api-go/cfg"
 	"strings"
@@ -53,12 +54,18 @@ func New(dbConfig cfg.MongoConfig) (*MongoConnection, error) {
 
 // FetchIndividual fetches an individual from the database.
 // If no individual is found, nil is returned.
-func (m *MongoConnection) FetchIndividual(population, gender string, age, height, weight int) (json.RawMessage, error) {
+func (m *MongoConnection) FetchIndividual(
+	population *string,
+	gender string, age, height, weight int,
+) (json.RawMessage, error) {
+	eth, err := mapEthnicity(population)
+	if err != nil {
+		return nil, fmt.Errorf("error mapping ethnicity: %w", err)
+	}
 
 	gender = strings.ToUpper(gender)
-
 	query := bson.D{
-		{Key: "population", Value: population},
+		{Key: "population", Value: eth},
 		{Key: "age", Value: age},
 		{Key: "weight", Value: weight},
 		{Key: "height", Value: height},
@@ -67,7 +74,7 @@ func (m *MongoConnection) FetchIndividual(population, gender string, age, height
 
 	collection := m.Client.Database(m.Database).Collection(m.Collection)
 	var result bson.M
-	err := collection.FindOne(context.TODO(), query).Decode(&result)
+	err = collection.FindOne(context.TODO(), query).Decode(&result)
 	if err != nil {
 		return nil, fmt.Errorf("error querying individual: %w", err)
 	}
@@ -78,7 +85,7 @@ func (m *MongoConnection) FetchIndividual(population, gender string, age, height
 
 	payload, ok := result["json"]
 	if !ok {
-		return nil, fmt.Errorf("error: 'json' key not found in result")
+		return nil, errors.New("error: 'json' key not found in result")
 	}
 
 	jsonData, err := json.Marshal(payload)
@@ -87,4 +94,37 @@ func (m *MongoConnection) FetchIndividual(population, gender string, age, height
 	}
 
 	return jsonData, nil
+}
+
+func mapEthnicity(ethnicity *string) (string, error) {
+	// Default value if ethnicity is nil
+	defaultPopulation := "European_ICRP_2002"
+
+	// Ethnicity-to-population mapping
+	mapping := map[string]string{
+		"european":       "European_ICRP_2002",
+		"white american": "European_ICRP_2002", // Assuming white Americans fall under European
+		"black american": "BlackAmerican_NHANES_1997",
+		"mexican":        "MexicanAmericanWhite_NHANES_1997",
+		"asian":          "Asian_Tanaka_1996",
+		"japanese":       "Japanese_Population",
+		"other":          defaultPopulation,
+		"unknown":        defaultPopulation,
+	}
+
+	// If ethnicity is nil, return the default value
+	if ethnicity == nil {
+		return defaultPopulation, nil
+	}
+
+	// Normalize input by trimming spaces and converting to lowercase
+	normalized := strings.ToLower(strings.TrimSpace(*ethnicity))
+
+	// Return the mapped value if found
+	if mapped, exists := mapping[normalized]; exists {
+		return mapped, nil
+	}
+
+	// Return an error if mapping fails
+	return "", errors.New("unknown ethnicity: " + *ethnicity)
 }

@@ -96,8 +96,7 @@ func virtualIndividualCheck(resp *PreCheckResponse, data *PatientData, m *mongod
 	weight := int(math.Round(data.PatientCharacteristics.Weight))
 	height := data.PatientCharacteristics.Height
 	sex := data.PatientCharacteristics.Sex
-	// TODO: Map ethnicity to PK-Sim population
-	population := *data.PatientCharacteristics.Ethnicity
+	population := data.PatientCharacteristics.Ethnicity
 
 	individualPayload, err := m.FetchIndividual(population, sex, age, height, weight)
 	if err != nil {
