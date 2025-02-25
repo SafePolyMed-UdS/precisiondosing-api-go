@@ -147,6 +147,46 @@ const docTemplate = `{
                 }
             }
         },
+        "/sys/info": {
+            "get": {
+                "description": "Get information about the API including version and query limits.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Get API Info",
+                "responses": {
+                    "200": {
+                        "description": "Response with API info",
+                        "schema": {
+                            "$ref": "#/definitions/JSendSuccess-InfoResp"
+                        }
+                    }
+                }
+            }
+        },
+        "/sys/ping": {
+            "get": {
+                "description": "Ping the API to check if it is alive.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "System"
+                ],
+                "summary": "Ping the API",
+                "responses": {
+                    "200": {
+                        "description": "Response with pong message",
+                        "schema": {
+                            "$ref": "#/definitions/JSendSuccess-PingResp"
+                        }
+                    }
+                }
+            }
+        },
         "/user": {
             "delete": {
                 "security": [
@@ -889,6 +929,19 @@ const docTemplate = `{
                 }
             }
         },
+        "InfoResp": {
+            "type": "object",
+            "properties": {
+                "meta_info": {
+                    "description": "Meta",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/cfg.MetaConfig"
+                        }
+                    ]
+                }
+            }
+        },
         "JSendError": {
             "type": "object",
             "properties": {
@@ -940,6 +993,24 @@ const docTemplate = `{
                 }
             }
         },
+        "JSendSuccess-InfoResp": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Data with success message(s)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/InfoResp"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "Status 'success'",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
         "JSendSuccess-LoginResponse": {
             "type": "object",
             "properties": {
@@ -948,6 +1019,24 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/LoginResponse"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "Status 'success'",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "JSendSuccess-PingResp": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Data with success message(s)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/PingResp"
                         }
                     ]
                 },
@@ -1047,6 +1136,16 @@ const docTemplate = `{
                 },
                 "token_type": {
                     "type": "string"
+                }
+            }
+        },
+        "PingResp": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "description": "Message",
+                    "type": "string",
+                    "example": "pong"
                 }
             }
         },
@@ -1180,6 +1279,26 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "reason": {
+                    "type": "string"
+                }
+            }
+        },
+        "cfg.MetaConfig": {
+            "type": "object",
+            "properties": {
+                "api": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "version_tag": {
                     "type": "string"
                 }
             }

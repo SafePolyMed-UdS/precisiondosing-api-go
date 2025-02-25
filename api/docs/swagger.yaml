@@ -112,6 +112,13 @@ definitions:
         example: Some error message
         type: string
     type: object
+  InfoResp:
+    properties:
+      meta_info:
+        allOf:
+        - $ref: '#/definitions/cfg.MetaConfig'
+        description: Meta
+    type: object
   JSendError:
     properties:
       message:
@@ -145,11 +152,33 @@ definitions:
         example: fail
         type: string
     type: object
+  JSendSuccess-InfoResp:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/InfoResp'
+        description: Data with success message(s)
+      status:
+        description: Status 'success'
+        example: success
+        type: string
+    type: object
   JSendSuccess-LoginResponse:
     properties:
       data:
         allOf:
         - $ref: '#/definitions/LoginResponse'
+        description: Data with success message(s)
+      status:
+        description: Status 'success'
+        example: success
+        type: string
+    type: object
+  JSendSuccess-PingResp:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/PingResp'
         description: Data with success message(s)
       status:
         description: Status 'success'
@@ -216,6 +245,13 @@ definitions:
         example: user
         type: string
       token_type:
+        type: string
+    type: object
+  PingResp:
+    properties:
+      message:
+        description: Message
+        example: pong
         type: string
     type: object
   RefreshQuery:
@@ -317,6 +353,19 @@ definitions:
       reason:
         type: string
     type: object
+  cfg.MetaConfig:
+    properties:
+      api:
+        type: string
+      description:
+        type: string
+      url:
+        type: string
+      version:
+        type: string
+      version_tag:
+        type: string
+    type: object
   map_string_string:
     additionalProperties:
       type: string
@@ -414,6 +463,32 @@ paths:
       summary: Create a new service user
       tags:
       - Admin
+  /sys/info:
+    get:
+      description: Get information about the API including version and query limits.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Response with API info
+          schema:
+            $ref: '#/definitions/JSendSuccess-InfoResp'
+      summary: Get API Info
+      tags:
+      - System
+  /sys/ping:
+    get:
+      description: Ping the API to check if it is alive.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Response with pong message
+          schema:
+            $ref: '#/definitions/JSendSuccess-PingResp'
+      summary: Ping the API
+      tags:
+      - System
   /user:
     delete:
       description: |-

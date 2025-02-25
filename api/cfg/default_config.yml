@@ -2,12 +2,12 @@ meta:
   api_name: "SafePolymed Precision Dosing API"
   api_description: "A REST-like API for SafePolymed Precision Dosing System"
   api_version: "0.0.1"
-  api_url: "https://doseadjustservice.clinicalpharmacy.me/"
+  api_url: "http://127.0.0.1:3333"
   group: "/api/v1"
 server:
   read_write_timeout: "120s"
   idle_timeout: "30s"
-  address: ":3333"
+  address: "127.0.0.1:3333"
 log:
   console_log: true
   file_name: "./tmp/doseadjustservice.log"
