@@ -72,14 +72,14 @@ func preCheck(data *PatientData, abdata *abdata.API, idb *mongodb.MongoConnectio
 		return response, nil
 	}
 
-	// Virtual individual check
-	ok, err := virtualIndividualCheck(response, data, idb)
+	// ABData check
+	ok, err := abdataCheck(response, data, abdata)
 	if !ok || err != nil {
 		return response, err
 	}
 
-	// ABData check
-	ok, err = abdataCheck(response, data, abdata)
+	// Virtual individual check
+	ok, err = virtualIndividualCheck(response, data, idb)
 	if !ok || err != nil {
 		return response, err
 	}
@@ -117,25 +117,33 @@ func virtualIndividualCheck(resp *PreCheckResponse, data *PatientData, m *mongod
 
 func abdataCheck(resp *PreCheckResponse, data *PatientData, api *abdata.API) (bool, error) {
 	compounds := drugCompounds(data)
-
-	// only for 2+ compounds
+	if len(compounds) < 2 {
+		resp.Message = "Less than 2 compounds. No interactions expected"
+		resp.Code = "PC-OK-AD-NI"
+		return true, nil
+	}
 
 	interactions, err := api.GetCommpoundInteractions(compounds)
 	if err != nil {
+		resp.Message = "ABDATA precheck error"
 		if err.IsHTTPError() {
-			if err.StatusCode == http.StatusNotFound {
-				resp.Message = "ABDATA precheck error"
-				resp.Details = err.Message
-				resp.Code = "PC-ERR-AD"
+			switch err.StatusCode {
+			case http.StatusNotFound:
+				resp.Details = json.RawMessage(`"ABDATA service not available"`)
+				resp.Code = "PC-ERR-AD-NF"
+				return false, nil
+			case http.StatusUnauthorized:
+				resp.Details = json.RawMessage(`"Unexpected ABDATA error"`)
+				resp.Code = "PC-ERR-AD-UA"
 				return false, nil
 			}
 		}
 		return false, err
 	}
 
-	if len(interactions.Interactions) == 0 {
+	if len(interactions) == 0 {
 		resp.Message = "No interactions expected"
-		resp.Code = "PC-ERR-IC"
+		resp.Code = "PC-OK-AD-NI"
 	}
 
 	return true, nil

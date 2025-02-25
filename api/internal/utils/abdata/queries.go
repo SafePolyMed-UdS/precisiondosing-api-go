@@ -22,18 +22,13 @@ type CompoundInteraction struct {
 	Frequency    *string         `json:"frequency"`
 	Credibility  *string         `json:"credibility"`
 	Direction    *string         `json:"direction"`
-	CompoundL    string          `json:"compound_left"`
-	CompoundR    string          `json:"compound_right"`
+	CompoundsL   []string        `json:"compounds_left"`
+	CompoundsR   []string        `json:"compounds_right"`
 	DosesL       []*CompoundDose `json:"doses_left"`
 	DosesR       []*CompoundDose `json:"doses_right"`
 }
 
-type Interactions struct {
-	Interactions []CompoundInteraction `json:"interactions"`
-}
-
-func (j *API) GetCommpoundInteractions(compounds []string) (*Interactions, *queryerr.Error) {
-
+func (j *API) GetCommpoundInteractions(compounds []string) ([]CompoundInteraction, *queryerr.Error) {
 	if !j.AccessValid() {
 		err := j.Refresh()
 		if err != nil {
@@ -55,10 +50,15 @@ func (j *API) GetCommpoundInteractions(compounds []string) (*Interactions, *quer
 		return nil, err
 	}
 
-	interactions := &Interactions{}
-	if err := json.Unmarshal(body, interactions); err != nil {
+	type JSendResponse struct {
+		Status string                `json:"status"`
+		Data   []CompoundInteraction `json:"data"`
+	}
+
+	var response JSendResponse
+	if err := json.Unmarshal(body, &response); err != nil {
 		return nil, queryerr.NewInternal(fmt.Errorf("cannot unmarshal interactions: %w", err))
 	}
 
-	return interactions, nil
+	return response.Data, nil
 }
