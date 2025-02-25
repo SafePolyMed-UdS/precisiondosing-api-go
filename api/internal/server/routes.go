@@ -75,7 +75,6 @@ func RegisterDSSRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle
 }
 
 func RegistgerSwaggerRoutes(r *gin.Engine, api *gin.RouterGroup, handle *handle.ResourceHandle) {
-
 	hostURL := handle.MetaCfg.URL
 	if handle.DebugMode {
 		hostURL = handle.ServerCfg.Address

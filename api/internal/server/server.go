@@ -13,6 +13,7 @@ import (
 	"precisiondosing-api-go/internal/mongodb"
 	"precisiondosing-api-go/internal/responder"
 	"precisiondosing-api-go/internal/utils/abdata"
+	"precisiondosing-api-go/internal/utils/validate"
 	"strings"
 	"syscall"
 	"time"
@@ -60,8 +61,14 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 	// create Mailer
 	mailer := responder.NewMailer(config.Mailer, config.Meta, debug)
 
+	// create JSON validators
+	jsonValidators, err := initJSONValidators(&config.Schema)
+	if err != nil {
+		return nil, fmt.Errorf("cannot init JSON validators: %w", err)
+	}
+
 	// routes
-	resourceHandle := handle.NewResourceHandle(config, databases, abdata, mailer, debug)
+	resourceHandle := handle.NewResourceHandle(config, databases, abdata, mailer, jsonValidators, debug)
 	registerRoutes(router, resourceHandle)
 
 	// server
@@ -151,4 +158,17 @@ func initABDATA(config *cfg.APIConfig) (*abdata.API, error) {
 	}
 
 	return api, nil
+}
+
+func initJSONValidators(config *cfg.SchemaConfig) (handle.JSONValidators, error) {
+
+	validators := handle.JSONValidators{}
+
+	var err error
+	validators.PreCheck, err = validate.NewJSONValidator(config.PreCheck)
+	if err != nil {
+		return validators, fmt.Errorf("cannot create PreCheck validator: %w", err)
+	}
+
+	return validators, nil
 }

@@ -3,12 +3,12 @@ package dsscontroller
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
 	"net/http"
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/mongodb"
 	"precisiondosing-api-go/internal/utils/abdata"
-	"precisiondosing-api-go/internal/utils/validate"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,33 +21,33 @@ type PreCheckResponse struct {
 }
 
 func (sc *DSSController) PostPrecheck(c *gin.Context) {
-	// Define the struct for the JSON body (use map[string]interface{} to accept any JSON object)
-	var jsonBody map[string]interface{}
+	bodyBytes, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		handle.BadRequestError(c, "Failed to read request body")
+		return
+	}
 
-	// Bind the JSON body from the request
-	if err := c.BindJSON(&jsonBody); err != nil {
+	var jsonBody map[string]interface{}
+	if err = json.Unmarshal(bodyBytes, &jsonBody); err != nil {
 		handle.BadRequestError(c, "Invalid JSON body")
 		return
 	}
 
-	// Create a JSON validator
-	jV, err := validate.NewJSONValidator("schemas/precheck_input_adjusted.schema.json")
-	if err != nil {
-		handle.ServerError(c, err)
-		return
-	}
-
-	err = jV.Validate(jsonBody) // Pass jsonBody directly (without &)
+	// Validate the JSON body
+	err = sc.JSONValidators.PreCheck.Validate(jsonBody)
 	if err != nil {
 		handle.BadRequestError(c, err.Error())
 		return
 	}
 
+	// Bind the JSON body to the query struct
 	query := PatientData{}
-	if !handle.JSONBind(c, &query) {
+	if err = json.Unmarshal(bodyBytes, &query); err != nil {
+		handle.BadRequestError(c, "Invalid body JSON structure")
 		return
 	}
 
+	// Precheck
 	result, err := preCheck(&query, sc.ABDATA, sc.IndibidualsDB)
 	if err != nil {
 		handle.ServerError(c, err)

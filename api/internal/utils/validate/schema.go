@@ -2,6 +2,7 @@ package validate
 
 import (
 	"fmt"
+
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
@@ -14,21 +15,10 @@ func NewJSONValidator(schemaFile string) (*JSONValidator, error) {
 	schema, err := c.Compile(schemaFile)
 
 	if err != nil {
-		fmt.Println("Error compiling schema:", err)
-		return nil, err
+		return nil, fmt.Errorf("error creating JSONValidator: %w", err)
 	}
 
 	return &JSONValidator{Schema: schema}, nil
-}
-
-func (v *JSONValidator) SerializeErrors(detailedError *jsonschema.Detailed, errors string) string {
-	if len(detailedError.Error) > 0 {
-		errors += fmt.Sprintf("\nError in %s: %s ", detailedError.InstanceLocation, detailedError.Error)
-	}
-	for _, e := range detailedError.Errors {
-		errors = v.SerializeErrors(&e, errors)
-	}
-	return errors
 }
 
 func (v *JSONValidator) Validate(data interface{}) error {
@@ -37,10 +27,20 @@ func (v *JSONValidator) Validate(data interface{}) error {
 		detailedErr := err.(*jsonschema.ValidationError).DetailedOutput()
 
 		var errors string
-		errors = v.SerializeErrors(&detailedErr, errors)
+		errors = v.serializeErrors(&detailedErr, errors)
 
-		return fmt.Errorf("Error validating data: %s", errors)
+		return fmt.Errorf("error validating data: %s", errors)
 	}
 
 	return nil
+}
+
+func (v *JSONValidator) serializeErrors(detailedError *jsonschema.Detailed, errors string) string {
+	if len(detailedError.Error) > 0 {
+		errors += fmt.Sprintf("\nError in %s: %s ", detailedError.InstanceLocation, detailedError.Error)
+	}
+	for _, e := range detailedError.Errors {
+		errors = v.serializeErrors(&e, errors)
+	}
+	return errors
 }
