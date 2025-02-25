@@ -21,40 +21,47 @@ type PreCheckResponse struct {
 }
 
 func (sc *DSSController) PostPrecheck(c *gin.Context) {
-	bodyBytes, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		handle.BadRequestError(c, "Failed to read request body")
-		return
-	}
-
-	var jsonBody map[string]interface{}
-	if err = json.Unmarshal(bodyBytes, &jsonBody); err != nil {
-		handle.BadRequestError(c, "Invalid JSON body")
-		return
-	}
-
-	// Validate the JSON body
-	err = sc.JSONValidators.PreCheck.Validate(jsonBody)
+	// Read the patient data from the request body
+	patientData, err := sc.readPatientData(c)
 	if err != nil {
 		handle.BadRequestError(c, err.Error())
 		return
 	}
 
-	// Bind the JSON body to the query struct
-	query := PatientData{}
-	if err = json.Unmarshal(bodyBytes, &query); err != nil {
-		handle.BadRequestError(c, "Invalid body JSON structure")
-		return
-	}
-
 	// Precheck
-	result, err := preCheck(&query, sc.ABDATA, sc.IndibidualsDB)
+	result, err := preCheck(patientData, sc.ABDATA, sc.IndibidualsDB)
 	if err != nil {
 		handle.ServerError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusOK, result)
+	handle.Success(c, result)
+}
+
+func (sc *DSSController) readPatientData(c *gin.Context) (*PatientData, error) {
+	bodyBytes, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read request body: %w", err)
+	}
+
+	var jsonBody map[string]interface{}
+	if err = json.Unmarshal(bodyBytes, &jsonBody); err != nil {
+		return nil, fmt.Errorf("invalid JSON body: %w", err)
+	}
+
+	// Validate the JSON body
+	err = sc.JSONValidators.PreCheck.Validate(jsonBody)
+	if err != nil {
+		return nil, fmt.Errorf("invalid JSON body: %w", err)
+	}
+
+	// Bind the JSON body to the query struct
+	patientData := PatientData{}
+	if err = json.Unmarshal(bodyBytes, &patientData); err != nil {
+		return nil, fmt.Errorf("invalid body JSON structure: %w", err)
+	}
+
+	return &patientData, nil
 }
 
 func preCheck(data *PatientData, abdata *abdata.API, idb *mongodb.MongoConnection) (*PreCheckResponse, error) {
