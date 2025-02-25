@@ -9,6 +9,8 @@ _default:
 [group('dev')]
 run:
     @ cd api && go mod tidy
+    @ cd api && swag init
+    @ cd api && swag fmt
     @ cd api && air
 
 [group ('prod')]
@@ -34,4 +36,6 @@ git-done branch=`git rev-parse --abbrev-ref HEAD`:
 [group('init')]
 init:
     @ go install github.com/air-verse/air@latest
+    @ go install github.com/swaggo/swag/cmd/swag@latest
+    @ scoop install main/golangci-lint
     @ cp api/cfg/default_env api/.env

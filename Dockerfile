@@ -6,7 +6,10 @@ COPY api/ ./
 COPY .git/ ./
 RUN apk update && apk add --no-cache git && \
     go mod tidy && \
-    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.versionTag=$(git rev-parse --short HEAD)" -trimpath -o api ./cmd/api
+    go install github.com/swaggo/swag/cmd/swag@latest && \
+    swag init && \
+    swag fmt && go mod tidy && \
+    CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags="-s -w -X main.versionTag=$(git rev-parse --short HEAD)" -trimpath -o api .
 
 FROM rocker/r-ver:4.3.3
 
