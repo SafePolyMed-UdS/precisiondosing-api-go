@@ -35,4 +35,4 @@ reset_token:
 abdata:
   url: "https://medinfo.precisiondosing.de/api/v1"
 schema:
-  precheck: "file:///schemas/precheck_input.schema.json"
+  precheck: "file:///app/schemas/precheck_input.schema.json"
