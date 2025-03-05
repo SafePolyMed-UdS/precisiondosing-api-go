@@ -1,13 +1,17 @@
 meta {
-  name: precheck-success
+  name: User Overview
   type: http
-  seq: 2
+  seq: 3
 }
 
-post {
-  url: {{url}}/api/v1/dose/precheck
+get {
+  url: {{url}}/api/v1/users
   body: json
-  auth: inherit
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
 }
 
 body:json {
@@ -19,17 +23,41 @@ body:json {
       "height": 168,
       "sex": "female",
       "ethnicity": "asian",
-      "kidney_disease": false,
-      "liver_disease": false
+      "kidney_disease": true,
+      "liver_disease": true
     },
     "patient_pgx_profile": [
       {
         "gene": "CYP2D6",
-        "allele1" : "*1",
+        "allele1": "*",
         "allele1_cnv_multiplier": 2,
-        "allele2": "*2",
+        "allele2": "*",
         "allele2_cnv_multiplier": 2,
         "phenotype": "Poor metabolizer"
+      },
+      {
+        "gene": "CYP2C19",
+        "allele1": "*",
+        "allele1_cnv_multiplier": 2,
+        "allele2": "*",
+        "allele2_cnv_multiplier": 2,
+        "phenotype": "Ultrarapid metabolizer"
+      },
+      {
+        "gene": "CYP2C9",
+        "allele1": "*1",
+        "allele1_cnv_multiplier": 1,
+        "allele2": "*3",
+        "allele2_cnv_multiplier": 1,
+        "phenotype": "Intermediate metabolizer ANDERS"
+      },
+      {
+        "gene": "SLCO1B1",
+        "allele1": "521CC",
+        "allele1_cnv_multiplier": 2,
+        "allele2": "521CC",
+        "allele2_cnv_multiplier": 2,
+        "phenotype": "n/a"
       }
     ],
     "drugs": [
@@ -40,12 +68,12 @@ body:json {
           "strength": 95,
           "strength_unit": "milligram"
         },
-        "active_substances": [
+        "active_substance": [
           "Metoprolol"
         ],
         "intake_cycle": {
           "starting_at": "2024-11-03",
-          "frequency": "daily",
+          "frequency": "days",
           "frequency_modifier": 1,
           "intakes": [
             {
@@ -70,12 +98,12 @@ body:json {
           "strength": 2,
           "strength_unit": "milligram"
         },
-        "active_substances": [
+        "active_substance": [
           "Siponimod"
         ],
         "intake_cycle": {
           "starting_at": "2024-09-16",
-          "frequency": "daily",
+          "frequency": "days",
           "frequency_modifier": 1,
           "intakes": [
             {
@@ -94,12 +122,12 @@ body:json {
           "strength": 200,
           "strength_unit": "milligram"
         },
-        "active_substances": [
+        "active_substance": [
           "Amiodaron"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
-          "frequency": "daily",
+          "frequency": "days",
           "frequency_modifier": 1,
           "intakes": [
             {
@@ -130,12 +158,12 @@ body:json {
           "strength": 100,
           "strength_unit": "milligram"
         },
-        "active_substances": [
+        "active_substance": [
           "Fluvoxamin"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
-          "frequency": "daily",
+          "frequency": "days",
           "frequency_modifier": 1,
           "intakes": [
             {
@@ -154,12 +182,12 @@ body:json {
           "strength": 20,
           "strength_unit": "milligram"
         },
-        "active_substances": [
+        "active_substance": [
           "Esomeprazol"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
-          "frequency": "weekly",
+          "frequency": "weeks",
           "frequency_modifier": 1,
           "intakes": [
             {

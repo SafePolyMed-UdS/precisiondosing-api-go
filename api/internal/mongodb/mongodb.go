@@ -103,7 +103,7 @@ func mapEthnicity(ethnicity *string) (string, error) {
 	// Ethnicity-to-population mapping
 	mapping := map[string]string{
 		"european":       "European_ICRP_2002",
-		"white american": "European_ICRP_2002", // Assuming white Americans fall under European
+		"white american": "WhiteAmerican_NHANES_1997",
 		"black american": "BlackAmerican_NHANES_1997",
 		"mexican":        "MexicanAmericanWhite_NHANES_1997",
 		"asian":          "Asian_Tanaka_1996",

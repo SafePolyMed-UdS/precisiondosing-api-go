@@ -3,7 +3,6 @@ package dsscontroller
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"math"
 	"net/http"
 	"precisiondosing-api-go/internal/handle"
@@ -29,7 +28,7 @@ func (sc *DSSController) PostPrecheck(c *gin.Context) {
 	}
 
 	// Precheck
-	result, err := preCheck(patientData, sc.ABDATA, sc.IndibidualsDB)
+	result, err := PreCheck(patientData, sc.ABDATA, sc.IndibidualsDB)
 	if err != nil {
 		handle.ServerError(c, err)
 		return
@@ -38,33 +37,7 @@ func (sc *DSSController) PostPrecheck(c *gin.Context) {
 	handle.Success(c, result)
 }
 
-func (sc *DSSController) readPatientData(c *gin.Context) (*PatientData, error) {
-	bodyBytes, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read request body: %w", err)
-	}
-
-	var jsonBody map[string]interface{}
-	if err = json.Unmarshal(bodyBytes, &jsonBody); err != nil {
-		return nil, fmt.Errorf("invalid JSON body: %w", err)
-	}
-
-	// Validate the JSON body
-	err = sc.JSONValidators.PreCheck.Validate(jsonBody)
-	if err != nil {
-		return nil, fmt.Errorf("invalid JSON body: %w", err)
-	}
-
-	// Bind the JSON body to the query struct
-	patientData := PatientData{}
-	if err = json.Unmarshal(bodyBytes, &patientData); err != nil {
-		return nil, fmt.Errorf("invalid body JSON structure: %w", err)
-	}
-
-	return &patientData, nil
-}
-
-func preCheck(data *PatientData, abdata *abdata.API, idb *mongodb.MongoConnection) (*PreCheckResponse, error) {
+func PreCheck(data *PatientData, abdata *abdata.API, idb *mongodb.MongoConnection) (*PreCheckResponse, error) {
 	response := &PreCheckResponse{}
 
 	// Impairment check
@@ -103,7 +76,6 @@ func virtualIndividualCheck(resp *PreCheckResponse, data *PatientData, m *mongod
 		return false, fmt.Errorf("error fetching individual: %w", err)
 	}
 	str := string(individualPayload)
-
 	hasData := individualPayload != nil && str != "\"[]\""
 
 	if !hasData {
@@ -141,7 +113,7 @@ func abdataCheck(resp *PreCheckResponse, data *PatientData, api *abdata.API) (bo
 	}
 
 	if len(interactions) == 0 {
-		resp.Message = "No interactions expected"
+		resp.Message += "Medinfo: No interactions expected"
 		resp.Code = "PC-OK-AD-NI"
 	}
 
@@ -149,8 +121,8 @@ func abdataCheck(resp *PreCheckResponse, data *PatientData, api *abdata.API) (bo
 }
 
 func impairmentCheck(resp *PreCheckResponse, data *PatientData) bool {
-	ld := *data.PatientCharacteristics.LiverDisease
-	kd := *data.PatientCharacteristics.KidneyDisease
+	ld := data.PatientCharacteristics.LiverDisease
+	kd := data.PatientCharacteristics.KidneyDisease
 
 	if ld || kd {
 		resp.Message = "Patient has liver or kidney disease"

@@ -19,8 +19,8 @@ type PatientCharacteristics struct {
 	Height        int     `json:"height" binding:"required"`
 	Sex           string  `json:"sex" binding:"required"`
 	Ethnicity     *string `json:"ethnicity"`
-	KidneyDisease *bool   `json:"kidney_disease" binding:"required"`
-	LiverDisease  *bool   `json:"liver_disease" binding:"required"`
+	KidneyDisease bool    `json:"kidney_disease" binding:"required"`
+	LiverDisease  bool    `json:"liver_disease" binding:"required"`
 }
 
 type PGXProfile struct {
@@ -47,9 +47,9 @@ type IntakeCycle struct {
 	// If "on_demand", the "frequency", "frequency_modifier" and 'intakes' fields are not required
 	// IntakeMode        string      `json:"intake_mode" binding:"required"`
 	StartingAt        *CustomTime `json:"starting_at"`
-	Frequency         *string     `json:"frequency" binding:"required"`
-	FrequencyModifier *int        `json:"frequency_modifier" binding:"required"`
-	Intakes           *[]Intake   `json:"intakes" binding:"required,dive,required"`
+	Frequency         string      `json:"frequency" binding:"required"`
+	FrequencyModifier int         `json:"frequency_modifier" binding:"required"`
+	Intakes           []Intake    `json:"intakes" binding:"required,dive,required"`
 }
 
 type Intake struct {
