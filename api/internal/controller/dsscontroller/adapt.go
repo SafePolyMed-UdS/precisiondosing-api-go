@@ -38,5 +38,5 @@ func (sc *DSSController) AdaptDose(c *gin.Context) {
 		Message: "Order queued",
 	}
 
-	c.JSON(http.StatusOK, result)
+	handle.Success(c, result)
 }

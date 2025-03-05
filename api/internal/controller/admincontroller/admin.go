@@ -128,12 +128,7 @@ func (ac *AdminController) CreateServiceUser(c *gin.Context) {
 		return
 	}
 
-	if gin.IsDebugging() {
-		c.JSON(http.StatusCreated, gin.H{"message": "Service user created"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"message": "Service user created"})
+	handle.Success(c, gin.H{"message": "Service user created"})
 }
 
 // @Summary		Create a new user
@@ -239,14 +234,23 @@ func (ac *AdminController) CreateUser(c *gin.Context) {
 		return
 	}
 
-	if gin.IsDebugging() {
-		c.JSON(http.StatusCreated, gin.H{"message": "User created", "token": resetTokens.Token})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"message": "User created"})
+	handle.Success(c, gin.H{"message": "User created"})
 }
 
+// @Summary		Get all users
+// @Description	__Admin role required__
+// @Description	List all users for the API.
+// @Tags			Admin
+// @Produce		json
+// @Success		200		{object}	handle.jsendSuccess[map[string]string]			"User created"
+// @Failure		400		{object}	handle.jsendFailure[handle.errorResponse]		"Bad request"
+// @Failure		401		{object}	handle.jsendFailure[handle.errorResponse]		"Unauthorized"
+// @Failure		403		{object}	handle.jsendFailure[handle.errorResponse]		"Non-admin user"
+// @Failure		500		{object}	handle.jSendError								"Internal server error"
+//
+// @Security		Bearer
+//
+// @Router			/admin/users [get]
 func (ac *AdminController) GetUsers(c *gin.Context) {
 	var query struct {
 		Role   string `form:"role" binding:"omitempty,oneof=admin user approver"`
@@ -277,7 +281,7 @@ func (ac *AdminController) GetUsers(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, users)
+	handle.Success(c, users)
 }
 
 func (ac *AdminController) GetUserByEmail(c *gin.Context) {
@@ -292,7 +296,7 @@ func (ac *AdminController) GetUserByEmail(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	handle.Success(c, user)
 }
 
 func (ac *AdminController) DeleteUserByEmail(c *gin.Context) {
@@ -315,7 +319,7 @@ func (ac *AdminController) DeleteUserByEmail(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted"})
+	handle.Success(c, gin.H{"message": "User deleted"})
 }
 
 func (ac *AdminController) ChangeUserProfile(c *gin.Context) {
@@ -370,6 +374,5 @@ func (ac *AdminController) ChangeUserProfile(c *gin.Context) {
 		return
 	}
 
-	handle.Success(c, gin.H{"message": "User profile updated"})
 	handle.Success(c, gin.H{"message": "User profile updated"})
 }
