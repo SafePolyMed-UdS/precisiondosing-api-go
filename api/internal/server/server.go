@@ -11,6 +11,7 @@ import (
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/middleware"
 	"precisiondosing-api-go/internal/mongodb"
+	"precisiondosing-api-go/internal/pbpk"
 	"precisiondosing-api-go/internal/responder"
 	"precisiondosing-api-go/internal/utils/abdata"
 	"precisiondosing-api-go/internal/utils/validate"
@@ -36,6 +37,9 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing databases: %w", err)
 	}
+
+	// init pbpk model definitions
+	model_defs := pbpk.MustParseAll(config.Models.Path)
 
 	// init abdata
 	abdata, err := initABDATA(config)
@@ -68,7 +72,7 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 	}
 
 	// routes
-	resourceHandle := handle.NewResourceHandle(config, databases, abdata, mailer, jsonValidators, debug)
+	resourceHandle := handle.NewResourceHandle(config, databases, abdata, model_defs, mailer, jsonValidators, debug)
 	registerRoutes(router, resourceHandle)
 
 	// server

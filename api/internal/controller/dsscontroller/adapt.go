@@ -2,7 +2,6 @@ package dsscontroller
 
 import (
 	"encoding/json"
-	"net/http"
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/model"
 

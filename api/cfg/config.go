@@ -58,6 +58,10 @@ type LogConfig struct {
 	MaxBackups int    `yaml:"max_backups"`
 }
 
+type Models struct {
+	Path string `yaml:"path"`
+}
+
 type AuthTokenConfig struct {
 	Secret                Bytes         `env:"JWT_SECRET, required"`
 	AccessExpirationTime  time.Duration `yaml:"access_expiration_time"`
@@ -104,6 +108,7 @@ type APIConfig struct {
 	ResetToken ResetTokenConfig `yaml:"reset_token"`
 	ABDATA     ABDATAConfig     `yaml:"abdata"`
 	Schema     SchemaConfig     `yaml:"schema"`
+	Models     Models           `yaml:"models"`
 	Mailer     MailerConfig
 }
 

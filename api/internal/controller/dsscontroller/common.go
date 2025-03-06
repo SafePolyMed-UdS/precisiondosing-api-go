@@ -7,6 +7,7 @@ import (
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/mongodb"
+	"precisiondosing-api-go/internal/pbpk"
 	"precisiondosing-api-go/internal/utils/abdata"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +19,7 @@ type DSSController struct {
 	DB             *gorm.DB
 	ABDATA         *abdata.API
 	IndibidualsDB  *mongodb.MongoConnection
+	PBPKModels     []pbpk.Model
 	JSONValidators handle.JSONValidators
 }
 
@@ -26,6 +28,7 @@ func NewDSSController(resourceHandle *handle.ResourceHandle) *DSSController {
 		Meta:           resourceHandle.MetaCfg,
 		DB:             resourceHandle.Databases.GormDB,
 		ABDATA:         resourceHandle.ABDATA,
+		PBPKModels:     resourceHandle.PBPKModels,
 		JSONValidators: resourceHandle.JSONValidators,
 		IndibidualsDB:  resourceHandle.Databases.MongoDB,
 	}

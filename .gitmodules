@@ -1,3 +1,6 @@
 [submodule "rbase-dockerfiles"]
-	path = rbase-dockerfiles
-	url = git@github.com:Clinical-Pharmacy-Saarland-University/rbase-dockerfiles.git
+path = rbase-dockerfiles
+url = git@github.com:Clinical-Pharmacy-Saarland-University/rbase-dockerfiles.git
+[submodule "models"]
+	path = models
+	url = https://github.com/Clinical-Pharmacy-Saarland-University/shiny-models

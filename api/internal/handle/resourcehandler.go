@@ -3,6 +3,7 @@ package handle
 import (
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/mongodb"
+	"precisiondosing-api-go/internal/pbpk"
 	"precisiondosing-api-go/internal/responder"
 	"precisiondosing-api-go/internal/utils/abdata"
 	"precisiondosing-api-go/internal/utils/helper"
@@ -21,6 +22,7 @@ type ResourceHandle struct {
 	Mailer         *responder.Mailer
 	Databases      Databases
 	JSONValidators JSONValidators
+	PBPKModels     []pbpk.Model
 	ABDATA         *abdata.API
 	DebugMode      bool
 }
@@ -39,6 +41,7 @@ func NewResourceHandle(
 	apiCfg *cfg.APIConfig,
 	databases Databases,
 	abdata *abdata.API,
+	pbpkModels []pbpk.Model,
 	mailer *responder.Mailer,
 	jsonValidators JSONValidators,
 	debug bool,
@@ -50,6 +53,7 @@ func NewResourceHandle(
 		ResetCfg:       apiCfg.ResetToken,
 		Databases:      databases,
 		JSONValidators: jsonValidators,
+		PBPKModels:     pbpkModels,
 		ABDATA:         abdata,
 		Mailer:         mailer,
 		DebugMode:      debug,
