@@ -1,7 +1,7 @@
 meta {
-  name: precheck-success
+  name: precheck-fail-Model-Missing
   type: http
-  seq: 4
+  seq: 2
 }
 
 post {
@@ -41,7 +41,7 @@ body:json {
           "strength_unit": "milligram"
         },
         "active_substances": [
-          "Voriconazole"
+          "Metoprolol"
         ],
         "intake_cycle": {
           "starting_at": "2024-11-03",
@@ -65,13 +65,37 @@ body:json {
       },
       {
         "product": {
+          "product_name": "Mayzent 2mg",
+          "atc": "L04AA42",
+          "strength": 2,
+          "strength_unit": "milligram"
+        },
+        "active_substances": [
+          "Siponimod"
+        ],
+        "intake_cycle": {
+          "starting_at": "2024-09-16",
+          "frequency": "daily",
+          "frequency_modifier": 1,
+          "intakes": [
+            {
+              "cron": "0 8 */1 * *",
+              "raw_time_str": "08:00",
+              "dosage": 1,
+              "dosage_unit": "tablets"
+            }
+          ]
+        }
+      },
+      {
+        "product": {
           "product_name": "Amiodaron 200 Heumann",
           "atc": "C01BD01",
           "strength": 200,
           "strength_unit": "milligram"
         },
         "active_substances": [
-          "Imatinib"
+          "Amiodaron"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
@@ -107,7 +131,7 @@ body:json {
           "strength_unit": "milligram"
         },
         "active_substances": [
-          "Cimetidine"
+          "Fluvoxamin"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
@@ -131,7 +155,7 @@ body:json {
           "strength_unit": "milligram"
         },
         "active_substances": [
-          "Clopidogrel"
+          "Esomeprazol"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",

@@ -38,7 +38,7 @@ RUN setup/install_osp_pkg.sh
 #COPY ${R_PKG_FILE} rbase-dockerfiles/scripts/packages.R
 #RUN rbase-dockerfiles/scripts/install_user_r_pkg.sh
 
-RUN mkdir -p /app /app/schemas /logs && \
+RUN mkdir -p /app /app/schemas /app/models /logs && \
     chown -R appuser:appuser /app /logs \
     && chmod -R 755 /app \
     && chmod -R 755 /logs
@@ -46,6 +46,7 @@ RUN mkdir -p /app /app/schemas /logs && \
 COPY --from=builder /app/api /app/api
 COPY api/cfg/prod_config.yml /app/config.yml
 COPY api/schemas/* /app/schemas/
+COPY api/models/* /app/models/
 
 USER appuser
 WORKDIR /app

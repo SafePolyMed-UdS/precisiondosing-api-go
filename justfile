@@ -32,6 +32,11 @@ git-done branch=`git rev-parse --abbrev-ref HEAD`:
     @ git diff --no-ext-diff --quiet --exit-code {{branch}}
     @ git branch -D {{branch}}
 
+# Updates all submodules
+[group('git')]
+git-update:
+    @ git submodule foreach --recursive git pull origin main
+
 # Installs Air and sets default .env
 [group('init')]
 init:
