@@ -37,4 +37,4 @@ abdata:
 schema:
   precheck: "file:///app/schemas/precheck_input.schema.json"
 models:
-  path: "app/models"
+  path: "/app/models"
