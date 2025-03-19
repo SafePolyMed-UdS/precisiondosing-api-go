@@ -2,7 +2,7 @@ meta:
   api_name: "SafePolymed Precision Dosing API"
   api_description: "A REST-like API for SafePolymed Precision Dosing System"
   api_version: "0.0.1"
-  api_url: "https://doseadjustservice.precisiondosing.de/"
+  api_url: "doseadjustservice.precisiondosing.de"
   group: "/api/v1"
 server:
   read_write_timeout: "120s"
