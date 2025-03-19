@@ -46,7 +46,7 @@ RUN mkdir -p /app /app/schemas /app/models /logs && \
 COPY --from=builder /app/api /app/api
 COPY api/cfg/prod_config.yml /app/config.yml
 COPY api/schemas/* /app/schemas/
-COPY api/models/* /app/models/
+COPY models/* /app/models/
 
 USER appuser
 WORKDIR /app
