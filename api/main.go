@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/server"
 	"precisiondosing-api-go/internal/utils/logger"
@@ -15,6 +16,13 @@ var (
 
 func main() {
 	args := cfg.ParseCmdLineArgs()
+
+	envVars := os.Environ()
+
+	// Print each environment variable
+	for _, env := range envVars {
+		fmt.Println(env)
+	}
 
 	// config
 	cfg.MustParseEnvFile(&args.EnvFile)
