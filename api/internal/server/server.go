@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"precisiondosing-api-go/cfg"
+	"precisiondosing-api-go/internal/callr"
 	"precisiondosing-api-go/internal/database"
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/middleware"
@@ -37,6 +38,22 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error initializing databases: %w", err)
 	}
+
+	////////////////////////////////////////////////////////
+	callR := callr.NewCallR(config.RLang.RScriptPathWin,
+		config.RLang.DoseAdjustScript,
+		config.Database.Password,
+		config.Database.Username,
+		config.Database.Host,
+		config.Database.DBName,
+		config.RLang.MaxExecutionTime,
+	)
+	tmp := callR.Adjust(10)
+	fmt.Printf("%+v\n", tmp)
+
+	rh := responder.NewResultHandler(databases.GormDB, config.ResultAPI.Endpoint)
+	rh.SendResults()
+	////////////////////////////////////////////////////////
 
 	// init pbpk model definitions
 	model_defs := pbpk.MustParseAll(config.Models.Path)

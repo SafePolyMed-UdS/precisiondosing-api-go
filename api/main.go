@@ -31,5 +31,6 @@ func main() {
 		panic(fmt.Sprintf("Cannot create server: %v", err))
 	}
 
-	srv.Run()
+	_ = srv
+	//srv.Run()
 }

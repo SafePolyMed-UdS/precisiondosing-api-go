@@ -8,6 +8,9 @@ server:
   read_write_timeout: "120s"
   idle_timeout: "30s"
   address: ":3333"
+rlang:
+  rscript_path_win: "Rscript.exe"
+  rscript_path_unix: "Rscript"
 log:
   console_log: true
   file_name: "/logs/doseadjustservice.log"

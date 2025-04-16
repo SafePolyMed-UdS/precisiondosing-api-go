@@ -5,6 +5,7 @@ import (
 	"precisiondosing-api-go/internal/controller/admincontroller"
 	"precisiondosing-api-go/internal/controller/dsscontroller"
 	"precisiondosing-api-go/internal/controller/syscontroller"
+	"precisiondosing-api-go/internal/controller/testcontroller"
 	"precisiondosing-api-go/internal/controller/usercontroller"
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/middleware"
@@ -73,6 +74,11 @@ func RegisterDSSRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle
 		dss.POST("/precheck/", c.PostPrecheck)
 		dss.POST("/adjust/", c.AdaptDose)
 	}
+}
+
+func TestRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
+	dss := r.Group("/test")
+	dss.POST("/acceptresult/", testcontroller.AcceptResult)
 }
 
 func RegistgerSwaggerRoutes(r *gin.Engine, api *gin.RouterGroup, handle *handle.ResourceHandle) {

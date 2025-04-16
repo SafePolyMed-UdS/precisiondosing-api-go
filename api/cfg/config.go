@@ -62,6 +62,13 @@ type Models struct {
 	Path string `yaml:"path"`
 }
 
+type RConfig struct {
+	RScriptPathWin   string        `yaml:"rscript_path_win"`
+	RScriptPathUnix  string        `yaml:"rscript_path_unix"`
+	DoseAdjustScript string        `yaml:"dose_adjust_script"`
+	MaxExecutionTime time.Duration `yaml:"max_execution_time"`
+}
+
 type AuthTokenConfig struct {
 	Secret                Bytes         `env:"JWT_SECRET, required"`
 	AccessExpirationTime  time.Duration `yaml:"access_expiration_time"`
@@ -89,6 +96,10 @@ type MailerConfig struct {
 	APIKey    string `env:"SEND_EMAIL_API_KEY, required"`
 }
 
+type ResultAPI struct {
+	Endpoint string `yaml:"endpoint"`
+}
+
 func (b *Bytes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var secret string
 	if err := unmarshal(&secret); err != nil {
@@ -101,6 +112,7 @@ func (b *Bytes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 type APIConfig struct {
 	Meta       MetaConfig       `yaml:"meta"`
 	Server     ServerConfig     `yaml:"server"`
+	RLang      RConfig          `yaml:"rlang"`
 	Database   DatabaseConfig   `yaml:"database"`
 	Mongo      MongoConfig      `yaml:"mongo"`
 	Log        LogConfig        `yaml:"log"`
@@ -109,6 +121,7 @@ type APIConfig struct {
 	ABDATA     ABDATAConfig     `yaml:"abdata"`
 	Schema     SchemaConfig     `yaml:"schema"`
 	Models     Models           `yaml:"models"`
+	ResultAPI  ResultAPI        `yaml:"result_api"`
 	Mailer     MailerConfig
 }
 
