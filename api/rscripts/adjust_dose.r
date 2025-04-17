@@ -7,6 +7,7 @@
 # -----------------------------------
 suppressMessages(suppressWarnings({
   source("startup/packages.R")
+  source("report/create_report.R")
   source("helpers.R")
   source("settings.R")
 

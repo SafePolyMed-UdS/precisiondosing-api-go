@@ -10,7 +10,6 @@ render_pdf <- function(markdown_path, outfile_name, params) {
   # create temporary dir
   tmp_dir <- paste0(sample(LETTERS, 10, replace = TRUE), collapse = "")
   dir_create(tmp_dir)
-  print(tmp_dir)
 
   tryCatch(
     {
@@ -23,8 +22,6 @@ render_pdf <- function(markdown_path, outfile_name, params) {
         recursive = TRUE
       )
       markdown_dest <- file.path(markdown_folder, basename(markdown_path))
-      Sys.sleep(1)
-      browser()
 
       rmarkdown::render(
         input = markdown_dest,
@@ -33,6 +30,17 @@ render_pdf <- function(markdown_path, outfile_name, params) {
         params = params,
         quiet = TRUE,
         envir = new.env(parent = globalenv())
+      ) |>
+        suppressWarnings()
+
+      return(
+        file.path(
+          tmp_dir,
+          paste0(
+            tools::file_path_sans_ext(basename(outfile_name)),
+            ".pdf"
+          )
+        )
       )
     },
     error = function(error) {
@@ -42,12 +50,27 @@ render_pdf <- function(markdown_path, outfile_name, params) {
   )
 }
 
-render_error_pdf <- function(results, settings) {
+render_error_pdf <- function(results, api_settings) {
   params <- results
 
-  report <- render_pdf(
-    markdown_path = settings$REPORT$markdown_failed,
-    outfile_name = file.path(settings$PATHS$REPORTS, paste0(settings$REPORT$outfile_name, "_failed.pdf")),
+  pdf_path <- render_pdf(
+    markdown_path = api_settings$REPORT$markdown_failed,
+    outfile_name = file.path(
+      api_settings$PATHS$REPORTS,
+      paste0(api_settings$REPORT$outfile_name, "_failed.pdf")
+    ),
     params = params
   )
+
+  return(pdf_path)
+}
+
+delete_tmp_folder <- function(pdf_path) {
+  # Extract the temporary directory from the PDF path
+  temp_dir <- dirname(pdf_path)
+
+  # Delete the temporary directory and its contents
+  if (dir_exists(temp_dir)) {
+    dir_delete(temp_dir)
+  }
 }

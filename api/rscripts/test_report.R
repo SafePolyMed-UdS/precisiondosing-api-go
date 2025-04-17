@@ -14,7 +14,8 @@ sim_results <- list(
   )
 )
 
-render_error_pdf(
+x <- render_error_pdf(
   results = sim_results,
-  settings = SETTINGS
+  api_settings = API_SETTINGS
 )
+print(x)

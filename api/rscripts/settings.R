@@ -75,4 +75,4 @@ create_settings <- function() {
 
   return(settings)
 }
-SETTINGS <- create_settings()
+API_SETTINGS <- create_settings()

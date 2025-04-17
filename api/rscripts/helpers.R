@@ -67,7 +67,6 @@ read_order <- function(settings) {
   )
 }
 
-
 write_order <- function(settings, success, results_json, pdf_path) {
   host_s <- strsplit(settings$mysql_host, ":") |>
     unlist()
@@ -86,6 +85,7 @@ write_order <- function(settings, success, results_json, pdf_path) {
   if (is.null(encoded_pdf)) {
     stop(sprintf("Failed to read PDF file: %s", pdf_path))
   }
+  # delete_tmp_folder(pdf_path)
 
   query <- sprintf(
     "UPDATE `%s` SET result_success = ?, result_json = ?, result_pdf = ? WHERE id = ? LIMIT 1",
@@ -105,13 +105,28 @@ execute <- function() {
     {
       settings <- read_settings()
       order <- read_order(settings)
+      sim_results <- list(
+        order = order,
+        errors = list(
+          "Some error message1",
+          "Some error message2"
+        )
+      )
+      report <- render_error_pdf(
+        results = sim_results,
+        api_settings = API_SETTINGS
+      )
+
+      write_order(settings, TRUE, jsonlite::toJSON(order$order, auto_unbox = TRUE), report)
 
       res <- list(
         success = TRUE,
         created_pdf = TRUE,
         msg_user = "Success",
-        msg_system = jsonlite::toJSON(order$order, auto_unbox = TRUE)
+        msg_system = "Success message"
       )
+
+
 
       res
     },
