@@ -1,0 +1,57 @@
+\documentclass[12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{fancyhdr}
+\usepackage{geometry}
+\usepackage{lipsum}
+\usepackage[table,xcdraw]{xcolor} 
+\usepackage{hyperref} 
+\usepackage[most]{tcolorbox}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+%\usepackage{tabu} 
+\usepackage{float}
+% Define custom turquoise color (RGB)
+\definecolor{turquoise}{RGB}{64,224,208}
+\usepackage{helvet}
+\renewcommand{\familydefault}{\sfdefault} 
+
+% Set up page geometry
+\geometry{
+	a4paper,
+	left=25mm,
+	right=25mm,
+	top=30mm,
+	bottom=30mm
+}
+
+ %Fancyhdr package configuration for header and footer
+\fancypagestyle{titlepage}{
+	\fancyhf{} % Clear all header and footer fields
+	\fancyhead[R]{\includegraphics[width=7cm]{spm_logo.png}} % Adjust the width and image path
+	\fancyfoot[C]{\includegraphics[width=5cm]{eu_funding_logo.png}} % Adjust the width and image path
+	\renewcommand{\headrulewidth}{2pt} % Set the header line thickness
+	\renewcommand{\headrule}{{\color{turquoise}\hrule width\headwidth height\headrulewidth}} % Header turquoise line
+	\renewcommand{\footrulewidth}{2pt} % Set the footer line thickness
+	\renewcommand{\footrule}{{\color{turquoise}\hrule width\headwidth height\footrulewidth}} % Footer turquoise line
+}
+
+\fancypagestyle{normal}{
+	\fancyhf{} % Clear all header and footer fields
+	\fancyfoot[C]{\includegraphics[width=5cm]{eu_funding_logo.png}} % Footer only on normal pages
+	\renewcommand{\headrulewidth}{0pt} % No line in the header for normal pages
+	\renewcommand{\footrulewidth}{0pt} % Set the footer line thickness
+	\renewcommand{\headrulewidth}{2pt} % Set the header line thickness
+	\renewcommand{\headrule}{{\color{turquoise}\hrule width\headwidth height\headrulewidth}} % Header turquoise line
+	\renewcommand{\footrulewidth}{2pt} % Set the footer line thickness
+	\renewcommand{\footrule}{{\color{turquoise}\hrule width\headwidth height\footrulewidth}} % Footer turquoise line
+}
+
+% Begin the document
+\begin{document}
+	
+$body$
+
+\end{document}

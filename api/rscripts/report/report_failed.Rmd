@@ -1,0 +1,25 @@
+---
+title: "Precision Dosing Summary Report"
+author: "Saarland University"
+version: "0.1"
+linkcolor: "blue"
+mainfont: "Arial"
+output:
+  bookdown::pdf_book:
+    includes:
+    number_sections: yes
+    fig_caption: yes
+    keep_tex: no
+    latex_engine: pdflatex
+    toc: no
+    toc_depth: 2
+    template: "dss_report_template.tex"
+params:
+  errors: NULL
+  order: NULL
+---
+\thispagestyle{titlepage} 
+
+```{r error, echo=FALSE}
+paste0("\\textcolor{red}{", params$error, "}")
+```
