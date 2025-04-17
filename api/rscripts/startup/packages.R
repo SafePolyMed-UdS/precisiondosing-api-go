@@ -12,7 +12,8 @@ packages <- function() {
     "future", "promises", "R6", "lubridate", "fs", "configr",
     "jsonlite", "mongolite", "units",
     "cookies", "data.table", "checkmate", "hms", "tictoc",
-    "DBI", "RMariaDB", "base64enc"
+    "DBI", "RMariaDB", "base64enc", "rmarkdown", "tinytex",
+    "bookdown", "kableExtra", "gt", "viridis", "paletteer"
   )
 }
 
