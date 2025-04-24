@@ -18,8 +18,8 @@
   for (child in list.dirs(folder, full.names = TRUE, recursive = FALSE)) {
     if (file.exists(file.path(child, "pkml"))) {
       model_name <- basename(child) |>
-        str_remove_all("shiny-models-") |>
-        str_remove_all("[^[:alnum:]]")
+        stringr::str_remove_all("shiny-models-") |>
+        stringr::str_remove_all("[^[:alnum:]]")
       pkml_paths[[model_name]] <- file.path(child, "pkml")
     }
   }

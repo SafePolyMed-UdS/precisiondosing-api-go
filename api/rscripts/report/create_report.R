@@ -65,6 +65,26 @@ render_error_pdf <- function(results, api_settings) {
   return(pdf_path)
 }
 
+render_success_pdf <- function(user_data, output_data, dose_pk, order, api_settings) {
+  params <- list(
+    user_data = user_data,
+    dose_pk = dose_pk,
+    order = order,
+    settings = api_settings
+  )
+
+  pdf_path <- render_pdf(
+    markdown_path = api_settings$REPORT$markdown_success,
+    outfile_name = file.path(
+      api_settings$PATHS$REPORTS,
+      paste0(api_settings$REPORT$outfile_name, "_success.pdf")
+    ),
+    params = params
+  )
+
+  return(pdf_path)
+}
+
 delete_tmp_folder <- function(pdf_path) {
   # Extract the temporary directory from the PDF path
   temp_dir <- dirname(pdf_path)

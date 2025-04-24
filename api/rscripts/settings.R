@@ -16,7 +16,7 @@ create_settings <- function() {
     ),
     INSTALL_TINYTEX = TRUE,
     PATHS = list(
-      MODELS = .get_pkml_paths("models"),
+      MODELS = .get_pkml_paths("../../models"),
       REPORTS = "report",
       REPORT_EXAMPLE = "assets/tests/example_report.pdf",
       TEST_DATA = "assets/test_data",
@@ -39,7 +39,7 @@ create_settings <- function() {
       outfile_name = "Report"
     ),
     VALUES = list(
-      MODEL_CONFIG = .read_model_definitions("models"),
+      MODEL_CONFIG = .read_model_definitions("../../models"),
       POPULATIONS = list(
         "European" = "European_ICRP_2002",
         "Black American" = "BlackAmerican_NHANES_1997",

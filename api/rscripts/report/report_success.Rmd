@@ -45,11 +45,14 @@ header-includes:
       \renewcommand{\footrulewidth}{0pt}
     }
 params:
-  errors: NULL
+  settings : NULL
   order: NULL
+  dose_pk: NULL
+  user_data: NULL
 ---
 
 ```{r libraries, echo = FALSE, results = 'asis', error = TRUE}
+knitr::opts_chunk$set(warning = FALSE)
 # define libraries
 suppressMessages(library(dplyr))
 suppressMessages(library(plotly))
@@ -91,12 +94,14 @@ compound <- params$user_data$model_family
 patient <- params$user_data$id
 
 # patient related information
-demographics <- data.frame(ID = params$user_data$id,
-                           Age = params$user_data$age,
-                           Weight = params$user_data$weight,
-                           Height = params$user_data$height,
-                           Sex = params$user_data$sex,
-                           Ethnicity = params$user_data$ethnicity)
+demographics <- data.frame(
+  ID = params$user_data$id,
+  Age = params$user_data$age,
+  Weight = params$user_data$weight,
+  Height = params$user_data$height,
+  Sex = params$user_data$sex,
+  Ethnicity = params$user_data$ethnicity
+)
 
 genetics <- params$user_data$genetics$table
 
@@ -106,10 +111,6 @@ dosing <- params$user_data$doses$table
 meas_conc <- params$user_data$clinical_conc$table
 meas_conc$Date <- format(meas_conc$Date, format = "%Y-%m-%d")
 meas_conc$`Clock time` <- format(meas_conc$`Clock time`, format = "%H:%M:%S")
-
-# map
-map_target <- params$map_pk$map$display
-map_pk <- params$map_pk$data
 
 # dose calc
 dose_pk <- params$dose_pk$data
@@ -168,8 +169,10 @@ kable(
 ### Genetics
 ```{r genetic-tab, echo = F, results = 'asis', error = T}
 if (nrow(genetics) > 0) {
-  kable(genetics, format = "latex", booktabs = TRUE, escape = FALSE,
-        caption = glue("Genetic information of patient {patient}")) |>
+  kable(genetics,
+    format = "latex", booktabs = TRUE, escape = FALSE,
+    caption = glue("Genetic information of patient {patient}")
+  ) |>
     kable_styling(latex_options = c("striped", "HOLD_position"), font_size = 12) |>
     row_spec(0, bold = TRUE)
 } else {
@@ -177,7 +180,7 @@ if (nrow(genetics) > 0) {
 }
 ```
 
-## Dosing and Clinical Data
+## Dosing Data
 The following table displays the administration schedules of `r compound` and the perpetrator drugs provided to the system. This dosing schedule is used to calculate individual `r compound` pharmacokinetics. 
 
 ```{r dosing-tab, echo = F, results = 'asis', error = T}
@@ -186,93 +189,16 @@ unit_dose <- params$user_data$doses$value_unit
 colnames(dosing)[colnames(dosing) == "Dose"] <- paste0("Dose [", unit_dose, "]")
 
 kable(dosing,
-      format = "latex",
-      booktabs = TRUE,
-      escape = FALSE,
-      caption = glue("Dosing information for {compound} and perpetrator drugs")) |>
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
+  caption = glue("Dosing information for {compound} and perpetrator drugs")
+) |>
   kable_styling(latex_options = c("striped", "HOLD_position"), font_size = 12) |>
   row_spec(0, bold = TRUE)
 ```
 
-```{r clindata-tab, echo = F, results = 'asis', error = T}
-###################
-if (nrow(meas_conc) > 0) {
-  glue("The following table displays the concentration measurements of {compound} provided to the system. The clinical data entered into the system are used to estimate individual model parameters using Maximum a Posteriori (MAP) estimation to predict patient specific plasma concentration-time profiles of {compound}. \n")
-  # add unit to conc column name
-  unit_clinconc <- params$user_data$clinical_conc$value_unit
-  colnames(meas_conc)[colnames(meas_conc) == "Concentration"] <- paste0("Concentration [", unit_clinconc, "]")
-  kable(meas_conc, format = "latex", booktabs = TRUE, escape = FALSE,
-        caption = glue("Clinical measurements of {compound} for patient {patient}"),
-        label = "ClinData") |>
-    kable_styling(latex_options = c("striped", "HOLD_position"), font_size = 12) |>
-    row_spec(0, bold = TRUE)
-} else {
-  glue("No clinical data for {compound} have been provided")
-}
-```
-
 # Results
-```{r map, echo = F, results = 'asis', error = T}
-# if no measured clinical data no map can be performed
-# check for clinical data
-if (nrow(meas_conc) > 0) {
-  cat("## MAP estimation \n")
-  print(glue("Based on the clinical data provided, a MAP approach was applied to calculate individual {compound} pharmacokinetics of patient {patient} by adjusting {map_target}. Results of the MAP are displayed in the following Figure and Table. \n\n"))
-
-  # add column date_time
-  meas_conc <- meas_conc |>
-    mutate(date_time = paste(Date, `Clock time`))
-
-  # transform column date_time to date
-  meas_conc$date_time <- as.POSIXct(meas_conc$date_time, format = "%Y-%m-%d %H:%M:%S")
-
-  # extract compartment (PK-Sim path)
-  cmt <- unique(map_pk$CMT)
-  parts <- strsplit(cmt, "\\|")[[1]]
-
-  # extract compound/compartment name from PK-Sim compartment path
-  drug_name <- parts[3]
-  sample_info <- parts[4] 
-
-  # get unit
-  conc_unit <- params$map_pk$metaData$PRED$unit
-
-  # plot pop mean, individual profile and measured clinical data
-  map_plot <- ggplot() +
-    geom_line(data = map_pk, aes(x = date_time, y = PRED, color = "Population prediction")) +
-    geom_line(data = map_pk, aes(x = date_time, y = IPRED, color = "Individual prediction")) +
-    geom_point(data = meas_conc, aes(x = date_time, y = `Concentration [mg/L]`, color = "Conc Measurement")) +
-    labs(
-      title = paste(drug_name, "concentration-time profile"),
-      x = "Date",
-      y = paste0(drug_name, " ", sample_info, " [", conc_unit, "]"),
-      color = "",
-    ) +
-    scale_color_manual(values = c("Population prediction" = "black",
-                                  "Individual prediction" = "red",
-                                  "Conc Measurement" = "red")) +
-    theme_classic() +
-    theme(legend.position = "bottom")
-
-  print(map_plot)
-
-  # extract pop value and individual value of MAP adjusted parameter
-  map_info <- params$map_pk$map |>
-    select(display, pop_values, ind_values) |>
-    rename(Parameter = display,
-           `Population value` = pop_values,
-           `Individually estimated value` = ind_values)
-
-  # print MAP results in table
-  kable(map_info, format = "latex", booktabs = TRUE, escape = FALSE,
-        caption = glue("Individualized {map_target} using the MAP approach")) |>
-    kable_styling(latex_options = c("striped", "HOLD_position")) |>
-    row_spec(0, bold = TRUE)
-}
-cat("<br/>\n\n")
-```
-\newpage
-
 ## Dose simulations
 The pharmacokinetics of `r compound` are calculated for different predefined doses. Results are displayed in the following figures and tables.
 
@@ -299,7 +225,8 @@ conc_unit <- params$dose_pk$metaData$PRED$unit
 dose_adapt <- ggplot() +
   geom_line(data = dose_pk, aes(x = date_time, y = DPRED, color = label, linetype = label)) +
   geom_rect(aes(xmin = dose_adapt_start_date, xmax = max(dose_pk$date_time), ymin = -Inf, ymax = Inf),
-            fill = "lightgray", alpha = 0.5) +
+    fill = "lightgray", alpha = 0.5
+  ) +
   labs(
     title = paste(drug_name, "concentration-time profile"),
     x = "Date",
@@ -315,9 +242,11 @@ dose_adapt <- ggplot() +
 # check for measured clinical data and add to plot if available
 if (nrow(meas_conc) > 0) {
   dose_adapt <- dose_adapt +
-    geom_point(data = meas_conc, aes(x = date_time, y = `Concentration [mg/L]`),
-               color = "darkred",
-               show.legend = FALSE)
+    geom_point(
+      data = meas_conc, aes(x = date_time, y = `Concentration [mg/L]`),
+      color = "darkred",
+      show.legend = FALSE
+    )
   print(dose_adapt)
 } else {
   print(dose_adapt)
@@ -329,13 +258,15 @@ if (nrow(meas_conc) > 0) {
 pk_data <- params$dose_pk$summary |>
   select(label, auc, cmax, ctrough, css_average, in_steady_state) |>
   mutate(in_steady_state = ifelse(in_steady_state == TRUE, "yes", "no")) |>
-  rename(`Steady state` = in_steady_state,
-         AUC = auc,
-         `Dose` = label,
-         `Css average` = css_average,
-         `C\\textsubscript{max}` = cmax,
-         `C\\textsubscript{trough}` = ctrough,
-         `C\\textsubscript{ss, average}` = css_average) |>
+  rename(
+    `Steady state` = in_steady_state,
+    AUC = auc,
+    `Dose` = label,
+    `Css average` = css_average,
+    `C\\textsubscript{max}` = cmax,
+    `C\\textsubscript{trough}` = ctrough,
+    `C\\textsubscript{ss, average}` = css_average
+  ) |>
   # round for nice visual presentation
   mutate_if(is.numeric, round, 2)
 
@@ -354,9 +285,11 @@ pk_data$`Dose [mg]` <- gsub("Daily doses: ", "", pk_data$`Dose [mg]`)
 pk_data$`Dose [mg]` <- gsub("\\[mg\\]", "", pk_data$`Dose [mg]`)
 
 # generate latex table
-kable(pk_data, format = "latex", booktabs = TRUE, escape = FALSE,
-      col.names = (names(pk_data)),
-      caption = glue("Pharmacokinetic parameters of {compound} estimated for different dosing schedules")) |>
+kable(pk_data,
+  format = "latex", booktabs = TRUE, escape = FALSE,
+  col.names = (names(pk_data)),
+  caption = glue("Pharmacokinetic parameters of {compound} estimated for different dosing schedules")
+) |>
   kable_styling(latex_options = c("striped", "HOLD_position"), font_size = 10) |>
   row_spec(0, bold = TRUE)
 
@@ -387,17 +320,21 @@ for (i in seq_len(length(split_result))) {
     # ensure to sort by dose
     arrange(dose_num_extr) |>
     mutate(label = factor(label, levels = unique(label)))
-  #generate subplots
+  # generate subplots
   sub_plots <- ggplot(data = dose_set, aes(x = date_time, y = DPRED)) +
     # gray area to indicate start of dose adapation
-    annotate("rect", xmin = dose_adapt_start_date, xmax = max(dose_set$date_time),
-             ymin = -Inf, ymax = Inf, fill = "lightgray", alpha = 0.5) +
+    annotate("rect",
+      xmin = dose_adapt_start_date, xmax = max(dose_set$date_time),
+      ymin = -Inf, ymax = Inf, fill = "lightgray", alpha = 0.5
+    ) +
     # alternative dose conc-time profile
     geom_line(aes(color = paste0("Alternative doses after ", dose_adapt_start_date_formatted))) +
     # original dose conc-time profile
-    geom_line(data = initial_dose, aes(x = date_time, y = DPRED, color = init_label),
-              linetype = "dashed") +
-    facet_wrap(~ label, ncol = 2) +
+    geom_line(
+      data = initial_dose, aes(x = date_time, y = DPRED, color = init_label),
+      linetype = "dashed"
+    ) +
+    facet_wrap(~label, ncol = 2) +
     labs(
       title = paste(drug_name, "concentration-time profile"),
       x = "Date",

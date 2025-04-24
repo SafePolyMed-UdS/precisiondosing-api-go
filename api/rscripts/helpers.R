@@ -105,6 +105,7 @@ execute <- function() {
     {
       settings <- read_settings()
       order <- read_order(settings)
+      dat <- readRDS("dose-adapt.rds")
       sim_results <- list(
         order = order,
         errors = list(
