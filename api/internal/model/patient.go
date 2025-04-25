@@ -85,3 +85,10 @@ func (ct *CustomTime) UnmarshalJSON(b []byte) error {
 	ct.Time = t
 	return nil
 }
+
+func (ct CustomTime) MarshalJSON() ([]byte, error) {
+	// Format the time in your desired layout
+	layout := "2006-01-02"
+	formatted := fmt.Sprintf("\"%s\"", ct.Time.Format(layout))
+	return []byte(formatted), nil
+}

@@ -16,7 +16,7 @@ body:json {
     "patient_characteristics": {
       "age": 60,
       "weight": 40,
-      "height": 200,
+      "height": 150,
       "sex": "female",
       "ethnicity": "asian",
       "kidney_disease": false,
@@ -25,39 +25,38 @@ body:json {
     "patient_pgx_profile": [
       {
         "gene": "CYP2D6",
-        "allele1" : "*1",
+        "allele1": "*1",
         "allele1_cnv_multiplier": 2,
         "allele2": "*2",
-        "allele2_cnv_multiplier": 2,
-        "phenotype": "Poor metabolizer"
+        "allele2_cnv_multiplier": 2
       }
     ],
     "drugs": [
       {
-        "adjust_dose" : true,
+        "active_substances": [
+          "Voriconazole"
+        ],
+        "adjust_dose": true,
         "product": {
           "product_name": "Beloc-Zok 95mg",
           "atc": "C07AB02",
           "strength": 95,
           "strength_unit": "milligram"
         },
-        "active_substances": [
-          "Voriconazole"
-        ],
         "intake_cycle": {
           "starting_at": "2024-11-03",
           "frequency": "daily",
           "frequency_modifier": 1,
           "intakes": [
             {
-              "cron": "0 8 */1 * *",
               "raw_time_str": "08:00",
+              "cron": "0 8 */1 * *",
               "dosage": 1,
               "dosage_unit": "tablets"
             },
             {
-              "cron": "0 18 */1 * *",
               "raw_time_str": "18:00",
+              "cron": "0 18 */1 * *",
               "dosage": 1,
               "dosage_unit": "tablets"
             }
@@ -65,36 +64,36 @@ body:json {
         }
       },
       {
-        "adjust_dose" : false,
+        "active_substances": [
+          "Imatinib"
+        ],
+        "adjust_dose": false,
         "product": {
           "product_name": "Amiodaron 200 Heumann",
           "atc": "C01BD01",
           "strength": 200,
           "strength_unit": "milligram"
         },
-        "active_substances": [
-          "Imatinib"
-        ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
           "frequency": "daily",
           "frequency_modifier": 1,
           "intakes": [
             {
-              "cron": "0 8 */1 * *",
               "raw_time_str": "08:00",
+              "cron": "0 8 */1 * *",
               "dosage": 1,
               "dosage_unit": "tablets"
             },
             {
-              "cron": "0 13 */1 * *",
               "raw_time_str": "13:00",
+              "cron": "0 13 */1 * *",
               "dosage": 1,
               "dosage_unit": "tablets"
             },
             {
-              "cron": "0 18 */1 * *",
               "raw_time_str": "18:00",
+              "cron": "0 18 */1 * *",
               "dosage": 1,
               "dosage_unit": "tablets"
             }
@@ -102,24 +101,24 @@ body:json {
         }
       },
       {
-        "adjust_dose" : false,
+        "active_substances": [
+          "Cimetidine"
+        ],
+        "adjust_dose": false,
         "product": {
           "product_name": "Fevarin 100mg",
           "atc": "N06AB08",
           "strength": 100,
           "strength_unit": "milligram"
         },
-        "active_substances": [
-          "Cimetidine"
-        ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
           "frequency": "daily",
           "frequency_modifier": 1,
           "intakes": [
             {
-              "cron": "0 8 */1 * *",
               "raw_time_str": "08:00",
+              "cron": "0 8 */1 * *",
               "dosage": 1,
               "dosage_unit": "tablets"
             }
@@ -127,24 +126,24 @@ body:json {
         }
       },
       {
-        "adjust_dose" : false,
+        "active_substances": [
+          "Clopidogrel"
+        ],
+        "adjust_dose": false,
         "product": {
           "product_name": "ESOMEP 20mg",
           "atc": "A02BC05",
           "strength": 20,
           "strength_unit": "milligram"
         },
-        "active_substances": [
-          "Clopidogrel"
-        ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
           "frequency": "weekly",
           "frequency_modifier": 1,
           "intakes": [
             {
-              "cron": "0 8 */7 * *",
               "raw_time_str": "08:00",
+              "cron": "0 8 */7 * *",
               "dosage": 1,
               "dosage_unit": "tablets"
             }

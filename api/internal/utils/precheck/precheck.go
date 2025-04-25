@@ -17,20 +17,6 @@ import (
 	"github.com/robfig/cron"
 )
 
-// _, err := parser.Parse(intake.Cron)
-// 			if err != nil {
-// 				return nil, fmt.Errorf("error parsing cron expression: %w", err)
-// 			}
-
-// 			now := time.Now()
-// 			var results [][2]string
-// 			next := now
-// 			for i := 0; i < 20; i++ {
-// 				next = schedule.Next(next)
-// 				results = append(results, [2]string{*drug.Product.ProductName, next.Format("2006-01-02 15:04")})
-// 			}
-// 			log.Info().Msgf("Next 20 intakes for %s: %v", *drug.Product.ProductName, results)
-
 type Intake struct {
 	RawTimeStr  string  `json:"time_str"`
 	Dosage      float64 `json:"dosage"`

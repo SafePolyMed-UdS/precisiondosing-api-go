@@ -15,6 +15,7 @@ import (
 	"precisiondosing-api-go/internal/responder"
 	"precisiondosing-api-go/internal/utils/abdata"
 	"precisiondosing-api-go/internal/utils/jobrunner"
+	"precisiondosing-api-go/internal/utils/precheck"
 	"precisiondosing-api-go/internal/utils/validate"
 	"strings"
 	"syscall"
@@ -78,12 +79,16 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 	registerRoutes(router, resourceHandle)
 
 	// init job runner
-	jobRunner := jobrunner.New(jobrunner.Config{
+	jobRunnerCfg := jobrunner.Config{
 		Interval:   config.JobRunner.Interval,
 		WorkerPool: config.JobRunner.MaxJobs,
 		Timeout:    config.JobRunner.Timeout,
-		JobDB:      databases.GormDB,
-	})
+	}
+	jobRunner := jobrunner.New(
+		jobRunnerCfg,
+		precheck.New(databases.MongoDB, abdata, model_defs),
+		databases.GormDB,
+	)
 
 	// server
 	srv := &Server{
