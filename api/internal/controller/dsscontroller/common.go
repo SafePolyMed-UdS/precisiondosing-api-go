@@ -6,11 +6,13 @@ import (
 	"io"
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/handle"
+	"precisiondosing-api-go/internal/model"
 	"precisiondosing-api-go/internal/mongodb"
 	"precisiondosing-api-go/internal/pbpk"
 	"precisiondosing-api-go/internal/utils/abdata"
 
 	"github.com/gin-gonic/gin"
+	cron "github.com/robfig/cron/v3"
 	"gorm.io/gorm"
 )
 
@@ -34,15 +36,7 @@ func NewDSSController(resourceHandle *handle.ResourceHandle) *DSSController {
 	}
 }
 
-func drugCompounds(data *PatientData) []string {
-	compounds := []string{}
-	for _, drug := range data.Drugs {
-		compounds = append(compounds, drug.ActiveSubstances...)
-	}
-	return compounds
-}
-
-func (sc *DSSController) readPatientData(c *gin.Context) (*PatientData, error) {
+func (sc *DSSController) readPatientData(c *gin.Context) (*model.PatientData, error) {
 	bodyBytes, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read request body: %w", err)
@@ -60,9 +54,20 @@ func (sc *DSSController) readPatientData(c *gin.Context) (*PatientData, error) {
 	}
 
 	// Bind the JSON body to the query struct
-	patientData := PatientData{}
+	patientData := model.PatientData{}
 	if err = json.Unmarshal(bodyBytes, &patientData); err != nil {
 		return nil, fmt.Errorf("invalid body JSON structure: %w", err)
+	}
+
+	// cron tab check
+	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
+	for _, drug := range patientData.Drugs {
+		for _, intake := range drug.IntakeCycle.Intakes {
+			_, err = parser.Parse(intake.Cron)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing cron expression: %w", err)
+			}
+		}
 	}
 
 	return &patientData, nil

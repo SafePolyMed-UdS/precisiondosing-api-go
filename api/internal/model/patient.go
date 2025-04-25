@@ -1,4 +1,4 @@
-package dsscontroller
+package model
 
 import (
 	"fmt"

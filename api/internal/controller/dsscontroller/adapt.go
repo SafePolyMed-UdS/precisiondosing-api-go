@@ -1,9 +1,7 @@
 package dsscontroller
 
 import (
-	"encoding/json"
 	"precisiondosing-api-go/internal/handle"
-	"precisiondosing-api-go/internal/model"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,28 +12,22 @@ type AdaptResponse struct {
 }
 
 func (sc *DSSController) AdaptDose(c *gin.Context) {
-	query := PatientData{}
-
-	if !handle.JSONBind(c, &query) {
-		return
-	}
-
-	marshalledQuery, err := json.Marshal(query)
+	_, err := sc.readPatientData(c)
 	if err != nil {
-		handle.ServerError(c, err)
+		handle.BadRequestError(c, err.Error())
 		return
 	}
 
-	newOrder := model.Order{Order: marshalledQuery}
-	if err = sc.DB.Create(&newOrder).Error; err != nil {
-		handle.ServerError(c, err)
-		return
-	}
+	// newOrder := model.Order{Order: marshalledQuery}
+	// if err = sc.DB.Create(&newOrder).Error; err != nil {
+	// 	handle.ServerError(c, err)
+	// 	return
+	// }
 
-	result := AdaptResponse{
-		OrderID: newOrder.OrderID,
-		Message: "Order queued",
-	}
+	// result := AdaptResponse{
+	// 	OrderID: newOrder.OrderID,
+	// 	Message: "Order queued",
+	// }
 
-	handle.Success(c, result)
+	// handle.Success(c, result)
 }

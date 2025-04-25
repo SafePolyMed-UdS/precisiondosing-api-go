@@ -32,5 +32,5 @@ func main() {
 	}
 
 	_ = srv
-	//srv.Run()
+	srv.Run()
 }
