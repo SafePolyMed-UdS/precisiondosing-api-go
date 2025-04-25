@@ -4,3 +4,6 @@ url = git@github.com:Clinical-Pharmacy-Saarland-University/rbase-dockerfiles.git
 [submodule "models"]
 path = models
 url = git@github.com:Clinical-Pharmacy-Saarland-University/shiny-models.git
+[submodule "api/rscripts/pksim-sim-engine"]
+	path = api/rscripts/pksim-sim-engine
+	url = git@github.com:Clinical-Pharmacy-Saarland-University/pksim-sim-engine
