@@ -33,6 +33,7 @@ type PGXProfile struct {
 
 type Drug struct {
 	ActiveSubstances []string    `json:"active_substances" binding:"required"`
+	AdjustDose       bool        `json:"adjust_dose" binding:"required"`
 	Product          *Product    `json:"product"`
 	IntakeCycle      IntakeCycle `json:"intake_cycle" binding:"required"`
 }

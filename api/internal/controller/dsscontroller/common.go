@@ -2,14 +2,13 @@ package dsscontroller
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/model"
-	"precisiondosing-api-go/internal/mongodb"
-	"precisiondosing-api-go/internal/pbpk"
-	"precisiondosing-api-go/internal/utils/abdata"
+	"precisiondosing-api-go/internal/utils/precheck"
 
 	"github.com/gin-gonic/gin"
 	cron "github.com/robfig/cron/v3"
@@ -19,20 +18,16 @@ import (
 type DSSController struct {
 	Meta           cfg.MetaConfig
 	DB             *gorm.DB
-	ABDATA         *abdata.API
-	IndibidualsDB  *mongodb.MongoConnection
-	PBPKModels     []pbpk.Model
 	JSONValidators handle.JSONValidators
+	Prechecker     *precheck.PreCheck
 }
 
 func NewDSSController(resourceHandle *handle.ResourceHandle) *DSSController {
 	return &DSSController{
 		Meta:           resourceHandle.MetaCfg,
 		DB:             resourceHandle.Databases.GormDB,
-		ABDATA:         resourceHandle.ABDATA,
-		PBPKModels:     resourceHandle.PBPKModels,
+		Prechecker:     precheck.New(resourceHandle.Databases.MongoDB, resourceHandle.ABDATA, resourceHandle.PBPKModels),
 		JSONValidators: resourceHandle.JSONValidators,
-		IndibidualsDB:  resourceHandle.Databases.MongoDB,
 	}
 }
 
@@ -68,6 +63,18 @@ func (sc *DSSController) readPatientData(c *gin.Context) (*model.PatientData, er
 				return nil, fmt.Errorf("error parsing cron expression: %w", err)
 			}
 		}
+	}
+
+	// check if one (only one) drug has the "adjust_dose" flag set to true
+	adjustDoseCount := 0
+	for _, drug := range patientData.Drugs {
+		if drug.AdjustDose {
+			adjustDoseCount++
+		}
+	}
+
+	if adjustDoseCount != 1 {
+		return nil, errors.New("exactly one drug must have the 'adjust_dose' flag set to true")
 	}
 
 	return &patientData, nil

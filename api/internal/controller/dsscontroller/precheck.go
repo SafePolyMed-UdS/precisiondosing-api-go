@@ -2,7 +2,6 @@ package dsscontroller
 
 import (
 	"precisiondosing-api-go/internal/handle"
-	"precisiondosing-api-go/internal/utils/precheck"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,10 +13,9 @@ func (sc *DSSController) PostPrecheck(c *gin.Context) {
 		return
 	}
 
-	preCheck := precheck.New(sc.IndibidualsDB, sc.ABDATA)
-	result, err := preCheck.Check(patientData)
-	if err != nil {
-		handle.ServerError(c, err)
+	result, precheckErr := sc.Prechecker.Check(patientData)
+	if precheckErr != nil {
+		handle.ServerError(c, precheckErr)
 		return
 	}
 

@@ -1,145 +1,163 @@
 package precheck
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"math"
 	"precisiondosing-api-go/internal/model"
 	"precisiondosing-api-go/internal/mongodb"
+	"precisiondosing-api-go/internal/pbpk"
 	"precisiondosing-api-go/internal/utils/abdata"
+	"slices"
+	"sort"
+	"strings"
 )
 
 type Result struct {
-	// Message to the user to explain briefly the reason for AdaptionPossible
-	Message string `json:"message"`
-	// Number of drugs in the patient data
-	NDrugs            int                          `json:"n_drugs"`
+	Message           string                       `json:"message"`
+	Compounds         map[string]bool              `json:"compounds"`
 	Interactions      []abdata.CompoundInteraction `json:"interactions"`
 	OrganImpairment   bool                         `json:"impairment"`
 	VirtualIndividual json.RawMessage              `json:"virtual_individual"`
+	ModelID           string                       `json:"model_id"`
+}
+
+type Error struct {
+	Msg         string
+	Recoverable bool
+	Err         error
+}
+
+func (e *Error) Error() string {
+	if e.Err != nil {
+		return fmt.Sprintf("%s: %v", e.Msg, e.Err)
+	}
+	return e.Msg
+}
+
+func (e *Error) Unwrap() error {
+	return e.Err
+}
+
+func NewError(msg string, recoverable bool, wrappedErr ...error) *Error {
+	var err error
+	if len(wrappedErr) > 0 {
+		err = wrappedErr[0]
+	}
+	return &Error{
+		Msg:         msg,
+		Recoverable: recoverable,
+		Err:         err,
+	}
 }
 
 type PreCheck struct {
-	mongoDB *mongodb.MongoConnection
-	ABDATA  *abdata.API
+	mongoDB    *mongodb.MongoConnection
+	ABDATA     *abdata.API
+	PBPKModels []pbpk.Model
 }
 
-func New(mongoDB *mongodb.MongoConnection, abdata *abdata.API) PreCheck {
-	return PreCheck{
-		mongoDB: mongoDB,
-		ABDATA:  abdata,
+func New(mongoDB *mongodb.MongoConnection, abdata *abdata.API, pbpkModels []pbpk.Model) *PreCheck {
+	return &PreCheck{
+		mongoDB:    mongoDB,
+		ABDATA:     abdata,
+		PBPKModels: pbpkModels,
 	}
 }
 
-func appendMsg(old_msg string, new_msg string) string {
-	if old_msg != "" {
-		old_msg += "\n"
+func appendMsg(oldMsg string, newMsg string) string {
+	if oldMsg != "" {
+		oldMsg += "\n"
 	}
-	old_msg += new_msg
-	return old_msg
+	oldMsg += newMsg
+	return oldMsg
 }
 
 // Error will only be returned if a check could not be performed
 // E.g. MedInfo is down
-func (p *PreCheck) Check(data *model.PatientData) (*Result, error) {
+func (p *PreCheck) Check(data *model.PatientData) (*Result, *Error) {
 	response := &Result{}
 
-	response.NDrugs = len(data.Drugs)
+	nDrugs := len(data.Drugs)
+	if nDrugs == 0 {
+		response.Message = "No drugs provided. No adjustment can be performed"
+		return response, NewError("no drugs provided", false)
+	}
+
+	// get compounds (unique and lowercase)
+	response.Compounds = drugCompounds(data)
+
 	// Impairment check
 	p.impairmentCheck(response, data)
 
 	// MedInfo check
-	err := p.abdataCheck(response, data)
+	err := p.abdataCheck(response)
 	if err != nil {
-		return response, fmt.Errorf("error in PreCheck: %w", err)
+		return response, err
 	}
 
 	// Virtual individual check
 	err = p.virtualIndividualCheck(response, data)
 	if err != nil {
-		return response, fmt.Errorf("error in PreCheck: %w", err)
+		return response, err
 	}
 
-	// Check for matching PBPK models
-	//ok, err = p.pbpkModelCheck(response, interactions)
-	//if !ok || err != nil {
-	//	return response, err
-	//}
+	// PBPK model check
+	err = p.pbpkModelCheck(response)
+	if err != nil {
+		return response, err
+	}
 
 	return response, nil
 }
 
-// func PBPKModelCheck(resp *PreCheckResponse,
-// 	interactions []abdata.CompoundInteraction,
-// 	models []pbpk.Model,
-// ) (bool, error) {
-// 	// this this from MedInfo Check (victim -> perpetrators)
-// 	victimMap := map[string][]string{}
+func (p *PreCheck) pbpkModelCheck(resp *Result) *Error {
+	// the potential victim that the user set to adjust
+	var victim string
+	for k, v := range resp.Compounds {
+		if v {
+			victim = k
+			break
+		}
+	}
 
-// 	// Create a map of victims and perpetrators
-// 	for _, interaction := range interactions {
-// 		victim := strings.ToLower(interaction.CompoundsL[0])
-// 		perpetrators := interaction.CompoundsR
-// 		for _, perpetrator := range perpetrators {
-// 			perpetrator = strings.ToLower(perpetrator)
-// 			if _, ok := victimMap[perpetrator]; !ok {
-// 				victimMap[perpetrator] = []string{}
-// 			} else {
-// 				victimMap[perpetrator] = append(victimMap[perpetrator], victim)
-// 			}
-// 		}
-// 	}
+	if victim == "" {
+		return NewError("no victim for adjustment found in compounds", false)
+	}
 
-// 	// sort perpetrators
-// 	for _, v := range victimMap {
-// 		sort.Strings(v)
-// 	}
+	var perpetrators []string
+	for _, interaction := range resp.Interactions {
+		v := strings.ToLower(interaction.CompoundsL[0])
+		if v == victim {
+			ps := interaction.CompoundsR
+			for _, p := range ps {
+				perpetrators = append(perpetrators, strings.ToLower(p))
+			}
+		}
+	}
+	sort.Strings(perpetrators)
 
-// 	// Check if any perpetrator is also a victim in the map
-// 	for _, v := range victimMap {
-// 		for _, p := range v {
-// 			if _, ok := victimMap[p]; ok {
-// 				resp.Message = "Perpetrator is also a victim"
-// 				resp.Code = "PC-ERR-PV"
-// 				return false, nil
-// 			}
-// 		}
-// 	}
+	// find the model that matches the victim and perpetrators
+	var modelID string
+	for _, model := range p.PBPKModels {
+		if model.Victim == victim {
+			if slices.Equal(model.Perpetrators, perpetrators) {
+				modelID = model.ID
+				break
+			}
+		}
+	}
 
-// 	// A -> B
-// 	// B, D -> C
-// 	// -->
-// 	// A, B -> C
+	if modelID == "" {
+		resp.Message = appendMsg(resp.Message, "PBPK Model Check: No model found for victim and perpetrators")
+		return NewError("no model found for victim and perpetrators", false)
+	}
 
-// 	// check for appropriate models that match the victim and perpetrators
-// 	for victim, perpetrators := range victimMap {
-// 		found := false
-// 		for _, model := range models {
-// 			if model.Victim == victim {
-// 				if slices.Equal(model.Perpetrators, perpetrators) {
-// 					found = true
-// 					break
-// 				}
-// 			}
-// 		}
-
-// 		if !found {
-// 			detailsMap := map[string]interface{}{
-// 				"victim":       victim,
-// 				"perpetrators": perpetrators,
-// 			}
-
-// 			detailsJSON, _ := json.Marshal(detailsMap)
-
-// 			resp.Message = "No appropriate PBPK model found for interaction"
-// 			resp.Code = "PC-ERR-MM"
-// 			resp.Details = json.RawMessage(detailsJSON)
-// 			return found, nil
-// 		}
-// 	}
-
-// 	return true, nil
-// }
+	resp.ModelID = modelID
+	return nil
+}
 
 func (p *PreCheck) impairmentCheck(resp *Result, data *model.PatientData) {
 	ld := data.PatientCharacteristics.LiverDisease
@@ -155,7 +173,7 @@ func (p *PreCheck) impairmentCheck(resp *Result, data *model.PatientData) {
 	resp.OrganImpairment = ld || kd
 }
 
-func (p *PreCheck) virtualIndividualCheck(resp *Result, data *model.PatientData) error {
+func (p *PreCheck) virtualIndividualCheck(resp *Result, data *model.PatientData) *Error {
 	age := data.PatientCharacteristics.Age
 	weight := int(math.Round(data.PatientCharacteristics.Weight))
 	height := data.PatientCharacteristics.Height
@@ -164,41 +182,51 @@ func (p *PreCheck) virtualIndividualCheck(resp *Result, data *model.PatientData)
 
 	individualPayload, err := p.mongoDB.FetchIndividual(population, sex, age, height, weight)
 	if err != nil {
-		return fmt.Errorf("error fetching individual: %w", err)
+		return NewError("fetching individual", true, err)
 	}
-	str := string(individualPayload)
-	preCheckSucess := individualPayload != nil && str != "\"[]\""
 
-	if !preCheckSucess {
+	trimmed := bytes.TrimSpace(individualPayload)
+	preCheckSuccess := len(trimmed) > 0 &&
+		!bytes.Equal(trimmed, []byte("[]")) &&
+		!bytes.Equal(trimmed, []byte("{}")) &&
+		!bytes.Equal(trimmed, []byte("null"))
+
+	if !preCheckSuccess {
 		resp.Message = appendMsg(resp.Message, "Virtual Individual Check: No virtual individual matched demographic data")
-		return fmt.Errorf("No virtual individual matched demographic data")
-	} else {
-		resp.VirtualIndividual = individualPayload
+		return NewError("no virtual individual matched demographic data", false)
 	}
 
+	resp.VirtualIndividual = individualPayload
 	return nil
 }
 
-func drugCompounds(data *model.PatientData) []string {
-	compounds := []string{}
+// gets all active substances from the drugs -> lowercase -> unique
+func drugCompounds(data *model.PatientData) map[string]bool {
+	compounds := map[string]bool{}
 	for _, drug := range data.Drugs {
-		compounds = append(compounds, drug.ActiveSubstances...)
+		compoundsList := drug.ActiveSubstances
+		adjust := drug.AdjustDose
+		for _, c := range compoundsList {
+			compounds[strings.ToLower(c)] = adjust
+		}
 	}
+
 	return compounds
 }
 
-func (p *PreCheck) abdataCheck(resp *Result, data *model.PatientData) error {
-	compounds := drugCompounds(data)
+func (p *PreCheck) abdataCheck(resp *Result) *Error {
+	compounds := resp.Compounds
 	if len(compounds) < 2 {
 		resp.Message = appendMsg(resp.Message, "MedInfo Check: Less than 2 compounds. No interaction check performed")
 		return nil
 	}
 
-	interactions, err := p.ABDATA.GetCommpoundInteractions(compounds)
+	compoundNames := slices.Sorted(maps.Keys(compounds))
+	interactions, err := p.ABDATA.GetCommpoundInteractions(compoundNames)
 	resp.Interactions = interactions
 	if err != nil {
 		resp.Message = appendMsg(resp.Message, "MedinfoCheck: Failed to fetch interactions")
-		return fmt.Errorf("error fetching interactions: %w", err)
+		return NewError("fetching interactions", true, err)
 	}
 
 	if len(interactions) == 0 {

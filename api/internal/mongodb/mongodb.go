@@ -88,12 +88,18 @@ func (m *MongoConnection) FetchIndividual(
 		return nil, errors.New("error: 'json' key not found in result")
 	}
 
-	jsonData, err := json.Marshal(payload)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'json' field to RawMessage: %w", err)
+	switch val := payload.(type) {
+	case string:
+		// Already a JSON string – return as RawMessage
+		return json.RawMessage(val), nil
+	default:
+		// Assume it's a map or document, marshal to RawMessage
+		jsonData, errMarshall := json.Marshal(val)
+		if errMarshall != nil {
+			return nil, fmt.Errorf("error marshaling 'json' field to RawMessage: %w", errMarshall)
+		}
+		return jsonData, nil
 	}
-
-	return jsonData, nil
 }
 
 func mapEthnicity(ethnicity *string) (string, error) {
