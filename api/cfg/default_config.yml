@@ -38,10 +38,15 @@ schema:
   precheck: "file:///schemas/precheck_input.schema.json"
 models:
   path: "../models"
+  max_doses: 20
 rlang:
   rscript_path_win: "Rscript.exe"
   rscript_path_unix: "Rscript"
   dose_adjust_script: "rscripts/adjust_dose.R"
   max_execution_time: "60s"
+job_runner:
+  fetch_interval: "5s"
+  max_concurrent_jobs: 5
+  timeout: "60s"
 result_api:
   endpoint: "127.0.0.1:3333/vi/result"

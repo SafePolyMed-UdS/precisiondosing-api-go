@@ -22,7 +22,7 @@ type ResourceHandle struct {
 	Mailer         *responder.Mailer
 	Databases      Databases
 	JSONValidators JSONValidators
-	PBPKModels     []pbpk.Model
+	PBPKModels     *pbpk.Models
 	ABDATA         *abdata.API
 	DebugMode      bool
 }
@@ -41,7 +41,7 @@ func NewResourceHandle(
 	apiCfg *cfg.APIConfig,
 	databases Databases,
 	abdata *abdata.API,
-	pbpkModels []pbpk.Model,
+	pbpkModels *pbpk.Models,
 	mailer *responder.Mailer,
 	jsonValidators JSONValidators,
 	debug bool,

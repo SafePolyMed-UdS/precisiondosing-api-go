@@ -4,7 +4,7 @@ suppressMessages(suppressWarnings({
   result <- list(success = TRUE, data = c(1, 2, 3))
 
   invisible(capture.output({
-    # DOIT
+    Sys.sleep(3)
   }))
 
   cat(toJSON(result, auto_unbox = TRUE))

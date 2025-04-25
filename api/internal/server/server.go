@@ -14,7 +14,7 @@ import (
 	"precisiondosing-api-go/internal/pbpk"
 	"precisiondosing-api-go/internal/responder"
 	"precisiondosing-api-go/internal/utils/abdata"
-	"precisiondosing-api-go/internal/utils/callr"
+	"precisiondosing-api-go/internal/utils/jobrunner"
 	"precisiondosing-api-go/internal/utils/validate"
 	"strings"
 	"syscall"
@@ -27,6 +27,7 @@ import (
 type Server struct {
 	Engine       *gin.Engine
 	ServerConfig cfg.ServerConfig
+	JobRunner    *jobrunner.JobRunner
 }
 
 func New(config *cfg.APIConfig, debug bool) (*Server, error) {
@@ -39,24 +40,8 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 		return nil, fmt.Errorf("error initializing databases: %w", err)
 	}
 
-	////////////////////////////////////////////////////////
-	callR := callr.NewCallR(config.RLang.RScriptPathWin,
-		config.RLang.DoseAdjustScript,
-		config.Database.Password,
-		config.Database.Username,
-		config.Database.Host,
-		config.Database.DBName,
-		config.RLang.MaxExecutionTime,
-	)
-	tmp := callR.Adjust(10)
-	fmt.Printf("%+v\n", tmp)
-
-	rh := responder.NewResultHandler(databases.GormDB, config.ResultAPI.Endpoint)
-	rh.SendResults()
-	////////////////////////////////////////////////////////
-
 	// init pbpk model definitions
-	model_defs := pbpk.MustParseAll(config.Models.Path)
+	model_defs := pbpk.MustParseAll(config.Models)
 
 	// init abdata
 	abdata, err := initABDATA(config)
@@ -92,10 +77,19 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 	resourceHandle := handle.NewResourceHandle(config, databases, abdata, model_defs, mailer, jsonValidators, debug)
 	registerRoutes(router, resourceHandle)
 
+	// init job runner
+	jobRunner := jobrunner.New(jobrunner.Config{
+		Interval:   config.JobRunner.Interval,
+		WorkerPool: config.JobRunner.MaxJobs,
+		Timeout:    config.JobRunner.Timeout,
+		JobDB:      databases.GormDB,
+	})
+
 	// server
 	srv := &Server{
 		Engine:       router,
 		ServerConfig: config.Server,
+		JobRunner:    jobRunner,
 	}
 
 	return srv, nil
@@ -110,6 +104,9 @@ func (r *Server) Run() {
 		IdleTimeout:  r.ServerConfig.IdleTimeout,
 	}
 
+	r.JobRunner.Start()
+
+	// Graceful shutdown for the server
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
@@ -119,6 +116,8 @@ func (r *Server) Run() {
 	log.Info().Msgf("Server started on %s", r.ServerConfig.Address)
 	<-quit
 	log.Info().Msg("Server shutting down")
+
+	r.JobRunner.Stop()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

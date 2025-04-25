@@ -59,7 +59,8 @@ type LogConfig struct {
 }
 
 type Models struct {
-	Path string `yaml:"path"`
+	Path     string `yaml:"path"`
+	MaxDoses int    `yaml:"max_doses"`
 }
 
 type RConfig struct {
@@ -100,6 +101,12 @@ type ResultAPI struct {
 	Endpoint string `yaml:"endpoint"`
 }
 
+type JobRunner struct {
+	Interval time.Duration `yaml:"fetch_interval"`
+	Timeout  time.Duration `yaml:"timeout"`
+	MaxJobs  int           `yaml:"max_concurrent_jobs"`
+}
+
 func (b *Bytes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var secret string
 	if err := unmarshal(&secret); err != nil {
@@ -113,6 +120,7 @@ type APIConfig struct {
 	Meta       MetaConfig       `yaml:"meta"`
 	Server     ServerConfig     `yaml:"server"`
 	RLang      RConfig          `yaml:"rlang"`
+	JobRunner  JobRunner        `yaml:"job_runner"`
 	Database   DatabaseConfig   `yaml:"database"`
 	Mongo      MongoConfig      `yaml:"mongo"`
 	Log        LogConfig        `yaml:"log"`

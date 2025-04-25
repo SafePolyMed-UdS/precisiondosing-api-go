@@ -4,20 +4,27 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"precisiondosing-api-go/cfg"
 	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 )
 
-type Model struct {
+type ModelDefinition struct {
 	ID           string   `yaml:"id"`
 	Victim       string   `yaml:"victim"`
 	Perpetrators []string `yaml:"perpetrators"`
 }
 
-func MustParseAll(folder string) []Model {
-	var models []Model
+type Models struct {
+	Definitions []ModelDefinition
+	MaxDoses    int
+}
+
+func MustParseAll(config cfg.Models) *Models {
+	folder := config.Path
+	var models []ModelDefinition
 
 	err := filepath.WalkDir(folder, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
@@ -29,7 +36,7 @@ func MustParseAll(folder string) []Model {
 		}
 
 		if d.Name() == "models.yaml" {
-			models = append(models, MustParseYAML(path)...)
+			models = append(models, mustParseYAML(path)...)
 		}
 
 		return nil
@@ -39,10 +46,15 @@ func MustParseAll(folder string) []Model {
 		panic(fmt.Sprintf("cannot read PBPK model config folder: %v", err))
 	}
 
-	return models
+	result := &Models{
+		Definitions: models,
+		MaxDoses:    config.MaxDoses,
+	}
+
+	return result
 }
 
-func MustParseYAML(configFile string) []Model {
+func mustParseYAML(configFile string) []ModelDefinition {
 	f, err := os.Open(configFile)
 	if err != nil {
 		panic(fmt.Sprintf("cannot open PBPK model config file: %v", err))
@@ -57,7 +69,7 @@ func MustParseYAML(configFile string) []Model {
 	}
 
 	var modelsWrapper struct {
-		Models []Model `yaml:"models"`
+		Models []ModelDefinition `yaml:"models"`
 	}
 
 	for _, v := range root {

@@ -41,6 +41,8 @@ type Drug struct {
 type Product struct {
 	ProductName *string `json:"product_name"`
 	ATC         *string `json:"atc"`
+	Dose        float64 `json:"strength" binding:"required"`
+	DoseUnit    string  `json:"strength_unit" binding:"required"`
 }
 
 type IntakeCycle struct {

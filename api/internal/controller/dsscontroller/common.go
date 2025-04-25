@@ -24,9 +24,11 @@ type DSSController struct {
 
 func NewDSSController(resourceHandle *handle.ResourceHandle) *DSSController {
 	return &DSSController{
-		Meta:           resourceHandle.MetaCfg,
-		DB:             resourceHandle.Databases.GormDB,
-		Prechecker:     precheck.New(resourceHandle.Databases.MongoDB, resourceHandle.ABDATA, resourceHandle.PBPKModels),
+		Meta: resourceHandle.MetaCfg,
+		DB:   resourceHandle.Databases.GormDB,
+		Prechecker: precheck.New(resourceHandle.Databases.MongoDB,
+			resourceHandle.ABDATA,
+			resourceHandle.PBPKModels),
 		JSONValidators: resourceHandle.JSONValidators,
 	}
 }
@@ -58,7 +60,7 @@ func (sc *DSSController) readPatientData(c *gin.Context) (*model.PatientData, er
 	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 	for _, drug := range patientData.Drugs {
 		for _, intake := range drug.IntakeCycle.Intakes {
-			_, err = parser.Parse(intake.Cron)
+			_, err := parser.Parse(intake.Cron)
 			if err != nil {
 				return nil, fmt.Errorf("error parsing cron expression: %w", err)
 			}

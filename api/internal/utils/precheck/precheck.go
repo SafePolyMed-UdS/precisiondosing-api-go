@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"maps"
 	"math"
 	"precisiondosing-api-go/internal/model"
 	"precisiondosing-api-go/internal/mongodb"
@@ -13,11 +12,42 @@ import (
 	"slices"
 	"sort"
 	"strings"
+	"time"
+
+	"github.com/robfig/cron"
 )
+
+// _, err := parser.Parse(intake.Cron)
+// 			if err != nil {
+// 				return nil, fmt.Errorf("error parsing cron expression: %w", err)
+// 			}
+
+// 			now := time.Now()
+// 			var results [][2]string
+// 			next := now
+// 			for i := 0; i < 20; i++ {
+// 				next = schedule.Next(next)
+// 				results = append(results, [2]string{*drug.Product.ProductName, next.Format("2006-01-02 15:04")})
+// 			}
+// 			log.Info().Msgf("Next 20 intakes for %s: %v", *drug.Product.ProductName, results)
+
+type Intake struct {
+	RawTimeStr  string  `json:"time_str"`
+	Dosage      float64 `json:"dosage"`
+	Formulation string  `json:"formulation"`
+}
+
+type Compound struct {
+	Name       string   `json:"name"`
+	Adjust     bool     `json:"adjust"`
+	DoseAmount float64  `json:"dose_amount"`
+	DoseUnit   string   `json:"dose_unit"`
+	Schedule   []Intake `json:"schedule"`
+}
 
 type Result struct {
 	Message           string                       `json:"message"`
-	Compounds         map[string]bool              `json:"compounds"`
+	Compounds         []Compound                   `json:"compounds"`
 	Interactions      []abdata.CompoundInteraction `json:"interactions"`
 	OrganImpairment   bool                         `json:"impairment"`
 	VirtualIndividual json.RawMessage              `json:"virtual_individual"`
@@ -56,10 +86,10 @@ func NewError(msg string, recoverable bool, wrappedErr ...error) *Error {
 type PreCheck struct {
 	mongoDB    *mongodb.MongoConnection
 	ABDATA     *abdata.API
-	PBPKModels []pbpk.Model
+	PBPKModels *pbpk.Models
 }
 
-func New(mongoDB *mongodb.MongoConnection, abdata *abdata.API, pbpkModels []pbpk.Model) *PreCheck {
+func New(mongoDB *mongodb.MongoConnection, abdata *abdata.API, pbpkModels *pbpk.Models) *PreCheck {
 	return &PreCheck{
 		mongoDB:    mongoDB,
 		ABDATA:     abdata,
@@ -87,13 +117,16 @@ func (p *PreCheck) Check(data *model.PatientData) (*Result, *Error) {
 	}
 
 	// get compounds (unique and lowercase)
-	response.Compounds = drugCompounds(data)
+	err := p.drugCompounds(response, data)
+	if err != nil {
+		return response, err
+	}
 
 	// Impairment check
 	p.impairmentCheck(response, data)
 
 	// MedInfo check
-	err := p.abdataCheck(response)
+	err = p.abdataCheck(response)
 	if err != nil {
 		return response, err
 	}
@@ -116,9 +149,9 @@ func (p *PreCheck) Check(data *model.PatientData) (*Result, *Error) {
 func (p *PreCheck) pbpkModelCheck(resp *Result) *Error {
 	// the potential victim that the user set to adjust
 	var victim string
-	for k, v := range resp.Compounds {
-		if v {
-			victim = k
+	for _, c := range resp.Compounds {
+		if c.Adjust {
+			victim = c.Name
 			break
 		}
 	}
@@ -141,7 +174,7 @@ func (p *PreCheck) pbpkModelCheck(resp *Result) *Error {
 
 	// find the model that matches the victim and perpetrators
 	var modelID string
-	for _, model := range p.PBPKModels {
+	for _, model := range p.PBPKModels.Definitions {
 		if model.Victim == victim {
 			if slices.Equal(model.Perpetrators, perpetrators) {
 				modelID = model.ID
@@ -201,17 +234,52 @@ func (p *PreCheck) virtualIndividualCheck(resp *Result, data *model.PatientData)
 }
 
 // gets all active substances from the drugs -> lowercase -> unique
-func drugCompounds(data *model.PatientData) map[string]bool {
-	compounds := map[string]bool{}
+// also parse doses and schedules
+func (p *PreCheck) drugCompounds(resp *Result, data *model.PatientData) *Error {
+	compounds := map[string]Compound{}
+	now := time.Now()
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+
+	parser := cron.NewParser(cron.Minute | cron.Hour | cron.Dom | cron.Month | cron.Dow)
 	for _, drug := range data.Drugs {
 		compoundsList := drug.ActiveSubstances
+		if len(compoundsList) > 1 {
+			resp.Message = appendMsg(resp.Message, "Multiple active substances in a single drug not supported")
+			return NewError("multiple active substances in a single drug", false)
+		}
+
+		c := strings.ToLower(compoundsList[0])
 		adjust := drug.AdjustDose
-		for _, c := range compoundsList {
-			compounds[strings.ToLower(c)] = adjust
+		amount := drug.Product.Dose
+		unit := drug.Product.DoseUnit
+		schedule := []Intake{}
+		for _, intake := range drug.IntakeCycle.Intakes {
+			s, _ := parser.Parse(intake.Cron)
+			next := startOfDay
+			for i := 0; i < p.PBPKModels.MaxDoses; i++ {
+				next = s.Next(next)
+				timeStr := next.Format("2006-01-02 15:04")
+				schedule = append(schedule, Intake{
+					RawTimeStr:  timeStr,
+					Dosage:      intake.Dosage,
+					Formulation: intake.DosageUnit,
+				})
+			}
+		}
+
+		compounds[c] = Compound{
+			Name:       c,
+			Adjust:     adjust,
+			DoseAmount: amount,
+			DoseUnit:   unit,
+			Schedule:   schedule,
 		}
 	}
 
-	return compounds
+	for _, k := range compounds {
+		resp.Compounds = append(resp.Compounds, k)
+	}
+	return nil
 }
 
 func (p *PreCheck) abdataCheck(resp *Result) *Error {
@@ -221,7 +289,11 @@ func (p *PreCheck) abdataCheck(resp *Result) *Error {
 		return nil
 	}
 
-	compoundNames := slices.Sorted(maps.Keys(compounds))
+	var compoundNames []string
+	for _, compound := range compounds {
+		compoundNames = append(compoundNames, compound.Name)
+	}
+
 	interactions, err := p.ABDATA.GetCommpoundInteractions(compoundNames)
 	resp.Interactions = interactions
 	if err != nil {
