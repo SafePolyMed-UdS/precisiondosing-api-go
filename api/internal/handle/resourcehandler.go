@@ -3,13 +3,12 @@ package handle
 import (
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/mongodb"
-	"precisiondosing-api-go/internal/pbpk"
 	"precisiondosing-api-go/internal/responder"
-	"precisiondosing-api-go/internal/utils/abdata"
+	"precisiondosing-api-go/internal/utils/callr"
 	"precisiondosing-api-go/internal/utils/helper"
+	"precisiondosing-api-go/internal/utils/precheck"
 	"precisiondosing-api-go/internal/utils/validate"
 
-	"github.com/jmoiron/sqlx"
 	"gorm.io/gorm"
 )
 
@@ -22,14 +21,13 @@ type ResourceHandle struct {
 	Mailer         *responder.Mailer
 	Databases      Databases
 	JSONValidators JSONValidators
-	PBPKModels     *pbpk.Models
-	ABDATA         *abdata.API
+	Prechecker     *precheck.PreCheck
+	CallR          *callr.CallR
 	DebugMode      bool
 }
 
 type Databases struct {
 	GormDB  *gorm.DB
-	SqlxDB  *sqlx.DB
 	MongoDB *mongodb.MongoConnection
 }
 
@@ -40,8 +38,8 @@ type JSONValidators struct {
 func NewResourceHandle(
 	apiCfg *cfg.APIConfig,
 	databases Databases,
-	abdata *abdata.API,
-	pbpkModels *pbpk.Models,
+	prechecker *precheck.PreCheck,
+	callR *callr.CallR,
 	mailer *responder.Mailer,
 	jsonValidators JSONValidators,
 	debug bool,
@@ -53,8 +51,8 @@ func NewResourceHandle(
 		ResetCfg:       apiCfg.ResetToken,
 		Databases:      databases,
 		JSONValidators: jsonValidators,
-		PBPKModels:     pbpkModels,
-		ABDATA:         abdata,
+		Prechecker:     prechecker,
+		CallR:          callR,
 		Mailer:         mailer,
 		DebugMode:      debug,
 	}

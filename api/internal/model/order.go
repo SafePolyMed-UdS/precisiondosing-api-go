@@ -18,11 +18,9 @@ type Order struct {
 	Precheck      *json.RawMessage `gorm:"type:json"`
 	LastPrecheck  *time.Time       `gorm:"type:timestamp"`
 	// Results
-	ResultSuccess bool             `gorm:"type:bool"`
-	ResultJSON    *json.RawMessage `gorm:"type:json"`
-	ResultPDF     string           `gorm:"type:longtext"`
+	ResultError *json.RawMessage `gorm:"type:json"`
+	ResultPDF   *string          `gorm:"type:longtext"`
 	// Created -> Started -> Completed -> Sent
-	CreatedAt   *time.Time `gorm:"type:timestamp"`
 	StartedAt   *time.Time `gorm:"type:timestamp"`
 	CompletedAt *time.Time `gorm:"type:timestamp"`
 	// Sending results

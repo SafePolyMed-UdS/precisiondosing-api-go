@@ -5,11 +5,8 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"precisiondosing-api-go/cfg"
 	"time"
-
-	"gopkg.in/natefinch/lumberjack.v2"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
@@ -17,19 +14,12 @@ import (
 )
 
 func MustInit(logConfig cfg.LogConfig, debug bool) {
-	// Log level
 	zerLogLevel, err := logLevel(logConfig.Level, debug)
 	if err != nil {
 		panic(fmt.Sprintf("Error setting log level: %v", err))
 	}
 
-	// Writer
-	writer, err := writer(logConfig, debug)
-	if err != nil {
-		panic(fmt.Sprintf("Error setting log writer: %v", err))
-	}
-
-	// Setup Logger
+	writer := writer(debug)
 	zerolog.SetGlobalLevel(zerLogLevel)
 	log.Logger = zerolog.New(writer).With().Timestamp().Logger()
 }
@@ -45,9 +35,6 @@ func LogServerError(c *gin.Context, err error) {
 
 func LogInternalError(err error) {
 	log.Error().
-		Str("endpoint", "").
-		Str("method", "").
-		Int("status", 0).
 		Err(err).
 		Msg("Internal error")
 }
@@ -72,22 +59,9 @@ func LogUnauthorizedError(c *gin.Context) {
 		Msg("Unauthorized")
 }
 
-func writer(logConfig cfg.LogConfig, debug bool) (io.Writer, error) {
-	logFile, err := initLogFile(logConfig.FileName, logConfig.MaxSize, logConfig.MaxBackups)
-	if err != nil {
-		return nil, fmt.Errorf("cannot initialize log file: %w", err)
-	}
-
-	// Setup Logger
-	var writers io.Writer
-	if debug || logConfig.ConsoleLog {
-		consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}
-		writers = io.MultiWriter(logFile, consoleWriter)
-	} else {
-		writers = logFile
-	}
-
-	return writers, nil
+func writer(debug bool) io.Writer {
+	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339, NoColor: !debug}
+	return consoleWriter
 }
 
 func logLevel(logLevel string, debug bool) (zerolog.Level, error) {
@@ -99,27 +73,4 @@ func logLevel(logLevel string, debug bool) (zerolog.Level, error) {
 		zerLogLevel = zerolog.DebugLevel
 	}
 	return zerLogLevel, nil
-}
-
-func initLogFile(fileName string, maxSize int, maxBackups int) (*lumberjack.Logger, error) {
-	dirName := filepath.Dir(fileName)
-	if _, err := os.Stat(dirName); os.IsNotExist(err) {
-		return nil, fmt.Errorf("log file directory does not exist: %w", err)
-	}
-
-	logger := &lumberjack.Logger{
-		Filename:   fileName,
-		MaxSize:    maxSize,
-		MaxBackups: maxBackups,
-		LocalTime:  false, // Use UTC time
-		Compress:   true,
-	}
-
-	if _, err := os.Stat(fileName); os.IsNotExist(err) {
-		if _, err = os.Create(fileName); err != nil {
-			return nil, fmt.Errorf("cannot create log file: %w", err)
-		}
-	}
-
-	return logger, nil
 }

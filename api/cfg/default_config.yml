@@ -9,11 +9,9 @@ server:
   idle_timeout: "30s"
   address: "127.0.0.1:3333"
 log:
-  console_log: true
-  file_name: "./tmp/doseadjustservice.log"
   level: "INFO"
-  max_size: 50
-  max_backups: 3
+  slow_query_theshold: "2s"
+  db_level: "WARN"
 database:
   db_name: "doseadjustservice"
   max_open_conns: 50
@@ -43,10 +41,12 @@ rlang:
   rscript_path_win: "Rscript.exe"
   rscript_path_unix: "Rscript"
   dose_adjust_script: "rscripts/adjust_dose.R"
-  max_execution_time: "60s"
+  r_worker: 4
 job_runner:
   fetch_interval: "5s"
   max_concurrent_jobs: 5
   timeout: "60s"
-result_api:
-  endpoint: "127.0.0.1:3333/vi/result"
+send_runner:
+  fetch_interval: "5s"
+  send_endpoint: "127.0.0.1:3333/v1/test/acceptresult"
+  auth_endpoint: "127.0.0.1:3333/v1/user/login"

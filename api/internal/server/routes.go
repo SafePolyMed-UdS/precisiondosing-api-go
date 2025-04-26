@@ -76,9 +76,12 @@ func RegisterDSSRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle
 	}
 }
 
-func TestRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
+func RegisterTestRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
 	dss := r.Group("/test")
-	dss.POST("/acceptresult/", testcontroller.AcceptResult)
+	dss.Use(middleware.Authentication(&resourceHandle.AuthCfg))
+	{
+		dss.POST("/acceptresult/:orderId", testcontroller.AcceptResult)
+	}
 }
 
 func RegistgerSwaggerRoutes(r *gin.Engine, api *gin.RouterGroup, handle *handle.ResourceHandle) {

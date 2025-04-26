@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/model"
+	"precisiondosing-api-go/internal/utils/callr"
 	"precisiondosing-api-go/internal/utils/precheck"
 	"sync"
 	"time"
@@ -13,37 +15,40 @@ import (
 )
 
 type Config struct {
-	Interval   time.Duration
-	Timeout    time.Duration
-	WorkerPool int
+	fetchInterval  time.Duration
+	timeout        time.Duration
+	workerPoolSize int
 }
 
 type JobRunner struct {
-	cfg        Config
-	ctx        context.Context
-	cancel     context.CancelFunc
-	wg         sync.WaitGroup
-	Preckecker *precheck.PreCheck
-	JobDB      *gorm.DB
-	jobs       chan *model.Order
+	cfg    Config
+	ctx    context.Context
+	cancel context.CancelFunc
+	wg     sync.WaitGroup
+	jobs   chan *model.Order
+
+	callr      *callr.CallR
+	preckecker *precheck.PreCheck
+	jobDB      *gorm.DB
 }
 
-func New(cfg Config, prechecker *precheck.PreCheck, jobDB *gorm.DB) *JobRunner {
+func New(config cfg.JobRunner, preckecker *precheck.PreCheck, callr *callr.CallR, jobDB *gorm.DB) *JobRunner {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &JobRunner{
-		cfg:        cfg,
+		cfg:        Config{fetchInterval: config.Interval, timeout: config.Timeout, workerPoolSize: config.MaxJobs},
 		ctx:        ctx,
 		cancel:     cancel,
-		Preckecker: prechecker,
-		JobDB:      jobDB,
+		preckecker: preckecker,
+		callr:      callr,
+		jobDB:      jobDB,
 	}
 }
 
 func (jr *JobRunner) Start() {
 	_ = jr.purgeOnStart(jr.ctx)
 
-	jr.jobs = make(chan *model.Order, jr.cfg.WorkerPool*2) // Buffered channel (can tweak size)
-	for i := 0; i < jr.cfg.WorkerPool; i++ {
+	jr.jobs = make(chan *model.Order, jr.cfg.workerPoolSize*2) // Buffered channel (can tweak size)
+	for i := 0; i < jr.cfg.workerPoolSize; i++ {
 		jr.wg.Add(1)
 		go jr.worker()
 	}
@@ -60,7 +65,7 @@ func (jr *JobRunner) Stop() {
 
 func (jr *JobRunner) run() {
 	defer jr.wg.Done()
-	ticker := time.NewTicker(jr.cfg.Interval)
+	ticker := time.NewTicker(jr.cfg.fetchInterval)
 	defer ticker.Stop()
 
 	for {
@@ -91,7 +96,7 @@ func (jr *JobRunner) fetchJobs(ctx context.Context) []model.Order {
 	}
 
 	var orders []model.Order
-	err := jr.JobDB.WithContext(ctx).
+	err := jr.jobDB.WithContext(ctx).
 		Where("pre_checked IS FALSE").
 		Limit(freeSlots).
 		Find(&orders).Error
@@ -126,7 +131,7 @@ func (jr *JobRunner) processJob(order *model.Order) {
 	now := time.Now()
 	order.LastPrecheck = &now
 
-	precheck, err := jr.Preckecker.Check(&patientData)
+	precheck, err := jr.preckecker.Check(&patientData)
 	if err == nil {
 		precheckByte, _ := json.Marshal(precheck)
 		precheckRaw := json.RawMessage(precheckByte)
@@ -145,7 +150,7 @@ func (jr *JobRunner) processJob(order *model.Order) {
 	}
 
 	// update order in db
-	if saveErr := jr.JobDB.Save(order).Error; saveErr != nil {
+	if saveErr := jr.jobDB.Save(order).Error; saveErr != nil {
 		log.Printf("Error updating order: %v", saveErr)
 		return
 	}
@@ -160,10 +165,9 @@ func (jr *JobRunner) purgeOnStart(ctx context.Context) error {
 	// on start purge orders that started but did not finish
 
 	var orders []model.Order
-	err := jr.JobDB.WithContext(ctx).
+	err := jr.jobDB.WithContext(ctx).
 		Where("pre_checked IS TRUE AND started_at IS NOT NULL AND completed_at IS NULL").
-		Find(&orders).
-		Limit(jr.cfg.WorkerPool).Error
+		Find(&orders).Error
 
 	if err != nil {
 		log.Printf("Error fetching purge orders: %v", err)
@@ -177,7 +181,7 @@ func (jr *JobRunner) purgeOnStart(ctx context.Context) error {
 		order.LastPrecheck = nil
 		order.StartedAt = nil
 
-		if err = jr.JobDB.Save(&order).Error; err != nil {
+		if err = jr.jobDB.Save(&order).Error; err != nil {
 			log.Printf("Error purging order: %v", err)
 			return nil
 		}

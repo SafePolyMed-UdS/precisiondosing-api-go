@@ -51,11 +51,9 @@ type MetaConfig struct {
 }
 
 type LogConfig struct {
-	ConsoleLog bool   `yaml:"console_log"`
-	FileName   string `yaml:"file_name"`
-	Level      string `yaml:"level"`
-	MaxSize    int    `yaml:"max_size"`
-	MaxBackups int    `yaml:"max_backups"`
+	Level              string        `yaml:"level"`
+	SlowQueryThreshold time.Duration `yaml:"slow_query_theshold"`
+	DBLevel            string        `yaml:"db_level"`
 }
 
 type Models struct {
@@ -64,10 +62,10 @@ type Models struct {
 }
 
 type RConfig struct {
-	RScriptPathWin   string        `yaml:"rscript_path_win"`
-	RScriptPathUnix  string        `yaml:"rscript_path_unix"`
-	DoseAdjustScript string        `yaml:"dose_adjust_script"`
-	MaxExecutionTime time.Duration `yaml:"max_execution_time"`
+	RScriptPathWin   string `yaml:"rscript_path_win"`
+	RScriptPathUnix  string `yaml:"rscript_path_unix"`
+	DoseAdjustScript string `yaml:"dose_adjust_script"`
+	RWorker          int    `yaml:"r_worker"`
 }
 
 type AuthTokenConfig struct {
@@ -97,8 +95,12 @@ type MailerConfig struct {
 	APIKey    string `env:"SEND_EMAIL_API_KEY, required"`
 }
 
-type ResultAPI struct {
-	Endpoint string `yaml:"endpoint"`
+type SendRunner struct {
+	SendEndpoint string        `yaml:"send_endpoint"`
+	AuthEndpoint string        `yaml:"auth_endpoint"`
+	Interval     time.Duration `yaml:"fetch_interval"`
+	Login        string        `env:"MMC_LOGIN, required"`
+	Password     string        `env:"MMC_PASSWORD, required"`
 }
 
 type JobRunner struct {
@@ -129,7 +131,7 @@ type APIConfig struct {
 	ABDATA     ABDATAConfig     `yaml:"abdata"`
 	Schema     SchemaConfig     `yaml:"schema"`
 	Models     Models           `yaml:"models"`
-	ResultAPI  ResultAPI        `yaml:"result_api"`
+	SendRunner SendRunner       `yaml:"send_runner"`
 	Mailer     MailerConfig
 }
 

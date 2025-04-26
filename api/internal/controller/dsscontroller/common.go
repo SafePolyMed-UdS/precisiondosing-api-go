@@ -24,11 +24,9 @@ type DSSController struct {
 
 func NewDSSController(resourceHandle *handle.ResourceHandle) *DSSController {
 	return &DSSController{
-		Meta: resourceHandle.MetaCfg,
-		DB:   resourceHandle.Databases.GormDB,
-		Prechecker: precheck.New(resourceHandle.Databases.MongoDB,
-			resourceHandle.ABDATA,
-			resourceHandle.PBPKModels),
+		Meta:           resourceHandle.MetaCfg,
+		DB:             resourceHandle.Databases.GormDB,
+		Prechecker:     resourceHandle.Prechecker,
 		JSONValidators: resourceHandle.JSONValidators,
 	}
 }

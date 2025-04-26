@@ -1,11 +1,11 @@
 meta {
-  name: precheck-fail-Model-Missing
+  name: adjust-success
   type: http
-  seq: 2
+  seq: 1
 }
 
 post {
-  url: {{url}}/api/v1/dose/precheck
+  url: {{url}}/api/v1/dose/adjust
   body: json
   auth: inherit
 }
@@ -15,8 +15,8 @@ body:json {
     "patient_id": 2,
     "patient_characteristics": {
       "age": 60,
-      "weight": 60,
-      "height": 168,
+      "weight": 40,
+      "height": 150,
       "sex": "female",
       "ethnicity": "asian",
       "kidney_disease": false,
@@ -34,6 +34,7 @@ body:json {
     ],
     "drugs": [
       {
+        "adjust_dose" : true,
         "product": {
           "product_name": "Beloc-Zok 95mg",
           "atc": "C07AB02",
@@ -41,7 +42,7 @@ body:json {
           "strength_unit": "milligram"
         },
         "active_substances": [
-          "Metoprolol"
+          "Voriconazole"
         ],
         "intake_cycle": {
           "starting_at": "2024-11-03",
@@ -64,30 +65,7 @@ body:json {
         }
       },
       {
-        "product": {
-          "product_name": "Mayzent 2mg",
-          "atc": "L04AA42",
-          "strength": 2,
-          "strength_unit": "milligram"
-        },
-        "active_substances": [
-          "Siponimod"
-        ],
-        "intake_cycle": {
-          "starting_at": "2024-09-16",
-          "frequency": "daily",
-          "frequency_modifier": 1,
-          "intakes": [
-            {
-              "cron": "0 8 */1 * *",
-              "raw_time_str": "08:00",
-              "dosage": 1,
-              "dosage_unit": "tablets"
-            }
-          ]
-        }
-      },
-      {
+        "adjust_dose" : false,
         "product": {
           "product_name": "Amiodaron 200 Heumann",
           "atc": "C01BD01",
@@ -95,7 +73,7 @@ body:json {
           "strength_unit": "milligram"
         },
         "active_substances": [
-          "Amiodaron"
+          "Imatinib"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
@@ -124,6 +102,7 @@ body:json {
         }
       },
       {
+        "adjust_dose" : false,
         "product": {
           "product_name": "Fevarin 100mg",
           "atc": "N06AB08",
@@ -131,7 +110,7 @@ body:json {
           "strength_unit": "milligram"
         },
         "active_substances": [
-          "Fluvoxamin"
+          "Cimetidine"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
@@ -148,6 +127,7 @@ body:json {
         }
       },
       {
+        "adjust_dose" : false,
         "product": {
           "product_name": "ESOMEP 20mg",
           "atc": "A02BC05",
@@ -155,7 +135,7 @@ body:json {
           "strength_unit": "milligram"
         },
         "active_substances": [
-          "Esomeprazol"
+          "Clopidogrel"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
