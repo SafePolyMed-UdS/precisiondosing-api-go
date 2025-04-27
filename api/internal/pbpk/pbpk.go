@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"precisiondosing-api-go/cfg"
+	"precisiondosing-api-go/internal/utils/log"
 	"sort"
 	"strings"
 
@@ -43,7 +44,8 @@ func MustParseAll(config cfg.Models) *Models {
 	})
 
 	if err != nil {
-		panic(fmt.Sprintf("cannot read PBPK model config folder: %v", err))
+		logger := log.WithComponent("pbpk")
+		logger.Panic("cannot read PBPK model config folder", log.Err(err))
 	}
 
 	result := &Models{
@@ -55,9 +57,11 @@ func MustParseAll(config cfg.Models) *Models {
 }
 
 func mustParseYAML(configFile string) []ModelDefinition {
+	logger := log.WithComponent("pbpk")
+
 	f, err := os.Open(configFile)
 	if err != nil {
-		panic(fmt.Sprintf("cannot open PBPK model config file: %v", err))
+		logger.Panic("cannot open PBPK model config file", log.Err(err))
 	}
 	defer f.Close()
 
@@ -65,7 +69,7 @@ func mustParseYAML(configFile string) []ModelDefinition {
 	var root map[string]map[string]interface{}
 	err = decoder.Decode(&root)
 	if err != nil {
-		panic(fmt.Sprintf("cannot decode PBPK model config file: %v", err))
+		logger.Panic("cannot decode PBPK model config file", log.Err(err))
 	}
 
 	var modelsWrapper struct {
@@ -75,12 +79,12 @@ func mustParseYAML(configFile string) []ModelDefinition {
 	for _, v := range root {
 		yamlBytes, errRoot := yaml.Marshal(v)
 		if errRoot != nil {
-			panic(fmt.Sprintf("cannot re-marshal nested YAML: %v", errRoot))
+			logger.Panic("cannot marshal nested YAML", log.Err(errRoot))
 		}
 
 		errRoot = yaml.Unmarshal(yamlBytes, &modelsWrapper)
 		if errRoot != nil {
-			panic(fmt.Sprintf("cannot unmarshal models section: %v", errRoot))
+			logger.Panic("cannot unmarshal models section", log.Err(errRoot))
 		}
 
 		break

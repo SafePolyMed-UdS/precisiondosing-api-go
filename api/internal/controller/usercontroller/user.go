@@ -20,7 +20,7 @@ type UserController struct {
 	ResetCfg cfg.ResetTokenConfig
 }
 
-func NewUserController(resourceHandle *handle.ResourceHandle) *UserController {
+func New(resourceHandle *handle.ResourceHandle) *UserController {
 	return &UserController{
 		DB:       resourceHandle.Databases.GormDB,
 		AuthCfg:  resourceHandle.AuthCfg,

@@ -1,10 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/server"
-	"precisiondosing-api-go/internal/utils/logger"
+	"precisiondosing-api-go/internal/utils/log"
 
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -22,13 +21,13 @@ func main() {
 	config.Meta.VersionTag = versionTag
 
 	// log
-	logger.MustInit(config.Log, args.DebugMode)
+	log.MustInit(config.Log, args.DebugMode)
+	logger := log.WithComponent("server")
 
 	// server
 	srv, err := server.New(config, args.DebugMode)
 	if err != nil {
-		//logger.LogInternalError(err)
-		panic(fmt.Sprintf("Cannot create server: %v", err))
+		logger.Panic("cannot create server", log.Err(err))
 	}
 
 	_ = srv

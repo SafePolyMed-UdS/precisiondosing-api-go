@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"net/http"
 	"precisiondosing-api-go/internal/model"
-	"precisiondosing-api-go/internal/mongodb"
 	"precisiondosing-api-go/internal/pbpk"
-	"precisiondosing-api-go/internal/utils/medinfo"
+	"precisiondosing-api-go/internal/services/individualdb"
+	"precisiondosing-api-go/internal/services/medinfo"
+	"precisiondosing-api-go/internal/utils/helper"
+	"precisiondosing-api-go/internal/utils/log"
 	"slices"
 	"sort"
 	"strings"
@@ -70,16 +73,18 @@ func NewError(msg string, recoverable bool, wrappedErr ...error) *Error {
 }
 
 type PreCheck struct {
-	mongoDB    *mongodb.MongoConnection
+	mongoDB    *individualdb.IndividualDB
 	MedInfoAPI *medinfo.API
 	PBPKModels *pbpk.Models
+	logger     log.Logger
 }
 
-func New(mongoDB *mongodb.MongoConnection, medinfoAPI *medinfo.API, pbpkModels *pbpk.Models) *PreCheck {
+func New(mongoDB *individualdb.IndividualDB, medinfoAPI *medinfo.API, pbpkModels *pbpk.Models) *PreCheck {
 	return &PreCheck{
 		mongoDB:    mongoDB,
 		MedInfoAPI: medinfoAPI,
 		PBPKModels: pbpkModels,
+		logger:     log.WithComponent("precheck"),
 	}
 }
 
@@ -211,6 +216,14 @@ func (p *PreCheck) virtualIndividualCheck(resp *Result, data *model.PatientData)
 		!bytes.Equal(trimmed, []byte("null"))
 
 	if !preCheckSuccess {
+		p.logger.Warn("no virtual individual matched demographic data",
+			log.Str("sex", sex),
+			log.Int("age", age),
+			log.Int("weight", weight),
+			log.Int("height", height),
+			log.Str("ethnicity", helper.DerefOrDefault(population, "unknown")),
+		)
+
 		resp.Message = appendMsg(resp.Message, "Virtual Individual Check: No virtual individual matched demographic data")
 		return NewError("no virtual individual matched demographic data", false)
 	}
@@ -230,6 +243,11 @@ func (p *PreCheck) drugCompounds(resp *Result, data *model.PatientData) *Error {
 	for _, drug := range data.Drugs {
 		compoundsList := drug.ActiveSubstances
 		if len(compoundsList) > 1 {
+			p.logger.Warn("multiple active substances in a single drug",
+				log.Str("peoduct", helper.DerefOrDefault(drug.Product.ProductName, "unknown")),
+				log.Str("active_substances", strings.Join(compoundsList, ",")),
+			)
+
 			resp.Message = appendMsg(resp.Message, "Multiple active substances in a single drug not supported")
 			return NewError("multiple active substances in a single drug", false)
 		}
@@ -242,7 +260,7 @@ func (p *PreCheck) drugCompounds(resp *Result, data *model.PatientData) *Error {
 		for _, intake := range drug.IntakeCycle.Intakes {
 			s, _ := parser.Parse(intake.Cron)
 			next := startOfDay
-			for i := 0; i < p.PBPKModels.MaxDoses; i++ {
+			for range make([]int, p.PBPKModels.MaxDoses) {
 				next = s.Next(next)
 				timeStr := next.Format("2006-01-02 15:04")
 				schedule = append(schedule, Intake{
@@ -283,8 +301,12 @@ func (p *PreCheck) medinfoCheck(resp *Result) *Error {
 	interactions, err := p.MedInfoAPI.GetCommpoundInteractions(compoundNames)
 	resp.Interactions = interactions
 	if err != nil {
+		if err.StatusCode == http.StatusNotFound {
+			p.logger.Warn("MedInfo compound not found", log.Err(err))
+		}
 		resp.Message = appendMsg(resp.Message, "MedinfoCheck: Failed to fetch interactions")
-		return NewError("fetching interactions", true, err)
+		// if compound cannot be found, it is not a recoverable error
+		return NewError("fetching interactions", err.StatusCode != http.StatusNotFound, err)
 	}
 
 	if len(interactions) == 0 {

@@ -11,7 +11,7 @@ type SysController struct {
 	Meta cfg.MetaConfig
 }
 
-func NewSysController(resourceHandle *handle.ResourceHandle) *SysController {
+func New(resourceHandle *handle.ResourceHandle) *SysController {
 	return &SysController{
 		Meta: resourceHandle.MetaCfg,
 	}

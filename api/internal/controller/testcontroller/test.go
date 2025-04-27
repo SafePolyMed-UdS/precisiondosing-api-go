@@ -1,13 +1,23 @@
 package testcontroller
 
 import (
-	"fmt"
 	"precisiondosing-api-go/internal/handle"
+	"precisiondosing-api-go/internal/utils/log"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AcceptResult(c *gin.Context) {
+type TestController struct {
+	logger log.Logger
+}
+
+func New() *TestController {
+	return &TestController{
+		logger: log.WithComponent("TestController"),
+	}
+}
+
+func (tc *TestController) AcceptResult(c *gin.Context) {
 	errorMsg := c.PostForm("ErrorMsg")
 	orderID := c.Param("orderId")
 
@@ -25,9 +35,12 @@ func AcceptResult(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("Received OrderID: %s\n", orderID)
-	fmt.Printf("Received ErrorMsg: %s\n", errorMsg)
-	fmt.Printf("Received file: %s (%d bytes)\n", header.Filename, header.Size)
+	tc.logger.Info("Received file",
+		log.Str("file", header.Filename),
+		log.Int("size", int(header.Size)),
+		log.Str("orderId", orderID),
+		log.Str("errorMsg", errorMsg),
+	)
 
 	// Respond OK
 	handle.Success(c, gin.H{"message": "Feedback accepted"})

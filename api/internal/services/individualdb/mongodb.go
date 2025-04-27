@@ -1,4 +1,4 @@
-package mongodb
+package individualdb
 
 import (
 	"context"
@@ -13,13 +13,13 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type MongoConnection struct {
+type IndividualDB struct {
 	Client     *mongo.Client
 	Database   string
 	Collection string
 }
 
-func New(dbConfig cfg.MongoConfig) (*MongoConnection, error) {
+func New(dbConfig cfg.IndividualDBConfig) (*IndividualDB, error) {
 	clientOptions := options.Client().ApplyURI(dbConfig.URI)
 	clientOptions.SetMaxPoolSize(dbConfig.MaxPoolSize)
 	clientOptions.SetMinPoolSize(dbConfig.MinPoolSize)
@@ -43,7 +43,7 @@ func New(dbConfig cfg.MongoConfig) (*MongoConnection, error) {
 	if err != nil || testFetch == nil {
 		return nil, fmt.Errorf("cannot find collection %s in database %s", dbConfig.Collection, dbConfig.Database)
 	}
-	result := &MongoConnection{
+	result := &IndividualDB{
 		Client:     client,
 		Database:   dbConfig.Database,
 		Collection: dbConfig.Collection,
@@ -54,7 +54,7 @@ func New(dbConfig cfg.MongoConfig) (*MongoConnection, error) {
 
 // FetchIndividual fetches an individual from the database.
 // If no individual is found, nil is returned.
-func (m *MongoConnection) FetchIndividual(
+func (m *IndividualDB) FetchIndividual(
 	population *string,
 	gender string, age, height, weight int,
 ) (json.RawMessage, error) {

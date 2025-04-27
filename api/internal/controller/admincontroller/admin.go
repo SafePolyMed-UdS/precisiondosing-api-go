@@ -18,30 +18,30 @@ type AdminController struct {
 	ResetCfg cfg.ResetTokenConfig
 }
 
-func NewAdminController(resourceHandle *handle.ResourceHandle) *AdminController {
+func New(resourceHandle *handle.ResourceHandle) *AdminController {
 	return &AdminController{
 		DB:       resourceHandle.Databases.GormDB,
 		ResetCfg: resourceHandle.ResetCfg,
 	}
 }
 
-//	@Summary		Create a new service user
-//	@Description	__Admin role required__
-//	@Description	Create a new service user for the API.
-//	@Description	You can create users with the following roles: `admin`, `user`, `approver`.
-//	@Tags			Admin
-//	@Produce		json
-//	@Param			request	body		CreateServiceUserQuery							true	"Request body"
-//	@Success		200		{object}	handle.jsendSuccess[map[string]string]			"User created"
-//	@Failure		400		{object}	handle.jsendFailure[handle.errorResponse]		"Bad request"
-//	@Failure		422		{object}	handle.jsendFailure[handle.validationResponse]	"Bad query format"
-//	@Failure		401		{object}	handle.jsendFailure[handle.errorResponse]		"Unauthorized"
-//	@Failure		403		{object}	handle.jsendFailure[handle.errorResponse]		"Non-admin user"
-//	@Failure		500		{object}	handle.jSendError								"Internal server error"
+// @Summary		Create a new service user
+// @Description	__Admin role required__
+// @Description	Create a new service user for the API.
+// @Description	You can create users with the following roles: `admin`, `user`, `approver`.
+// @Tags			Admin
+// @Produce		json
+// @Param			request	body		CreateServiceUserQuery							true	"Request body"
+// @Success		200		{object}	handle.jsendSuccess[map[string]string]			"User created"
+// @Failure		400		{object}	handle.jsendFailure[handle.errorResponse]		"Bad request"
+// @Failure		422		{object}	handle.jsendFailure[handle.validationResponse]	"Bad query format"
+// @Failure		401		{object}	handle.jsendFailure[handle.errorResponse]		"Unauthorized"
+// @Failure		403		{object}	handle.jsendFailure[handle.errorResponse]		"Non-admin user"
+// @Failure		500		{object}	handle.jSendError								"Internal server error"
 //
-//	@Security		Bearer
+// @Security		Bearer
 //
-//	@Router			/admin/users/service [post]
+// @Router			/admin/users/service [post]
 func (ac *AdminController) CreateServiceUser(c *gin.Context) {
 	type Query struct {
 		Email     string `json:"email" binding:"required,email,min=2,max=255" example:"joe@gmail.com"`
@@ -125,20 +125,20 @@ func (ac *AdminController) CreateServiceUser(c *gin.Context) {
 	handle.Success(c, gin.H{"message": "Service user created"})
 }
 
-//	@Summary		Get all users
-//	@Description	__Admin role required__
-//	@Description	List all users for the API.
-//	@Tags			Admin
-//	@Produce		json
-//	@Success		200	{object}	handle.jsendSuccess[map[string]string]		"User created"
-//	@Failure		400	{object}	handle.jsendFailure[handle.errorResponse]	"Bad request"
-//	@Failure		401	{object}	handle.jsendFailure[handle.errorResponse]	"Unauthorized"
-//	@Failure		403	{object}	handle.jsendFailure[handle.errorResponse]	"Non-admin user"
-//	@Failure		500	{object}	handle.jSendError							"Internal server error"
+// @Summary		Get all users
+// @Description	__Admin role required__
+// @Description	List all users for the API.
+// @Tags			Admin
+// @Produce		json
+// @Success		200	{object}	handle.jsendSuccess[map[string]string]		"User created"
+// @Failure		400	{object}	handle.jsendFailure[handle.errorResponse]	"Bad request"
+// @Failure		401	{object}	handle.jsendFailure[handle.errorResponse]	"Unauthorized"
+// @Failure		403	{object}	handle.jsendFailure[handle.errorResponse]	"Non-admin user"
+// @Failure		500	{object}	handle.jSendError							"Internal server error"
 //
-//	@Security		Bearer
+// @Security		Bearer
 //
-//	@Router			/admin/users [get]
+// @Router			/admin/users [get]
 func (ac *AdminController) GetUsers(c *gin.Context) {
 	var query struct {
 		Role   string `form:"role" binding:"omitempty,oneof=admin user approver"`
@@ -172,20 +172,20 @@ func (ac *AdminController) GetUsers(c *gin.Context) {
 	handle.Success(c, users)
 }
 
-//	@Summary		Get user by email
-//	@Description	__Admin role required__
-//	@Description	Retrieve a single user by their email address.
-//	@Tags			Admin
-//	@Produce		json
-//	@Param			email	path		string										true	"User email"
-//	@Success		200		{object}	handle.jsendSuccess[model.User]				"User found"
-//	@Failure		400		{object}	handle.jsendFailure[handle.errorResponse]	"Bad request"
-//	@Failure		401		{object}	handle.jsendFailure[handle.errorResponse]	"Unauthorized"
-//	@Failure		403		{object}	handle.jsendFailure[handle.errorResponse]	"Non-admin user"
-//	@Failure		404		{object}	handle.jsendFailure[handle.errorResponse]	"User not found"
-//	@Failure		500		{object}	handle.jSendError							"Internal server error"
-//	@Security		Bearer
-//	@Router			/admin/users/{email} [get]
+// @Summary		Get user by email
+// @Description	__Admin role required__
+// @Description	Retrieve a single user by their email address.
+// @Tags			Admin
+// @Produce		json
+// @Param			email	path		string										true	"User email"
+// @Success		200		{object}	handle.jsendSuccess[model.User]				"User found"
+// @Failure		400		{object}	handle.jsendFailure[handle.errorResponse]	"Bad request"
+// @Failure		401		{object}	handle.jsendFailure[handle.errorResponse]	"Unauthorized"
+// @Failure		403		{object}	handle.jsendFailure[handle.errorResponse]	"Non-admin user"
+// @Failure		404		{object}	handle.jsendFailure[handle.errorResponse]	"User not found"
+// @Failure		500		{object}	handle.jSendError							"Internal server error"
+// @Security		Bearer
+// @Router			/admin/users/{email} [get]
 func (ac *AdminController) GetUserByEmail(c *gin.Context) {
 	user, err := model.GetUserByEmail(ac.DB, c.Param("email"))
 	if err != nil {
@@ -201,20 +201,20 @@ func (ac *AdminController) GetUserByEmail(c *gin.Context) {
 	handle.Success(c, user)
 }
 
-//	@Summary		Delete user by email
-//	@Description	__Admin role required__
-//	@Description	Delete a user by their email address. Cannot delete own account.
-//	@Tags			Admin
-//	@Produce		json
-//	@Param			email	path		string										true	"User email"
-//	@Success		200		{object}	handle.jsendSuccess[map[string]string]		"User deleted"
-//	@Failure		400		{object}	handle.jsendFailure[handle.errorResponse]	"Bad request"
-//	@Failure		401		{object}	handle.jsendFailure[handle.errorResponse]	"Unauthorized"
-//	@Failure		403		{object}	handle.jsendFailure[handle.errorResponse]	"Cannot delete own account"
-//	@Failure		404		{object}	handle.jsendFailure[handle.errorResponse]	"User not found"
-//	@Failure		500		{object}	handle.jSendError							"Internal server error"
-//	@Security		Bearer
-//	@Router			/admin/users/{email} [delete]
+// @Summary		Delete user by email
+// @Description	__Admin role required__
+// @Description	Delete a user by their email address. Cannot delete own account.
+// @Tags			Admin
+// @Produce		json
+// @Param			email	path		string										true	"User email"
+// @Success		200		{object}	handle.jsendSuccess[map[string]string]		"User deleted"
+// @Failure		400		{object}	handle.jsendFailure[handle.errorResponse]	"Bad request"
+// @Failure		401		{object}	handle.jsendFailure[handle.errorResponse]	"Unauthorized"
+// @Failure		403		{object}	handle.jsendFailure[handle.errorResponse]	"Cannot delete own account"
+// @Failure		404		{object}	handle.jsendFailure[handle.errorResponse]	"User not found"
+// @Failure		500		{object}	handle.jSendError							"Internal server error"
+// @Security		Bearer
+// @Router			/admin/users/{email} [delete]
 func (ac *AdminController) DeleteUserByEmail(c *gin.Context) {
 	emailToDelete := c.Param("email")
 	adminEmail := c.GetString("user_email")
@@ -238,22 +238,22 @@ func (ac *AdminController) DeleteUserByEmail(c *gin.Context) {
 	handle.Success(c, gin.H{"message": "User deleted"})
 }
 
-//	@Summary		Change user profile
-//	@Description	__Admin role required__
-//	@Description	Update a user's role or status. Cannot change own role or status.
-//	@Tags			Admin
-//	@Accept			json
-//	@Produce		json
-//	@Param			email					path		string										true	"User email"
-//	@Param			ChangeUserProfileQuery	body		ChangeUserProfileQuery						true	"Role and/or status updates"
-//	@Success		200						{object}	handle.jsendSuccess[map[string]string]		"User profile updated"
-//	@Failure		400						{object}	handle.jsendFailure[handle.errorResponse]	"Bad request"
-//	@Failure		401						{object}	handle.jsendFailure[handle.errorResponse]	"Unauthorized"
-//	@Failure		403						{object}	handle.jsendFailure[handle.errorResponse]	"Cannot change own role or status"
-//	@Failure		404						{object}	handle.jsendFailure[handle.errorResponse]	"User not found"
-//	@Failure		500						{object}	handle.jSendError							"Internal server error"
-//	@Security		Bearer
-//	@Router			/admin/users/{email} [patch]
+// @Summary		Change user profile
+// @Description	__Admin role required__
+// @Description	Update a user's role or status. Cannot change own role or status.
+// @Tags			Admin
+// @Accept			json
+// @Produce		json
+// @Param			email					path		string										true	"User email"
+// @Param			ChangeUserProfileQuery	body		ChangeUserProfileQuery						true	"Role and/or status updates"
+// @Success		200						{object}	handle.jsendSuccess[map[string]string]		"User profile updated"
+// @Failure		400						{object}	handle.jsendFailure[handle.errorResponse]	"Bad request"
+// @Failure		401						{object}	handle.jsendFailure[handle.errorResponse]	"Unauthorized"
+// @Failure		403						{object}	handle.jsendFailure[handle.errorResponse]	"Cannot change own role or status"
+// @Failure		404						{object}	handle.jsendFailure[handle.errorResponse]	"User not found"
+// @Failure		500						{object}	handle.jSendError							"Internal server error"
+// @Security		Bearer
+// @Router			/admin/users/{email} [patch]
 func (ac *AdminController) ChangeUserProfile(c *gin.Context) {
 	type Query struct {
 		Role   string `json:"role" binding:"omitempty,oneof=admin user approver" example:"user"`

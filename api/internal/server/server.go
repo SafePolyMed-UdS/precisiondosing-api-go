@@ -9,22 +9,23 @@ import (
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/database"
 	"precisiondosing-api-go/internal/handle"
+	"precisiondosing-api-go/internal/jobs/jobrunner"
+	"precisiondosing-api-go/internal/jobs/jobsender"
 	"precisiondosing-api-go/internal/middleware"
-	"precisiondosing-api-go/internal/mongodb"
 	"precisiondosing-api-go/internal/pbpk"
+	"precisiondosing-api-go/internal/precheck"
+	"precisiondosing-api-go/internal/services/individualdb"
+	"precisiondosing-api-go/internal/services/medinfo"
 	"precisiondosing-api-go/internal/utils/callr"
-	"precisiondosing-api-go/internal/utils/jobrunner"
-	"precisiondosing-api-go/internal/utils/jobsender"
-	"precisiondosing-api-go/internal/utils/medinfo"
-	"precisiondosing-api-go/internal/utils/precheck"
 	"precisiondosing-api-go/internal/utils/validate"
 	"runtime"
 	"strings"
 	"syscall"
 	"time"
 
+	"precisiondosing-api-go/internal/utils/log"
+
 	"github.com/gin-gonic/gin"
-	"github.com/rs/zerolog/log"
 )
 
 type Server struct {
@@ -32,6 +33,7 @@ type Server struct {
 	serverConfig cfg.ServerConfig
 	jobRunner    *jobrunner.JobRunner
 	jobSender    *jobsender.JobSender
+	logger       log.Logger
 }
 
 func New(config *cfg.APIConfig, debug bool) (*Server, error) {
@@ -80,22 +82,23 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 		serverConfig: config.Server,
 		jobRunner:    jobRunner,
 		jobSender:    jobSender,
+		logger:       log.WithComponent("server"),
 	}
 
 	return srv, nil
 }
 
-func (r *Server) Run() {
+func (s *Server) Run() {
 	srv := &http.Server{
-		Addr:         r.serverConfig.Address,
-		Handler:      r.engine,
-		ReadTimeout:  r.serverConfig.ReadWriteTimeout,
-		WriteTimeout: r.serverConfig.ReadWriteTimeout,
-		IdleTimeout:  r.serverConfig.IdleTimeout,
+		Addr:         s.serverConfig.Address,
+		Handler:      s.engine,
+		ReadTimeout:  s.serverConfig.ReadWriteTimeout,
+		WriteTimeout: s.serverConfig.ReadWriteTimeout,
+		IdleTimeout:  s.serverConfig.IdleTimeout,
 	}
 
-	r.jobRunner.Start()
-	r.jobSender.Start()
+	s.jobRunner.Start()
+	s.jobSender.Start()
 
 	// Graceful shutdown for the server
 	quit := make(chan os.Signal, 1)
@@ -104,20 +107,20 @@ func (r *Server) Run() {
 	go func() {
 		_ = srv.ListenAndServe()
 	}()
-	log.Info().Msgf("Server started on %s", r.serverConfig.Address)
+	s.logger.Info("started", log.Str("Address", s.serverConfig.Address))
 	<-quit
-	log.Info().Msg("Server shutting down")
+	s.logger.Info("shutting down...")
 
-	r.jobRunner.Stop()
-	r.jobSender.Stop()
+	s.jobRunner.Stop()
+	s.jobSender.Stop()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Error().Err(err).Msg("Server forced to shutdown")
+		s.logger.Error("shutdown error", log.Err(err))
 	}
 
-	log.Info().Msg("Server exiting")
+	s.logger.Info("exited")
 }
 
 func initHandler(config *cfg.APIConfig, debug bool) (*handle.ResourceHandle, error) {
@@ -196,7 +199,7 @@ func initDatabases(config *cfg.APIConfig, debug bool) (handle.Databases, error) 
 	}
 
 	// init mongo db
-	individualsDB, err := mongodb.New(config.Mongo)
+	individualsDB, err := individualdb.New(config.IndividualDB)
 	if err != nil {
 		return dbs, fmt.Errorf("cannot connect to mongodb: %w", err)
 	}
@@ -205,7 +208,7 @@ func initDatabases(config *cfg.APIConfig, debug bool) (handle.Databases, error) 
 	return dbs, nil
 }
 
-func initPrechecker(config *cfg.APIConfig, mongo *mongodb.MongoConnection) (*precheck.PreCheck, error) {
+func initPrechecker(config *cfg.APIConfig, mongo *individualdb.IndividualDB) (*precheck.PreCheck, error) {
 	// models
 	modelDefinitions := pbpk.MustParseAll(config.Models)
 

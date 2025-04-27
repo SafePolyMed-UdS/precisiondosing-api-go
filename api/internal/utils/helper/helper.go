@@ -85,3 +85,10 @@ func AddLeadingSlash(s string) string {
 	}
 	return s
 }
+
+func DerefOrDefault[T any](ptr *T, def T) T {
+	if ptr != nil {
+		return *ptr
+	}
+	return def
+}

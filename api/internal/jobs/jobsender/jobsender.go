@@ -3,10 +3,10 @@ package jobsender
 import (
 	"context"
 	"encoding/base64"
-	"fmt"
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/model"
-	"precisiondosing-api-go/internal/utils/mmc"
+	"precisiondosing-api-go/internal/services/mmc"
+	"precisiondosing-api-go/internal/utils/log"
 	"sync"
 	"time"
 
@@ -21,6 +21,8 @@ type JobSender struct {
 	batchSize     int
 	jobDB         *gorm.DB
 	mmcAPI        *mmc.API
+
+	logger log.Logger
 }
 
 func New(mmcConfig cfg.MMCConfig, jobDB *gorm.DB) *JobSender {
@@ -39,15 +41,20 @@ func New(mmcConfig cfg.MMCConfig, jobDB *gorm.DB) *JobSender {
 		ctx:    ctx,
 		cancel: cancel,
 		jobDB:  jobDB,
+		logger: log.WithComponent("jobsender"),
 	}
 }
 
 func (js *JobSender) Start() {
+	js.logger.Info("started")
+
 	js.wg.Add(1)
 	go js.run()
 }
 
 func (js *JobSender) Stop() {
+	js.logger.Info("stopped")
+
 	js.cancel()
 	js.wg.Wait()
 }
@@ -62,44 +69,54 @@ func (js *JobSender) run() {
 		case <-js.ctx.Done():
 			return
 		case <-ticker.C:
-			if err := js.processJobs(js.ctx); err != nil {
-				// TODO: log error
-			}
+			js.processJobs(js.ctx)
 		}
 	}
 }
 
-func (js *JobSender) processJobs(ctx context.Context) error {
+func (js *JobSender) processJobs(ctx context.Context) {
 	var orders []model.Order
 	if err := js.jobDB.WithContext(ctx).
 		Where("completed_at IS NOT NULL AND sent_at IS NULL").
 		Order("COALESCE(sent_trys, 0) ASC").
 		Limit(js.batchSize).
 		Find(&orders).Error; err != nil {
-		return fmt.Errorf("failed to fetch orders: %w", err)
+		js.logger.Error("fetching orders", log.Err(err))
+		return
+	}
+	if len(orders) == 0 {
+		return
 	}
 
+	js.logger.Info("fetched orders", log.Int("count", len(orders)))
 	for _, order := range orders {
 		if order.ResultPDF == nil {
-			// TODO: This cannot happen -> log error
+			js.logger.Error("order has no result PDF", log.Str("orderID", order.OrderID))
 			continue
 		}
 
 		pdfBytes, err := base64.StdEncoding.DecodeString(*order.ResultPDF)
 		if err != nil {
-			// TODO: log error
+			js.logger.Error("decoding PDF", log.Str("orderID", order.OrderID), log.Err(err))
 			continue
 		}
 
-		// TODO: increment sent_trys
-		if err := js.mmcAPI.Send(pdfBytes, order.OrderID); err != nil {
-			// TODO: log error
+		order.SentTrys++
+		if err = js.jobDB.WithContext(ctx).Save(&order).Error; err != nil {
+			js.logger.Error("updating order sent_trys", log.Str("orderID", order.OrderID), log.Err(err))
 			continue
 		}
 
-		// TODO: update order as sent (sent_at to now)
-		// log error -> do not return error
+		if err = js.mmcAPI.Send(pdfBytes, order.OrderID); err != nil {
+			js.logger.Warn("sending PDF", log.Str("orderID", order.OrderID), log.Err(err))
+			continue
+		}
+		js.logger.Info("sent PDF", log.Str("orderID", order.OrderID))
+
+		now := time.Now()
+		order.SentAt = &now
+		if err = js.jobDB.WithContext(ctx).Save(&order).Error; err != nil {
+			js.logger.Error("updating order sent_at", log.Str("orderID", order.OrderID), log.Err(err))
+		}
 	}
-
-	return nil
 }

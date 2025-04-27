@@ -3,11 +3,11 @@ package jobrunner
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/model"
+	"precisiondosing-api-go/internal/precheck"
 	"precisiondosing-api-go/internal/utils/callr"
-	"precisiondosing-api-go/internal/utils/precheck"
+	"precisiondosing-api-go/internal/utils/log"
 	"sync"
 	"time"
 
@@ -30,6 +30,8 @@ type JobRunner struct {
 	callr      *callr.CallR
 	preckecker *precheck.PreCheck
 	jobDB      *gorm.DB
+
+	logger log.Logger
 }
 
 func New(config cfg.JobRunnerConfig, preckecker *precheck.PreCheck, callr *callr.CallR, jobDB *gorm.DB) *JobRunner {
@@ -41,11 +43,13 @@ func New(config cfg.JobRunnerConfig, preckecker *precheck.PreCheck, callr *callr
 		preckecker: preckecker,
 		callr:      callr,
 		jobDB:      jobDB,
+		logger:     log.WithComponent("jobrunner"),
 	}
 }
 
 func (jr *JobRunner) Start() {
-	_ = jr.purgeOnStart(jr.ctx)
+	jr.logger.Info("started")
+	jr.purgeOnStart(jr.ctx)
 
 	jr.jobs = make(chan *model.Order, jr.cfg.workerPoolSize*2) // Buffered channel (can tweak size)
 	for i := 0; i < jr.cfg.workerPoolSize; i++ {
@@ -58,6 +62,8 @@ func (jr *JobRunner) Start() {
 }
 
 func (jr *JobRunner) Stop() {
+	jr.logger.Info("stopped")
+
 	jr.cancel()
 	close(jr.jobs)
 	jr.wg.Wait()
@@ -77,7 +83,8 @@ func (jr *JobRunner) run() {
 			if len(orders) == 0 {
 				continue
 			}
-			log.Printf("Fetched %d orders", len(orders))
+
+			jr.logger.Info("fetched orders", log.Int("count", len(orders)))
 			for i := range orders {
 				select {
 				case jr.jobs <- &orders[i]:
@@ -102,7 +109,7 @@ func (jr *JobRunner) fetchJobs(ctx context.Context) []model.Order {
 		Find(&orders).Error
 
 	if err != nil {
-		log.Printf("Error fetching orders: %v", err)
+		jr.logger.Error("fetching orders", log.Err(err))
 		return nil
 	}
 
@@ -147,21 +154,28 @@ func (jr *JobRunner) processJob(order *model.Order) {
 			order.PreChecked = true
 			order.StartedAt = &now
 		}
+
+		jr.logger.Error("precheck error",
+			log.Str("orderID", order.OrderID),
+			log.Bool("recoverable", err.Recoverable),
+			log.Err(err),
+		)
 	}
 
 	// update order in db
 	if saveErr := jr.jobDB.Save(order).Error; saveErr != nil {
-		log.Printf("Error updating order: %v", saveErr)
+		jr.logger.Error("updating order", log.Str("orderID", order.OrderID), log.Err(saveErr))
 		return
 	}
 
 	// if unrecoverable error or precheck is done call R
 	if order.PreChecked {
-		log.Println("Precheck done, starting order")
+		jr.logger.Info("running order", log.Str("orderID", order.OrderID))
+		// TODO: Call R here and process result
 	}
 }
 
-func (jr *JobRunner) purgeOnStart(ctx context.Context) error {
+func (jr *JobRunner) purgeOnStart(ctx context.Context) {
 	// on start purge orders that started but did not finish
 
 	var orders []model.Order
@@ -170,8 +184,8 @@ func (jr *JobRunner) purgeOnStart(ctx context.Context) error {
 		Find(&orders).Error
 
 	if err != nil {
-		log.Printf("Error fetching purge orders: %v", err)
-		return nil
+		jr.logger.Error("fetching purge orders", log.Err(err))
+		return
 	}
 
 	for _, order := range orders {
@@ -182,10 +196,7 @@ func (jr *JobRunner) purgeOnStart(ctx context.Context) error {
 		order.StartedAt = nil
 
 		if err = jr.jobDB.Save(&order).Error; err != nil {
-			log.Printf("Error purging order: %v", err)
-			return nil
+			jr.logger.Error("purging order", log.Str("orderID", order.OrderID), log.Err(err))
 		}
 	}
-
-	return nil
 }

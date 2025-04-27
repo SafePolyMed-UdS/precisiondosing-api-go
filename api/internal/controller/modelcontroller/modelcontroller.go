@@ -11,7 +11,7 @@ type ModelController struct {
 	Models []pbpk.ModelDefinition
 }
 
-func NewModelController(models []pbpk.ModelDefinition) *ModelController {
+func New(models []pbpk.ModelDefinition) *ModelController {
 	return &ModelController{
 		Models: models,
 	}

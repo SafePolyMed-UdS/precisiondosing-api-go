@@ -1,14 +1,14 @@
 # SafePolyMed doseadjustservice API
 
-# API Testing with Bruno
+## API Testing with Bruno
 
 This repository uses [Bruno](https://www.usebruno.com/) for API testing. The API request collection is located in the `/bruno` directory.
 
-## Setup
+### Setup
 
 To use Bruno with this project, you need to create a `.env` file in the `/bruno` directory with the following structure.
 
-```
+```bash
 LOGIN=YOUR_EMAIL_HERE
 PASSWORD="your_password_here"
 URL=127.0.0.1:3333
@@ -18,7 +18,7 @@ PASSWORD_PROD="your_production_password_here"
 URL_PROD=https://doseadjustservice.precisiondosing.de/
 ```
 
-## Usage
+### Usage
 
 Make sure to use the appropriate environment in Bruno when running tests:
 
@@ -27,28 +27,28 @@ Make sure to use the appropriate environment in Bruno when running tests:
 
 Select the correct environment in Bruno before executing API requests.
 
-# Endpoints:
+## Endpoints
 
 Information Endpoints:
 
-- https://doseadjustservice.precisiondosing.de/api/v1/sys/info
-- https://doseadjustservice.precisiondosing.de/api/v1/sys/ping
+- [System Info](https://doseadjustservice.precisiondosing.de/api/v1/sys/info)
+- [System Ping](https://doseadjustservice.precisiondosing.de/api/v1/sys/ping)
 
 User Login Endpoints:
 
-- https://doseadjustservice.precisiondosing.de/api/v1/user/login
-- https://doseadjustservice.precisiondosing.de/api/v1/user/refresh-token
+- [User Login](https://doseadjustservice.precisiondosing.de/api/v1/user/login)
+- [Refresh Token](https://doseadjustservice.precisiondosing.de/api/v1/user/refresh-token)
 
 Dose Adjustment Endpoints:
 
-- https://doseadjustservice.precisiondosing.de/api/v1/dose/precheck
-- https://doseadjustservice.precisiondosing.de/api/v1/dose/adjust
+- [Dose Precheck](https://doseadjustservice.precisiondosing.de/api/v1/dose/precheck)
+- [Dose Adjust](https://doseadjustservice.precisiondosing.de/api/v1/dose/adjust)
 
 Model Endpoints:
 
-- https://doseadjustservice.precisiondosing.de/api/v1/models
+- [Models](https://doseadjustservice.precisiondosing.de/api/v1/models)
 
-# Input:
+## Input
 
 ```json
 {
@@ -186,10 +186,10 @@ Model Endpoints:
 }
 ```
 
-# TODO:
+## TODO
 
 - [ ] Check in MedInfo for synonyms of active substances
-- [ ] Logging Framework with implementation in all functions
+- [x] Logging Framework with implementation in all functions
 - [ ] Endpoint for job queue overview
 - [ ] Test with real R call with return data
 - [ ] Handle failed R calls -> should we even send a response?

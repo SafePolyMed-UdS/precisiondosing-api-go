@@ -10,7 +10,7 @@ import (
 func RecoveryHandler(c *gin.Context, err any) {
 	realErr, ok := err.(error)
 	if !ok {
-		realErr = errors.New("unknown error")
+		realErr = errors.New("unexpected API error")
 	}
 
 	handle.ServerError(c, realErr)

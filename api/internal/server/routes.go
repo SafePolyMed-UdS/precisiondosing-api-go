@@ -17,7 +17,7 @@ import (
 )
 
 func RegisterSysRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
-	c := syscontroller.NewSysController(resourceHandle)
+	c := syscontroller.New(resourceHandle)
 
 	users := r.Group("/sys")
 	{
@@ -27,7 +27,7 @@ func RegisterSysRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle
 }
 
 func RegisterUserRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
-	c := usercontroller.NewUserController(resourceHandle)
+	c := usercontroller.New(resourceHandle)
 
 	// no auth here
 	user := r.Group("/user")
@@ -38,7 +38,7 @@ func RegisterUserRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandl
 }
 
 func RegisterAdminRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
-	c := admincontroller.NewAdminController(resourceHandle)
+	c := admincontroller.New(resourceHandle)
 
 	authUser := r.Group("/admin")
 	authUser.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
@@ -52,18 +52,18 @@ func RegisterAdminRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHand
 }
 
 func RegisterDSSRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
-	c := dsscontroller.NewDSSController(resourceHandle)
+	c := dsscontroller.New(resourceHandle)
 
 	dss := r.Group("/dose")
 	dss.Use(middleware.Authentication(&resourceHandle.AuthCfg))
 	{
 		dss.POST("/precheck/", c.PostPrecheck)
-		dss.POST("/adjust/", c.AdaptDose)
+		dss.POST("/adjust/", c.PostAdjust)
 	}
 }
 
 func RegisterModelRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
-	c := modelcontroller.NewModelController(resourceHandle.Prechecker.PBPKModels.Definitions)
+	c := modelcontroller.New(resourceHandle.Prechecker.PBPKModels.Definitions)
 
 	models := r.Group("/models")
 	models.Use(middleware.Authentication(&resourceHandle.AuthCfg))
@@ -73,10 +73,12 @@ func RegisterModelRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHand
 }
 
 func RegisterTestRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
-	dss := r.Group("/test")
-	dss.Use(middleware.Authentication(&resourceHandle.AuthCfg))
+	c := testcontroller.New()
+
+	test := r.Group("/test")
+	test.Use(middleware.Authentication(&resourceHandle.AuthCfg))
 	{
-		dss.POST("/acceptresult/:orderId", testcontroller.AcceptResult)
+		test.POST("/acceptresult/:orderId", c.AcceptResult)
 	}
 }
 

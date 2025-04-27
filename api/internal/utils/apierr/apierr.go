@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"precisiondosing-api-go/internal/utils/logger"
+	"precisiondosing-api-go/internal/utils/log"
 	"reflect"
 
 	"github.com/gin-gonic/gin"
@@ -34,11 +34,13 @@ func (e Error) Message() string {
 func (e Error) Log(c *gin.Context) {
 	switch e.Status() {
 	case http.StatusUnauthorized:
-		logger.LogUnauthorizedError(c)
+		log.Unauthorized(c)
 	case http.StatusForbidden:
-		logger.LogForbiddenError(c, e.Error())
+		log.Forbidden(c, e.Error())
+	case http.StatusBadRequest:
+		log.BadRequest(c, e.Error())
 	case http.StatusInternalServerError:
-		logger.LogServerError(c, errors.New(e.Message()))
+		log.ServerError(c, errors.New(e.Message()))
 	}
 }
 

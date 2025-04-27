@@ -25,8 +25,8 @@ type DatabaseConfig struct {
 	MaxConnLifetime time.Duration `yaml:"max_conn_lifetime"`
 }
 
-type MongoConfig struct {
-	URI         string        `env:"MONGO_URI, required"`
+type IndividualDBConfig struct {
+	URI         string        `env:"INDIVIDUAL_DB_URI, required"`
 	MaxPoolSize uint64        `yaml:"max_pool_size"`
 	MinPoolSize uint64        `yaml:"min_pool_size"`
 	MaxIdletime time.Duration `yaml:"max_idle_time"`
@@ -120,19 +120,19 @@ func (b *Bytes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 }
 
 type APIConfig struct {
-	Meta       MetaConfig       `yaml:"meta"`
-	Server     ServerConfig     `yaml:"server"`
-	RLang      RConfig          `yaml:"rlang"`
-	JobRunner  JobRunnerConfig  `yaml:"job_runner"`
-	Database   DatabaseConfig   `yaml:"database"`
-	Mongo      MongoConfig      `yaml:"mongo"`
-	Log        LogConfig        `yaml:"log"`
-	AuthToken  AuthTokenConfig  `yaml:"auth_token"`
-	ResetToken ResetTokenConfig `yaml:"reset_token"`
-	MedInfoAPI MedInfoConfig    `yaml:"medinfo"`
-	Schema     SchemaConfig     `yaml:"schema"`
-	Models     Models           `yaml:"models"`
-	MMCAPI     MMCConfig        `yaml:"mmc"`
+	Meta         MetaConfig         `yaml:"meta"`
+	Server       ServerConfig       `yaml:"server"`
+	RLang        RConfig            `yaml:"rlang"`
+	JobRunner    JobRunnerConfig    `yaml:"job_runner"`
+	Database     DatabaseConfig     `yaml:"database"`
+	IndividualDB IndividualDBConfig `yaml:"induvidual_db"`
+	Log          LogConfig          `yaml:"log"`
+	AuthToken    AuthTokenConfig    `yaml:"auth_token"`
+	ResetToken   ResetTokenConfig   `yaml:"reset_token"`
+	MedInfoAPI   MedInfoConfig      `yaml:"medinfo"`
+	Schema       SchemaConfig       `yaml:"schema"`
+	Models       Models             `yaml:"models"`
+	MMCAPI       MMCConfig          `yaml:"mmc"`
 }
 
 // Read reads the configuration file and environment variables

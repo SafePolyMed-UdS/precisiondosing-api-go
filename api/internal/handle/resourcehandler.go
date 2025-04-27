@@ -2,10 +2,10 @@ package handle
 
 import (
 	"precisiondosing-api-go/cfg"
-	"precisiondosing-api-go/internal/mongodb"
+	"precisiondosing-api-go/internal/precheck"
+	"precisiondosing-api-go/internal/services/individualdb"
 	"precisiondosing-api-go/internal/utils/callr"
 	"precisiondosing-api-go/internal/utils/helper"
-	"precisiondosing-api-go/internal/utils/precheck"
 	"precisiondosing-api-go/internal/utils/validate"
 
 	"gorm.io/gorm"
@@ -26,7 +26,7 @@ type ResourceHandle struct {
 
 type Databases struct {
 	GormDB  *gorm.DB
-	MongoDB *mongodb.MongoConnection
+	MongoDB *individualdb.IndividualDB
 }
 
 type JSONValidators struct {

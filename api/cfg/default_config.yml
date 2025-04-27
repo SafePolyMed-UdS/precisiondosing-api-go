@@ -10,16 +10,16 @@ server:
   address: "127.0.0.1:3333"
 log:
   level: "INFO"
-  json_format: true
+  json_format: false
   slow_query_theshold: "2s"
-  db_level: "WARN"
+  db_level: "SILENT"
   log_caller: false
 database:
   db_name: "doseadjustservice"
   max_open_conns: 50
   max_idle_conns: 10
   max_conn_lifetime: "1h"
-mongo:
+induvidual_db:
   max_pool_size: 50
   min_pool_size: 10
   max_idle_time: "10m"
