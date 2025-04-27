@@ -1,4 +1,4 @@
-package abdata
+package medinfo
 
 import (
 	"encoding/json"
@@ -28,9 +28,9 @@ type CompoundInteraction struct {
 	DosesR       []*CompoundDose `json:"doses_right"`
 }
 
-func (j *API) GetCommpoundInteractions(compounds []string) ([]CompoundInteraction, *queryerr.Error) {
-	if !j.AccessValid() {
-		err := j.Refresh()
+func (a *API) GetCommpoundInteractions(compounds []string) ([]CompoundInteraction, *queryerr.Error) {
+	if !a.AccessValid() {
+		err := a.Refresh()
 		if err != nil {
 			return nil, err
 		}
@@ -38,12 +38,12 @@ func (j *API) GetCommpoundInteractions(compounds []string) ([]CompoundInteractio
 
 	compoundStr := strings.Join(compounds, ",")
 	compoundStr = url.QueryEscape(compoundStr)
-	url := fmt.Sprintf("%s/interactions/compounds/", j.BaseURL)
+	url := fmt.Sprintf("%s/interactions/compounds/", a.baseURL)
 	url += fmt.Sprintf("?compounds=%s", compoundStr)
 
-	j.Mutex.Lock()
-	authHeader := bearerHeader(j.AccessToken)
-	j.Mutex.Unlock()
+	a.mutex.Lock()
+	authHeader := bearerHeader(a.AccessToken)
+	a.mutex.Unlock()
 
 	body, err := get(url, &authHeader)
 	if err != nil {

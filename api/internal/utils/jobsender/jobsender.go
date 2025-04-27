@@ -2,13 +2,14 @@ package jobsender
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/model"
-	"precisiondosing-api-go/internal/utils/resultsender"
+	"precisiondosing-api-go/internal/utils/mmc"
 	"sync"
 	"time"
 
-	"github.com/rs/zerolog/log"
 	"gorm.io/gorm"
 )
 
@@ -17,19 +18,23 @@ type JobSender struct {
 	cancel        context.CancelFunc
 	wg            sync.WaitGroup
 	fetchInterval time.Duration
+	batchSize     int
 	jobDB         *gorm.DB
-	sender        *resultsender.Sender
+	mmcAPI        *mmc.API
 }
 
-func New(senderConfig cfg.SendRunner, jobDB *gorm.DB) *JobSender {
+func New(mmcConfig cfg.MMCConfig, jobDB *gorm.DB) *JobSender {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &JobSender{
-		fetchInterval: senderConfig.Interval,
-		sender: resultsender.New(
-			senderConfig.Login,
-			senderConfig.Password,
-			senderConfig.AuthEndpoint,
-			senderConfig.SendEndpoint,
+		fetchInterval: mmcConfig.Interval,
+		batchSize:     mmcConfig.BatchSize,
+		mmcAPI: mmc.NewAPI(
+			mmcConfig.Login,
+			mmcConfig.Password,
+			mmcConfig.AuthEndpoint,
+			mmcConfig.ResultEndpoint,
+			mmcConfig.PDFPrefix,
+			mmcConfig.ExpiryThreshold,
 		),
 		ctx:    ctx,
 		cancel: cancel,
@@ -57,22 +62,44 @@ func (js *JobSender) run() {
 		case <-js.ctx.Done():
 			return
 		case <-ticker.C:
-			js.processJobs(js.ctx)
+			if err := js.processJobs(js.ctx); err != nil {
+				// TODO: log error
+			}
 		}
 	}
 }
 
-func (js *JobSender) processJobs(ctx context.Context) {
+func (js *JobSender) processJobs(ctx context.Context) error {
 	var orders []model.Order
-	err := js.jobDB.WithContext(ctx).
-		Where("completed_at IS NOT NULL AND sent_at is NULL").
-		Limit(2).
-		Find(&orders).Error
-
-	if err != nil {
-		// Handle error (e.g., log it)
-		return
+	if err := js.jobDB.WithContext(ctx).
+		Where("completed_at IS NOT NULL AND sent_at IS NULL").
+		Order("COALESCE(sent_trys, 0) ASC").
+		Limit(js.batchSize).
+		Find(&orders).Error; err != nil {
+		return fmt.Errorf("failed to fetch orders: %w", err)
 	}
 
-	log.Printf("Found %d orders to send", len(orders))
+	for _, order := range orders {
+		if order.ResultPDF == nil {
+			// TODO: This cannot happen -> log error
+			continue
+		}
+
+		pdfBytes, err := base64.StdEncoding.DecodeString(*order.ResultPDF)
+		if err != nil {
+			// TODO: log error
+			continue
+		}
+
+		// TODO: increment sent_trys
+		if err := js.mmcAPI.Send(pdfBytes, order.OrderID); err != nil {
+			// TODO: log error
+			continue
+		}
+
+		// TODO: update order as sent (sent_at to now)
+		// log error -> do not return error
+	}
+
+	return nil
 }

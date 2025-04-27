@@ -79,7 +79,7 @@ func checkToken(tokenString string, jwtKey *cfg.Bytes, issuer string, tokenType 
 	})
 
 	if err != nil || !token.Valid {
-		return nil, errors.New("invalid token")
+		return nil, errors.New("could not parse JWT")
 	}
 
 	const timeSkew = validate.ServerTimeSkew

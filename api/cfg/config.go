@@ -52,8 +52,10 @@ type MetaConfig struct {
 
 type LogConfig struct {
 	Level              string        `yaml:"level"`
+	JSONFormat         bool          `yaml:"json_format"`
 	SlowQueryThreshold time.Duration `yaml:"slow_query_theshold"`
 	DBLevel            string        `yaml:"db_level"`
+	LogCaller          bool          `yaml:"log_caller"`
 }
 
 type Models struct {
@@ -80,10 +82,11 @@ type ResetTokenConfig struct {
 	RetryInterval  time.Duration `yaml:"retry_interval"`
 }
 
-type ABDATAConfig struct {
-	URL      string `yaml:"url"`
-	Login    string `env:"ABDATA_LOGIN, required"`
-	Password string `env:"ABDATA_PASSWORD, required"`
+type MedInfoConfig struct {
+	URL             string        `yaml:"url"`
+	ExpiryThreshold time.Duration `yaml:"expiry_threshold"`
+	Login           string        `env:"ABDATA_LOGIN, required"`
+	Password        string        `env:"ABDATA_PASSWORD, required"`
 }
 
 type SchemaConfig struct {
@@ -95,15 +98,18 @@ type MailerConfig struct {
 	APIKey    string `env:"SEND_EMAIL_API_KEY, required"`
 }
 
-type SendRunner struct {
-	SendEndpoint string        `yaml:"send_endpoint"`
-	AuthEndpoint string        `yaml:"auth_endpoint"`
-	Interval     time.Duration `yaml:"fetch_interval"`
-	Login        string        `env:"MMC_LOGIN, required"`
-	Password     string        `env:"MMC_PASSWORD, required"`
+type MMCConfig struct {
+	ResultEndpoint  string        `yaml:"result_endpoint"`
+	AuthEndpoint    string        `yaml:"auth_endpoint"`
+	Interval        time.Duration `yaml:"fetch_interval"`
+	BatchSize       int           `yaml:"batch_size"`
+	ExpiryThreshold time.Duration `yaml:"expiry_threshold"`
+	PDFPrefix       string        `yaml:"pdf_prefix"`
+	Login           string        `env:"MMC_LOGIN, required"`
+	Password        string        `env:"MMC_PASSWORD, required"`
 }
 
-type JobRunner struct {
+type JobRunnerConfig struct {
 	Interval time.Duration `yaml:"fetch_interval"`
 	Timeout  time.Duration `yaml:"timeout"`
 	MaxJobs  int           `yaml:"max_concurrent_jobs"`
@@ -122,17 +128,17 @@ type APIConfig struct {
 	Meta       MetaConfig       `yaml:"meta"`
 	Server     ServerConfig     `yaml:"server"`
 	RLang      RConfig          `yaml:"rlang"`
-	JobRunner  JobRunner        `yaml:"job_runner"`
+	JobRunner  JobRunnerConfig  `yaml:"job_runner"`
 	Database   DatabaseConfig   `yaml:"database"`
 	Mongo      MongoConfig      `yaml:"mongo"`
 	Log        LogConfig        `yaml:"log"`
 	AuthToken  AuthTokenConfig  `yaml:"auth_token"`
 	ResetToken ResetTokenConfig `yaml:"reset_token"`
-	ABDATA     ABDATAConfig     `yaml:"abdata"`
+	MedInfoAPI MedInfoConfig    `yaml:"medinfo"`
 	Schema     SchemaConfig     `yaml:"schema"`
 	Models     Models           `yaml:"models"`
-	SendRunner SendRunner       `yaml:"send_runner"`
-	Mailer     MailerConfig
+	MMCAPI     MMCConfig        `yaml:"mmc"`
+	Mailer     MailerConfig     // TODO: kill this and the endpoints that are not used
 }
 
 // Read reads the configuration file and environment variables

@@ -27,7 +27,7 @@ func main() {
 	// server
 	srv, err := server.New(config, args.DebugMode)
 	if err != nil {
-		logger.LogInternalError(err)
+		//logger.LogInternalError(err)
 		panic(fmt.Sprintf("Cannot create server: %v", err))
 	}
 

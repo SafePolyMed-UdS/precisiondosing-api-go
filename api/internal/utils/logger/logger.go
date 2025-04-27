@@ -19,9 +19,15 @@ func MustInit(logConfig cfg.LogConfig, debug bool) {
 		panic(fmt.Sprintf("Error setting log level: %v", err))
 	}
 
-	writer := writer(debug)
+	writer := writer(debug, logConfig.JSONFormat)
+	baseLogger := zerolog.New(writer).With().Timestamp()
+
+	if logConfig.LogCaller {
+		baseLogger = baseLogger.Caller()
+	}
+
+	log.Logger = baseLogger.Logger()
 	zerolog.SetGlobalLevel(zerLogLevel)
-	log.Logger = zerolog.New(writer).With().Timestamp().Logger()
 }
 
 func LogServerError(c *gin.Context, err error) {
@@ -31,12 +37,6 @@ func LogServerError(c *gin.Context, err error) {
 		Int("status", http.StatusInternalServerError).
 		Err(err).
 		Msg("Internal server error")
-}
-
-func LogInternalError(err error) {
-	log.Error().
-		Err(err).
-		Msg("Internal error")
 }
 
 func LogForbiddenError(c *gin.Context, msg string) {
@@ -59,9 +59,35 @@ func LogUnauthorizedError(c *gin.Context) {
 		Msg("Unauthorized")
 }
 
-func writer(debug bool) io.Writer {
-	consoleWriter := zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339, NoColor: !debug}
-	return consoleWriter
+func LogInfo(msg string, fields map[string]interface{}) {
+	event := log.Info()
+	for k, v := range fields {
+		event = event.Interface(k, v)
+	}
+	event.Msg(msg)
+}
+
+func LogDebug(msg string, fields map[string]interface{}) {
+	event := log.Debug()
+	for k, v := range fields {
+		event = event.Interface(k, v)
+	}
+	event.Msg(msg)
+}
+
+func LogError(err error, msg string, fields map[string]interface{}) {
+	event := log.Error().Err(err)
+	for k, v := range fields {
+		event = event.Interface(k, v)
+	}
+	event.Msg(msg)
+}
+
+func writer(debug bool, json bool) io.Writer {
+	if !json {
+		return zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339, NoColor: debug}
+	}
+	return os.Stdout
 }
 
 func logLevel(logLevel string, debug bool) (zerolog.Level, error) {

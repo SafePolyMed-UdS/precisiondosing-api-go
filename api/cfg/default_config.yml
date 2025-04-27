@@ -10,8 +10,10 @@ server:
   address: "127.0.0.1:3333"
 log:
   level: "INFO"
+  json_format: true
   slow_query_theshold: "2s"
   db_level: "WARN"
+  log_caller: false
 database:
   db_name: "doseadjustservice"
   max_open_conns: 50
@@ -30,8 +32,6 @@ auth_token:
 reset_token:
   expiration_time: "48h"
   retry_interval: "24h"
-abdata:
-  url: "https://medinfo.precisiondosing.de/api/v1"
 schema:
   precheck: "file:///schemas/precheck_input.schema.json"
 models:
@@ -46,7 +46,13 @@ job_runner:
   fetch_interval: "5s"
   max_concurrent_jobs: 5
   timeout: "60s"
-send_runner:
+medinfo:
+  url: "https://medinfo.precisiondosing.de/api/v1"
+  expiry_threshold: "2m"
+mmc:
   fetch_interval: "5s"
-  send_endpoint: "127.0.0.1:3333/v1/test/acceptresult"
-  auth_endpoint: "127.0.0.1:3333/v1/user/login"
+  batch_size: 2
+  expiry_threshold: "2m"
+  pdf_prefix: "doseadjust"
+  result_endpoint: "http://127.0.0.1:3333/api/v1/test/acceptresult"
+  auth_endpoint: "http://127.0.0.1:3333/api/v1/user/login"

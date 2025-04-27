@@ -13,10 +13,10 @@ import (
 	"precisiondosing-api-go/internal/mongodb"
 	"precisiondosing-api-go/internal/pbpk"
 	"precisiondosing-api-go/internal/responder"
-	"precisiondosing-api-go/internal/utils/abdata"
 	"precisiondosing-api-go/internal/utils/callr"
 	"precisiondosing-api-go/internal/utils/jobrunner"
 	"precisiondosing-api-go/internal/utils/jobsender"
+	"precisiondosing-api-go/internal/utils/medinfo"
 	"precisiondosing-api-go/internal/utils/precheck"
 	"precisiondosing-api-go/internal/utils/validate"
 	"runtime"
@@ -73,7 +73,7 @@ func New(config *cfg.APIConfig, debug bool) (*Server, error) {
 	)
 
 	// init job sender
-	jobSender := jobsender.New(config.SendRunner, resourceHandle.Databases.GormDB)
+	jobSender := jobsender.New(config.MMCAPI, resourceHandle.Databases.GormDB)
 
 	// server
 	srv := &Server{
@@ -213,10 +213,10 @@ func initPrechecker(config *cfg.APIConfig, mongo *mongodb.MongoConnection) (*pre
 	modelDefinitions := pbpk.MustParseAll(config.Models)
 
 	// init Abdata
-	aCfg := config.ABDATA
-	medinfoAPI := abdata.NewJWT(aCfg.URL, aCfg.Login, aCfg.Password)
+	aCfg := config.MedInfoAPI
+	medinfoAPI := medinfo.NewAPI(aCfg.URL, aCfg.Login, aCfg.Password, aCfg.ExpiryThreshold)
 	if err := medinfoAPI.Refresh(); err != nil {
-		return nil, fmt.Errorf("cannot login to ABDATA: %w", err)
+		return nil, fmt.Errorf("cannot login to MedInfo: %w", err)
 	}
 
 	// init medinfo

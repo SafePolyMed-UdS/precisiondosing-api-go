@@ -32,7 +32,7 @@ type JobRunner struct {
 	jobDB      *gorm.DB
 }
 
-func New(config cfg.JobRunner, preckecker *precheck.PreCheck, callr *callr.CallR, jobDB *gorm.DB) *JobRunner {
+func New(config cfg.JobRunnerConfig, preckecker *precheck.PreCheck, callr *callr.CallR, jobDB *gorm.DB) *JobRunner {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &JobRunner{
 		cfg:        Config{fetchInterval: config.Interval, timeout: config.Timeout, workerPoolSize: config.MaxJobs},

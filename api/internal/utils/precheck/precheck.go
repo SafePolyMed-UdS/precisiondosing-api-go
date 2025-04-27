@@ -8,13 +8,13 @@ import (
 	"precisiondosing-api-go/internal/model"
 	"precisiondosing-api-go/internal/mongodb"
 	"precisiondosing-api-go/internal/pbpk"
-	"precisiondosing-api-go/internal/utils/abdata"
+	"precisiondosing-api-go/internal/utils/medinfo"
 	"slices"
 	"sort"
 	"strings"
 	"time"
 
-	"github.com/robfig/cron"
+	cron "github.com/robfig/cron"
 )
 
 type Intake struct {
@@ -32,12 +32,12 @@ type Compound struct {
 }
 
 type Result struct {
-	Message           string                       `json:"message"`
-	Compounds         []Compound                   `json:"compounds"`
-	Interactions      []abdata.CompoundInteraction `json:"interactions"`
-	OrganImpairment   bool                         `json:"impairment"`
-	VirtualIndividual json.RawMessage              `json:"virtual_individual"`
-	ModelID           string                       `json:"model_id"`
+	Message           string                        `json:"message"`
+	Compounds         []Compound                    `json:"compounds"`
+	Interactions      []medinfo.CompoundInteraction `json:"interactions"`
+	OrganImpairment   bool                          `json:"impairment"`
+	VirtualIndividual json.RawMessage               `json:"virtual_individual"`
+	ModelID           string                        `json:"model_id"`
 }
 
 type Error struct {
@@ -71,14 +71,14 @@ func NewError(msg string, recoverable bool, wrappedErr ...error) *Error {
 
 type PreCheck struct {
 	mongoDB    *mongodb.MongoConnection
-	ABDATA     *abdata.API
+	MedInfoAPI *medinfo.API
 	PBPKModels *pbpk.Models
 }
 
-func New(mongoDB *mongodb.MongoConnection, abdata *abdata.API, pbpkModels *pbpk.Models) *PreCheck {
+func New(mongoDB *mongodb.MongoConnection, medinfoAPI *medinfo.API, pbpkModels *pbpk.Models) *PreCheck {
 	return &PreCheck{
 		mongoDB:    mongoDB,
-		ABDATA:     abdata,
+		MedInfoAPI: medinfoAPI,
 		PBPKModels: pbpkModels,
 	}
 }
@@ -112,7 +112,7 @@ func (p *PreCheck) Check(data *model.PatientData) (*Result, *Error) {
 	p.impairmentCheck(response, data)
 
 	// MedInfo check
-	err = p.abdataCheck(response)
+	err = p.medinfoCheck(response)
 	if err != nil {
 		return response, err
 	}
@@ -268,7 +268,7 @@ func (p *PreCheck) drugCompounds(resp *Result, data *model.PatientData) *Error {
 	return nil
 }
 
-func (p *PreCheck) abdataCheck(resp *Result) *Error {
+func (p *PreCheck) medinfoCheck(resp *Result) *Error {
 	compounds := resp.Compounds
 	if len(compounds) < 2 {
 		resp.Message = appendMsg(resp.Message, "MedInfo Check: Less than 2 compounds. No interaction check performed")
@@ -280,7 +280,7 @@ func (p *PreCheck) abdataCheck(resp *Result) *Error {
 		compoundNames = append(compoundNames, compound.Name)
 	}
 
-	interactions, err := p.ABDATA.GetCommpoundInteractions(compoundNames)
+	interactions, err := p.MedInfoAPI.GetCommpoundInteractions(compoundNames)
 	resp.Interactions = interactions
 	if err != nil {
 		resp.Message = appendMsg(resp.Message, "MedinfoCheck: Failed to fetch interactions")

@@ -1,4 +1,4 @@
-package abdata
+package medinfo
 
 import (
 	"bytes"
@@ -15,41 +15,44 @@ import (
 
 type API struct {
 	tokens.AuthTokens
-	Role      string     `json:"role"`
-	LastLogin *time.Time `json:"last_login"`
-	BaseURL   string     `json:"-"`
-	Login     string     `json:"-"`
-	Password  string     `json:"-"`
-	Mutex     sync.Mutex `json:"-"`
+	Role            string        `json:"role"`
+	LastLogin       *time.Time    `json:"last_login"`
+	baseURL         string        `json:"-"`
+	login           string        `json:"-"`
+	password        string        `json:"-"`
+	expiryThreshold time.Duration `json:"-"`
+	mutex           sync.Mutex    `json:"-"`
 }
 
-func NewJWT(baseURL, login, password string) *API {
+func NewAPI(baseURL, login, password string, expiryThreshold time.Duration) *API {
 	return &API{
-		BaseURL:  baseURL,
-		Login:    login,
-		Password: password,
+		baseURL:         baseURL,
+		login:           login,
+		password:        password,
+		expiryThreshold: expiryThreshold,
 	}
 }
 
-func (j *API) AccessValid() bool {
-	j.Mutex.Lock()
-	defer j.Mutex.Unlock()
-	return j.AccessToken != "" && j.AccessExpiresIn.After(time.Now())
+func (a *API) AccessValid() bool {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+	return a.AccessToken != "" && a.AccessExpiresIn.After(time.Now())
 }
 
-func (j *API) RefreshValid() bool {
-	j.Mutex.Lock()
-	defer j.Mutex.Unlock()
-	return j.RefreshToken != "" && j.RefreshExpiresIn.After(time.Now())
+func (a *API) RefreshValid() bool {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
+	return a.RefreshToken != "" && a.RefreshExpiresIn.After(time.Now())
 }
 
-func (j *API) Refresh() *queryerr.Error {
-	j.Mutex.Lock()
-	defer j.Mutex.Unlock()
+func (a *API) Refresh() *queryerr.Error {
+	a.mutex.Lock()
+	defer a.mutex.Unlock()
 
 	// try to refresh the access token if it is expired
-	if j.RefreshToken != "" && j.RefreshExpiresIn.After(time.Now()) {
-		err := refresh(j)
+	timeThreshold := time.Now().Add(a.expiryThreshold)
+	if a.RefreshToken != "" && a.RefreshExpiresIn.After(timeThreshold) {
+		err := refresh(a)
 		if err != nil {
 			return err
 		}
@@ -57,7 +60,7 @@ func (j *API) Refresh() *queryerr.Error {
 	}
 
 	// try to login if the refresh token is expired
-	err := login(j)
+	err := login(a)
 	if err != nil {
 		return err
 	}
@@ -65,8 +68,8 @@ func (j *API) Refresh() *queryerr.Error {
 	return nil
 }
 
-func authenticate(j *API, endpoint string, payload any, authHeader *string) *queryerr.Error {
-	url := j.BaseURL + endpoint
+func authenticate(a *API, endpoint string, payload any, authHeader *string) *queryerr.Error {
+	url := a.baseURL + endpoint
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return queryerr.NewInternal(fmt.Errorf("failed to marshal payload: %w", err))
@@ -97,22 +100,22 @@ func authenticate(j *API, endpoint string, payload any, authHeader *string) *que
 		return queryerr.NewInternal(fmt.Errorf("unexpected status: %s", tmp.Status))
 	}
 
-	j.AuthTokens = tmp.Data.AuthTokens
-	j.Role = tmp.Data.Role
-	j.LastLogin = tmp.Data.LastLogin
+	a.AuthTokens = tmp.Data.AuthTokens
+	a.Role = tmp.Data.Role
+	a.LastLogin = tmp.Data.LastLogin
 
 	return nil
 }
 
-func refresh(j *API) *queryerr.Error {
-	payload := map[string]string{"refresh_token": j.RefreshToken}
-	authHeader := bearerHeader(j.AccessToken)
-	return authenticate(j, "/user/refresh-token", payload, &authHeader)
+func refresh(a *API) *queryerr.Error {
+	payload := map[string]string{"refresh_token": a.RefreshToken}
+	authHeader := bearerHeader(a.AccessToken)
+	return authenticate(a, "/user/refresh-token", payload, &authHeader)
 }
 
-func login(j *API) *queryerr.Error {
-	payload := map[string]string{"login": j.Login, "password": j.Password}
-	return authenticate(j, "/user/login", payload, nil)
+func login(a *API) *queryerr.Error {
+	payload := map[string]string{"login": a.login, "password": a.password}
+	return authenticate(a, "/user/login", payload, nil)
 }
 
 func bearerHeader(token string) string {
