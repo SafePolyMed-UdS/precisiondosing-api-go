@@ -330,6 +330,31 @@ const docTemplate = `{
                 }
             }
         },
+        "/models": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "__Authentication required__\nRetrieve a list of all available PBPK models.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Models"
+                ],
+                "summary": "List available models",
+                "responses": {
+                    "200": {
+                        "description": "List of models",
+                        "schema": {
+                            "$ref": "#/definitions/JSendSuccess-ModelsResp"
+                        }
+                    }
+                }
+            }
+        },
         "/sys/info": {
             "get": {
                 "description": "Get information about the API including version and query limits.",
@@ -579,6 +604,11 @@ const docTemplate = `{
         "JSendError": {
             "type": "object",
             "properties": {
+                "code": {
+                    "description": "Error code",
+                    "type": "integer",
+                    "example": 500
+                },
                 "message": {
                     "description": "Error message",
                     "type": "string",
@@ -653,6 +683,24 @@ const docTemplate = `{
                     "allOf": [
                         {
                             "$ref": "#/definitions/LoginResponse"
+                        }
+                    ]
+                },
+                "status": {
+                    "description": "Status 'success'",
+                    "type": "string",
+                    "example": "success"
+                }
+            }
+        },
+        "JSendSuccess-ModelsResp": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "description": "Data with success message(s)",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/ModelsResp"
                         }
                     ]
                 },
@@ -773,6 +821,18 @@ const docTemplate = `{
                 }
             }
         },
+        "ModelsResp": {
+            "type": "object",
+            "properties": {
+                "models": {
+                    "description": "List of models",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/pbpk.ModelDefinition"
+                    }
+                }
+            }
+        },
         "PingResp": {
             "type": "object",
             "properties": {
@@ -866,6 +926,23 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "pbpk.ModelDefinition": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "perpetrators": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "victim": {
                     "type": "string"
                 }
             }

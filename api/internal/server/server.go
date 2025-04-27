@@ -168,6 +168,7 @@ func registerRoutes(r *gin.Engine, resourceHandle *handle.ResourceHandle) {
 	RegisterUserRoutes(api, resourceHandle)
 	RegisterAdminRoutes(api, resourceHandle)
 	RegisterDSSRoutes(api, resourceHandle)
+	RegisterModelRoutes(api, resourceHandle)
 	if resourceHandle.DebugMode {
 		RegisterTestRoutes(api, resourceHandle)
 	}

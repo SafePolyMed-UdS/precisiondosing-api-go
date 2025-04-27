@@ -72,8 +72,8 @@ type jsendFailure[T any] struct {
 } //	@name	JSendFailure
 
 type jsendSuccess[T any] struct {
-	Status string `json:"status" example:"success"`                          // Status 'success'
-	Data   T      `json:"data" example:"{\"some\": 1, \"fields\": \"Doe\"}"` // Data with success message(s)
+	Status string `json:"status" example:"success"` // Status 'success'
+	Data   T      `json:"data"`                     // Data with success message(s)
 } //	@name	JSendSuccess
 
 func newJSendError(message string, code int) jSendError {

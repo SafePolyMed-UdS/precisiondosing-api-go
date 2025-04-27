@@ -70,6 +70,10 @@ definitions:
     type: object
   JSendError:
     properties:
+      code:
+        description: Error code
+        example: 500
+        type: integer
       message:
         description: Error message
         example: Internal server error
@@ -117,6 +121,17 @@ definitions:
       data:
         allOf:
         - $ref: '#/definitions/LoginResponse'
+        description: Data with success message(s)
+      status:
+        description: Status 'success'
+        example: success
+        type: string
+    type: object
+  JSendSuccess-ModelsResp:
+    properties:
+      data:
+        allOf:
+        - $ref: '#/definitions/ModelsResp'
         description: Data with success message(s)
       status:
         description: Status 'success'
@@ -196,6 +211,14 @@ definitions:
       token_type:
         type: string
     type: object
+  ModelsResp:
+    properties:
+      models:
+        description: List of models
+        items:
+          $ref: '#/definitions/pbpk.ModelDefinition'
+        type: array
+    type: object
   PingResp:
     properties:
       message:
@@ -258,6 +281,17 @@ definitions:
       role:
         type: string
       status:
+        type: string
+    type: object
+  pbpk.ModelDefinition:
+    properties:
+      id:
+        type: string
+      perpetrators:
+        items:
+          type: string
+        type: array
+      victim:
         type: string
     type: object
 info:
@@ -476,6 +510,23 @@ paths:
       summary: Create a new service user
       tags:
       - Admin
+  /models:
+    get:
+      description: |-
+        __Authentication required__
+        Retrieve a list of all available PBPK models.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of models
+          schema:
+            $ref: '#/definitions/JSendSuccess-ModelsResp'
+      security:
+      - Bearer: []
+      summary: List available models
+      tags:
+      - Models
   /sys/info:
     get:
       description: Get information about the API including version and query limits.

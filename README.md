@@ -44,6 +44,10 @@ Dose Adjustment Endpoints:
 - https://doseadjustservice.precisiondosing.de/api/v1/dose/precheck
 - https://doseadjustservice.precisiondosing.de/api/v1/dose/adjust
 
+Model Endpoints:
+
+- https://doseadjustservice.precisiondosing.de/api/v1/models
+
 # Input:
 
 ```json
@@ -187,6 +191,6 @@ Dose Adjustment Endpoints:
 - [ ] Check in MedInfo for synonyms of active substances
 - [ ] Logging Framework with implementation in all functions
 - [ ] Endpoint for job queue overview
-- [ ] Endpoint for models available
 - [ ] Test with real R call with return data
 - [ ] Handle failed R calls -> should we even send a response?
+- [ ] Polish Swagger documentation

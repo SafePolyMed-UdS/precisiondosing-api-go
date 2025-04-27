@@ -4,6 +4,7 @@ import (
 	"precisiondosing-api-go/docs"
 	"precisiondosing-api-go/internal/controller/admincontroller"
 	"precisiondosing-api-go/internal/controller/dsscontroller"
+	"precisiondosing-api-go/internal/controller/modelcontroller"
 	"precisiondosing-api-go/internal/controller/syscontroller"
 	"precisiondosing-api-go/internal/controller/testcontroller"
 	"precisiondosing-api-go/internal/controller/usercontroller"
@@ -58,6 +59,16 @@ func RegisterDSSRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle
 	{
 		dss.POST("/precheck/", c.PostPrecheck)
 		dss.POST("/adjust/", c.AdaptDose)
+	}
+}
+
+func RegisterModelRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
+	c := modelcontroller.NewModelController(resourceHandle.Prechecker.PBPKModels.Definitions)
+
+	models := r.Group("/models")
+	models.Use(middleware.Authentication(&resourceHandle.AuthCfg))
+	{
+		models.GET("/", c.GetModels)
 	}
 }
 

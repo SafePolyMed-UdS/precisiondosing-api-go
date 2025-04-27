@@ -1,7 +1,6 @@
 package syscontroller
 
 import (
-	"net/http"
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/handle"
 
@@ -47,5 +46,5 @@ func (sc *SysController) GetInfo(c *gin.Context) {
 		API: sc.Meta,
 	}
 
-	c.JSON(http.StatusOK, res)
+	handle.Success(c, res)
 }
