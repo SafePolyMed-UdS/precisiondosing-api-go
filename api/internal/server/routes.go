@@ -33,20 +33,6 @@ func RegisterUserRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandl
 	{
 		user.POST("/login", c.Login)
 		user.POST("/refresh-token", c.RefreshToken)
-		user.POST("/password/reset", c.ResetPwd)
-		user.POST("/password/init", c.ResetPwd)
-		user.POST("/password/reset/confirm", c.ResetPwdConfirm)
-	}
-
-	authUser := r.Group("/user")
-	authUser.Use(middleware.Authentication(&resourceHandle.AuthCfg))
-	{
-		authUser.PATCH("/password", c.ChangePwd)
-		authUser.PATCH("/email", c.ChangeEmail)
-		authUser.POST("/email/confirm", c.ConfirmEmailChange)
-		authUser.DELETE("/", c.DeleteAccount)
-		authUser.GET("/profile", c.GetProfile)
-		authUser.PATCH("/profile", c.UpdateProfile)
 	}
 }
 
@@ -56,7 +42,6 @@ func RegisterAdminRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHand
 	authUser := r.Group("/admin")
 	authUser.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
 	{
-		authUser.POST("/users/", c.CreateUser)
 		authUser.POST("/users/service", c.CreateServiceUser)
 		authUser.GET("/users", c.GetUsers)
 		authUser.GET("/users/:email", c.GetUserByEmail)

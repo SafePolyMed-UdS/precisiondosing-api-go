@@ -48,7 +48,7 @@ func Error(c *gin.Context, err error) {
 
 	apiErr.Log(c)
 	if apiErr.Status() >= http.StatusInternalServerError {
-		c.JSON(apiErr.Status(), newJSendError(apiErr.Message()))
+		c.JSON(apiErr.Status(), newJSendError(apiErr.Message(), apiErr.Status()))
 		return
 	}
 
@@ -63,6 +63,7 @@ func Error(c *gin.Context, err error) {
 type jSendError struct {
 	Status  string `json:"status" example:"error"`                  // Status
 	Message string `json:"message" example:"Internal server error"` // Error message
+	Code    int    `json:"code" example:"500"`                      // Error code
 } //	@name	JSendError
 
 type jsendFailure[T any] struct {
@@ -71,14 +72,15 @@ type jsendFailure[T any] struct {
 } //	@name	JSendFailure
 
 type jsendSuccess[T any] struct {
-	Status string `json:"status" example:"success"` // Status 'success'
-	Data   T      `json:"data"`                     // Data with success message(s)
+	Status string `json:"status" example:"success"`                          // Status 'success'
+	Data   T      `json:"data" example:"{\"some\": 1, \"fields\": \"Doe\"}"` // Data with success message(s)
 } //	@name	JSendSuccess
 
-func newJSendError(message string) jSendError {
+func newJSendError(message string, code int) jSendError {
 	return jSendError{
 		Status:  "error", // Status 'error'
 		Message: message, // Single error message
+		Code:    code,    // Error code
 	}
 }
 

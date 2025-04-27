@@ -62,70 +62,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "__Admin role required__\nCreate a new user for the API. Ths user will receive an email with a token to set their password.\nYou can create users with the following roles: ` + "`" + `admin` + "`" + `, ` + "`" + `user` + "`" + `, ` + "`" + `approver` + "`" + `.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Admin"
-                ],
-                "summary": "Create a new user",
-                "parameters": [
-                    {
-                        "description": "Request body",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/CreateUserQuery"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "User created",
-                        "schema": {
-                            "$ref": "#/definitions/JSendSuccess-map_string_string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Non-admin user",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Bad query format",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ValidationResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/JSendError"
-                        }
-                    }
-                }
             }
         },
         "/admin/users/service": {
@@ -194,6 +130,206 @@ const docTemplate = `{
                 }
             }
         },
+        "/admin/users/{email}": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "__Admin role required__\nRetrieve a single user by their email address.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Get user by email",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User email",
+                        "name": "email",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User found",
+                        "schema": {
+                            "$ref": "#/definitions/JSendSuccess-model_User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Non-admin user",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/JSendError"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "__Admin role required__\nDelete a user by their email address. Cannot delete own account.",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Delete user by email",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User email",
+                        "name": "email",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted",
+                        "schema": {
+                            "$ref": "#/definitions/JSendSuccess-map_string_string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Cannot delete own account",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/JSendError"
+                        }
+                    }
+                }
+            },
+            "patch": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "__Admin role required__\nUpdate a user's role or status. Cannot change own role or status.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Admin"
+                ],
+                "summary": "Change user profile",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User email",
+                        "name": "email",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Role and/or status updates",
+                        "name": "ChangeUserProfileQuery",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ChangeUserProfileQuery"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User profile updated",
+                        "schema": {
+                            "$ref": "#/definitions/JSendSuccess-map_string_string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Cannot change own role or status",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "User not found",
+                        "schema": {
+                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/JSendError"
+                        }
+                    }
+                }
+            }
+        },
         "/sys/info": {
             "get": {
                 "description": "Get information about the API including version and query limits.",
@@ -229,181 +365,6 @@ const docTemplate = `{
                         "description": "Response with pong message",
                         "schema": {
                             "$ref": "#/definitions/JSendSuccess-PingResp"
-                        }
-                    }
-                }
-            }
-        },
-        "/user": {
-            "delete": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "The account will be soft deleted.\nIf the user is the last admin, the account cannot be deleted.\nIf a user is soft-deleted, the account will be permanently deleted in the future.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Delete user account",
-                "responses": {
-                    "200": {
-                        "description": "Password reset",
-                        "schema": {
-                            "$ref": "#/definitions/JSendSuccess-map_string_string"
-                        }
-                    },
-                    "400": {
-                        "description": "Last admin account",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/JSendError"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/email": {
-            "patch": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Requests an email change for the user. An email change token will be sent to the new email address.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Request email change for the user",
-                "parameters": [
-                    {
-                        "description": "Request body",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ChangeEmailQuery"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Email change request token sent",
-                        "schema": {
-                            "$ref": "#/definitions/JSendSuccess-map_string_string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request/invalid email/already in use",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Bad query format",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ValidationResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/JSendError"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/email/confirm": {
-            "post": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Confirms an email change for the user.\nThe new email address will be active on the next login.\nYou have to login (authenticate) with the old email address to confirm the change.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Confirm email change for the user",
-                "parameters": [
-                    {
-                        "description": "Request body",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ConfirmEmailChangeQuery"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Email changed",
-                        "schema": {
-                            "$ref": "#/definitions/JSendSuccess-map_string_string"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid token",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Token expired",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "No email change request found",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Bad query format",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ValidationResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/JSendError"
                         }
                     }
                 }
@@ -445,313 +406,6 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "User is not active",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Bad query format",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ValidationResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/JSendError"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/password": {
-            "patch": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Changes the password for the user. The old password must be provided.\nThe new password will be active on the next login.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Change password for the user",
-                "parameters": [
-                    {
-                        "description": "Request body",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ChangePwdQuery"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Password changed",
-                        "schema": {
-                            "$ref": "#/definitions/JSendSuccess-map_string_string"
-                        }
-                    },
-                    "400": {
-                        "description": "Wrong old password/invalid new password",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Bad query format",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ValidationResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/JSendError"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/password/init": {
-            "post": {
-                "description": "Confirms a password reset or first password set for the user.\nThe API will always return the same message (400) on auth errors to prevent email enumeration.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Login"
-                ],
-                "summary": "Confirm password reset or first password set",
-                "parameters": [
-                    {
-                        "description": "Request body",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ResetConfirmPwdQuery"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Password reset",
-                        "schema": {
-                            "$ref": "#/definitions/JSendSuccess-map_string_string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request/invalid token",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Token expired",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Bad query format",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ValidationResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/JSendError"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/password/reset": {
-            "post": {
-                "description": "Requests a password reset for the user. A password reset token will be sent to the user's email.\nPassword reset tokens are valid for a limited time.\nThe API will always return the same message (200) to prevent email enumeration.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Login"
-                ],
-                "summary": "Request password reset",
-                "parameters": [
-                    {
-                        "description": "Request body",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ResetPwdQuery"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Password reset token sent",
-                        "schema": {
-                            "$ref": "#/definitions/JSendSuccess-map_string_string"
-                        }
-                    },
-                    "422": {
-                        "description": "Bad query format",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ValidationResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/JSendError"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/password/reset/confirm": {
-            "post": {
-                "description": "Confirms a password reset or first password set for the user.\nThe API will always return the same message (400) on auth errors to prevent email enumeration.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Login"
-                ],
-                "summary": "Confirm password reset or first password set",
-                "parameters": [
-                    {
-                        "description": "Request body",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/ResetConfirmPwdQuery"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Password reset",
-                        "schema": {
-                            "$ref": "#/definitions/JSendSuccess-map_string_string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad request/invalid token",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Token expired",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "422": {
-                        "description": "Bad query format",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ValidationResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/JSendError"
-                        }
-                    }
-                }
-            }
-        },
-        "/user/profile": {
-            "get": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Get the user profile information",
-                "responses": {
-                    "200": {
-                        "description": "User profile",
-                        "schema": {
-                            "$ref": "#/definitions/JSendSuccess-UserProfile"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "$ref": "#/definitions/JSendError"
-                        }
-                    }
-                }
-            },
-            "patch": {
-                "security": [
-                    {
-                        "Bearer": []
-                    }
-                ],
-                "description": "Updates the user profile information. At least one field must be provided for update.\nThe following fields can be updated: ` + "`" + `first name` + "`" + `, ` + "`" + `last name` + "`" + `, ` + "`" + `organization` + "`" + `.",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "User"
-                ],
-                "summary": "Update user profile information",
-                "parameters": [
-                    {
-                        "description": "Request body",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/UpdateProfileQuery"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Profile updated",
-                        "schema": {
-                            "$ref": "#/definitions/JSendSuccess-map_string_string"
-                        }
-                    },
-                    "400": {
-                        "description": "No changes requested or invalid data",
-                        "schema": {
-                            "$ref": "#/definitions/JSendFailure-ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/JSendFailure-ErrorResponse"
                         }
@@ -828,48 +482,25 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "ChangeEmailQuery": {
+        "ChangeUserProfileQuery": {
             "type": "object",
-            "required": [
-                "email"
-            ],
             "properties": {
-                "email": {
-                    "description": "New email address",
+                "role": {
                     "type": "string",
-                    "example": "newmail@newcomp.com"
-                }
-            }
-        },
-        "ChangePwdQuery": {
-            "type": "object",
-            "required": [
-                "new_password",
-                "old_password"
-            ],
-            "properties": {
-                "new_password": {
-                    "description": "New password",
-                    "type": "string",
-                    "example": "new_password"
+                    "enum": [
+                        "admin",
+                        "user",
+                        "approver"
+                    ],
+                    "example": "user"
                 },
-                "old_password": {
-                    "description": "Old password",
+                "status": {
                     "type": "string",
-                    "example": "old_password"
-                }
-            }
-        },
-        "ConfirmEmailChangeQuery": {
-            "type": "object",
-            "required": [
-                "token"
-            ],
-            "properties": {
-                "token": {
-                    "description": "Change token",
-                    "type": "string",
-                    "example": "my_change_token"
+                    "enum": [
+                        "active",
+                        "inactive"
+                    ],
+                    "example": "inactive"
                 }
             }
         },
@@ -911,50 +542,6 @@ const docTemplate = `{
                 "password": {
                     "type": "string",
                     "example": "password123"
-                },
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "admin",
-                        "user",
-                        "approver"
-                    ]
-                }
-            }
-        },
-        "CreateUserQuery": {
-            "type": "object",
-            "required": [
-                "email",
-                "first_name",
-                "last_name",
-                "organization",
-                "role"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 2,
-                    "example": "joe@gmail.com"
-                },
-                "first_name": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 2,
-                    "example": "Joe"
-                },
-                "last_name": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 2,
-                    "example": "Doe"
-                },
-                "organization": {
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 2,
-                    "example": "ACME"
                 },
                 "role": {
                     "type": "string",
@@ -1094,14 +681,14 @@ const docTemplate = `{
                 }
             }
         },
-        "JSendSuccess-UserProfile": {
+        "JSendSuccess-map_string_string": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "Data with success message(s)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/UserProfile"
+                            "$ref": "#/definitions/map_string_string"
                         }
                     ]
                 },
@@ -1112,14 +699,14 @@ const docTemplate = `{
                 }
             }
         },
-        "JSendSuccess-map_string_string": {
+        "JSendSuccess-model_User": {
             "type": "object",
             "properties": {
                 "data": {
                     "description": "Data with success message(s)",
                     "allOf": [
                         {
-                            "$ref": "#/definitions/map_string_string"
+                            "$ref": "#/definitions/model.User"
                         }
                     ]
                 },
@@ -1208,105 +795,6 @@ const docTemplate = `{
                 }
             }
         },
-        "ResetConfirmPwdQuery": {
-            "type": "object",
-            "required": [
-                "email",
-                "password",
-                "token"
-            ],
-            "properties": {
-                "email": {
-                    "description": "Email address",
-                    "type": "string",
-                    "example": "joe@me.com"
-                },
-                "password": {
-                    "description": "New password",
-                    "type": "string",
-                    "example": "my_new_pwd"
-                },
-                "token": {
-                    "description": "Reset token",
-                    "type": "string",
-                    "example": "my_reset_token"
-                }
-            }
-        },
-        "ResetPwdQuery": {
-            "type": "object",
-            "required": [
-                "email"
-            ],
-            "properties": {
-                "email": {
-                    "description": "Email address",
-                    "type": "string",
-                    "example": "joe@me.com"
-                }
-            }
-        },
-        "UpdateProfileQuery": {
-            "type": "object",
-            "properties": {
-                "first_name": {
-                    "description": "First name",
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 2,
-                    "example": "Joe"
-                },
-                "last_name": {
-                    "description": "Last name",
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 2,
-                    "example": "Doe"
-                },
-                "organization": {
-                    "description": "Organization",
-                    "type": "string",
-                    "maxLength": 255,
-                    "minLength": 2,
-                    "example": "ACME"
-                }
-            }
-        },
-        "UserProfile": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "description": "Email address",
-                    "type": "string",
-                    "example": "joe@me.com"
-                },
-                "first_name": {
-                    "description": "First name",
-                    "type": "string",
-                    "example": "Joe"
-                },
-                "last_login": {
-                    "description": "Last login time",
-                    "type": "string",
-                    "example": "2021-07-01T12:00:00Z"
-                },
-                "last_name": {
-                    "description": "Last name",
-                    "type": "string",
-                    "example": "Doe"
-                },
-                "organization": {
-                    "description": "Organization",
-                    "type": "string",
-                    "example": "ACME"
-                },
-                "role": {
-                    "description": "User role",
-                    "type": "string",
-                    "example": "user"
-                }
-            }
-        },
         "ValidationResponse": {
             "type": "object",
             "properties": {
@@ -1354,6 +842,32 @@ const docTemplate = `{
             "type": "object",
             "additionalProperties": {
                 "type": "string"
+            }
+        },
+        "model.User": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "last_login": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "organization": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
             }
         }
     }

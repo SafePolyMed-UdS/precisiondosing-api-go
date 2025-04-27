@@ -12,7 +12,6 @@ require (
 	github.com/robfig/cron v1.2.0
 	github.com/rs/zerolog v1.33.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
-	github.com/sendgrid/sendgrid-go v3.16.0+incompatible
 	github.com/sethvargo/go-envconfig v1.1.0
 	github.com/swaggo/files v1.0.1
 	github.com/swaggo/gin-swagger v1.6.0
@@ -58,7 +57,6 @@ require (
 	github.com/montanaflynn/stats v0.7.1 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/robfig/cron/v3 v3.0.0
-	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.2.12 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect

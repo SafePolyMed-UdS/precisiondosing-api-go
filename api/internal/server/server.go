@@ -12,7 +12,6 @@ import (
 	"precisiondosing-api-go/internal/middleware"
 	"precisiondosing-api-go/internal/mongodb"
 	"precisiondosing-api-go/internal/pbpk"
-	"precisiondosing-api-go/internal/responder"
 	"precisiondosing-api-go/internal/utils/callr"
 	"precisiondosing-api-go/internal/utils/jobrunner"
 	"precisiondosing-api-go/internal/utils/jobsender"
@@ -134,9 +133,6 @@ func initHandler(config *cfg.APIConfig, debug bool) (*handle.ResourceHandle, err
 		return nil, fmt.Errorf("error initializing prechecker: %w", err)
 	}
 
-	// create Mailer
-	mailer := responder.NewMailer(config.Mailer, config.Meta, debug)
-
 	// create JSON validators
 	jsonValidators, err := initJSONValidators(&config.Schema)
 	if err != nil {
@@ -160,7 +156,7 @@ func initHandler(config *cfg.APIConfig, debug bool) (*handle.ResourceHandle, err
 		config.RLang.RWorker,
 	)
 
-	resourceHandle := handle.NewResourceHandle(config, databases, prechecker, callR, mailer, jsonValidators, debug)
+	resourceHandle := handle.NewResourceHandle(config, databases, prechecker, callR, jsonValidators, debug)
 	return resourceHandle, nil
 }
 

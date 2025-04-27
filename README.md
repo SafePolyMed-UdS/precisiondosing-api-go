@@ -51,70 +51,46 @@ Dose Adjustment Endpoints:
   "patient_id": 2,
   "patient_characteristics": {
     "age": 60,
-    "weight": 65,
-    "height": 168,
+    "weight": 40,
+    "height": 150,
     "sex": "female",
     "ethnicity": "asian",
-    "kidney_disease": true,
-    "liver_disease": true
+    "kidney_disease": false,
+    "liver_disease": false
   },
   "patient_pgx_profile": [
     {
       "gene": "CYP2D6",
-      "allele1": "*",
-      "allele1_cnv_multiplier": 2,
-      "allele2": "*",
-      "allele2_cnv_multiplier": 2,
-      "phenotype": "Poor metabolizer"
-    },
-    {
-      "gene": "CYP2C19",
-      "allele1": "*",
-      "allele1_cnv_multiplier": 2,
-      "allele2": "*",
-      "allele2_cnv_multiplier": 2,
-      "phenotype": "Ultrarapid metabolizer"
-    },
-    {
-      "gene": "CYP2C9",
       "allele1": "*1",
-      "allele1_cnv_multiplier": 1,
-      "allele2": "*3",
-      "allele2_cnv_multiplier": 1,
-      "phenotype": "Intermediate metabolizer ANDERS"
-    },
-    {
-      "gene": "SLCO1B1",
-      "allele1": "521CC",
       "allele1_cnv_multiplier": 2,
-      "allele2": "521CC",
-      "allele2_cnv_multiplier": 2,
-      "phenotype": "n/a"
+      "allele2": "*2",
+      "allele2_cnv_multiplier": 2
     }
   ],
   "drugs": [
     {
+      "active_substances": ["Voriconazole"],
+      "adjust_dose": true,
       "product": {
         "product_name": "Beloc-Zok 95mg",
         "atc": "C07AB02",
         "strength": 95,
         "strength_unit": "milligram"
       },
-      "active_substance": ["Metoprolol"],
       "intake_cycle": {
         "starting_at": "2024-11-03",
-        "frequency": "days",
+        "frequency": "daily",
         "frequency_modifier": 1,
         "intakes": [
           {
-            "cron": "0 8 */1 * *",
             "raw_time_str": "08:00",
+            "cron": "0 8 */1 * *",
             "dosage": 1,
             "dosage_unit": "tablets"
           },
           {
-            "cron": "0 18 */1 * *",
             "raw_time_str": "18:00",
+            "cron": "0 18 */1 * *",
             "dosage": 1,
             "dosage_unit": "tablets"
           }
@@ -122,55 +98,34 @@ Dose Adjustment Endpoints:
       }
     },
     {
-      "product": {
-        "product_name": "Mayzent 2mg",
-        "atc": "L04AA42",
-        "strength": 2,
-        "strength_unit": "milligram"
-      },
-      "active_substance": ["Siponimod"],
-      "intake_cycle": {
-        "starting_at": "2024-09-16",
-        "frequency": "days",
-        "frequency_modifier": 1,
-        "intakes": [
-          {
-            "cron": "0 8 */1 * *",
-            "raw_time_str": "08:00",
-            "dosage": 1,
-            "dosage_unit": "tablets"
-          }
-        ]
-      }
-    },
-    {
+      "active_substances": ["Imatinib"],
+      "adjust_dose": false,
       "product": {
         "product_name": "Amiodaron 200 Heumann",
         "atc": "C01BD01",
         "strength": 200,
         "strength_unit": "milligram"
       },
-      "active_substance": ["Amiodaron"],
       "intake_cycle": {
         "starting_at": "2024-12-01",
-        "frequency": "days",
+        "frequency": "daily",
         "frequency_modifier": 1,
         "intakes": [
           {
-            "cron": "0 8 */1 * *",
             "raw_time_str": "08:00",
+            "cron": "0 8 */1 * *",
             "dosage": 1,
             "dosage_unit": "tablets"
           },
           {
-            "cron": "0 13 */1 * *",
             "raw_time_str": "13:00",
+            "cron": "0 13 */1 * *",
             "dosage": 1,
             "dosage_unit": "tablets"
           },
           {
-            "cron": "0 18 */1 * *",
             "raw_time_str": "18:00",
+            "cron": "0 18 */1 * *",
             "dosage": 1,
             "dosage_unit": "tablets"
           }
@@ -178,21 +133,22 @@ Dose Adjustment Endpoints:
       }
     },
     {
+      "active_substances": ["Cimetidine"],
+      "adjust_dose": false,
       "product": {
         "product_name": "Fevarin 100mg",
         "atc": "N06AB08",
         "strength": 100,
         "strength_unit": "milligram"
       },
-      "active_substance": ["Fluvoxamin"],
       "intake_cycle": {
         "starting_at": "2024-12-01",
-        "frequency": "days",
+        "frequency": "daily",
         "frequency_modifier": 1,
         "intakes": [
           {
-            "cron": "0 8 */1 * *",
             "raw_time_str": "08:00",
+            "cron": "0 8 */1 * *",
             "dosage": 1,
             "dosage_unit": "tablets"
           }
@@ -200,21 +156,22 @@ Dose Adjustment Endpoints:
       }
     },
     {
+      "active_substances": ["Clopidogrel"],
+      "adjust_dose": false,
       "product": {
         "product_name": "ESOMEP 20mg",
         "atc": "A02BC05",
         "strength": 20,
         "strength_unit": "milligram"
       },
-      "active_substance": ["Esomeprazol"],
       "intake_cycle": {
         "starting_at": "2024-12-01",
-        "frequency": "weeks",
+        "frequency": "weekly",
         "frequency_modifier": 1,
         "intakes": [
           {
-            "cron": "0 8 */7 * *",
             "raw_time_str": "08:00",
+            "cron": "0 8 */7 * *",
             "dosage": 1,
             "dosage_unit": "tablets"
           }
@@ -227,10 +184,9 @@ Dose Adjustment Endpoints:
 
 # TODO:
 
-- [x] Log to console option
-- [ ] User management
-- [ ] Input JSON validation
-- [ ] JSON structured reading
-- [ ] Precheck endpoint
-- [ ] Task database
-- [ ] Job queue handler
+- [ ] Check in MedInfo for synonyms of active substances
+- [ ] Logging Framework with implementation in all functions
+- [ ] Endpoint for job queue overview
+- [ ] Endpoint for models available
+- [ ] Test with real R call with return data
+- [ ] Handle failed R calls -> should we even send a response?

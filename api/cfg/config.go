@@ -85,17 +85,12 @@ type ResetTokenConfig struct {
 type MedInfoConfig struct {
 	URL             string        `yaml:"url"`
 	ExpiryThreshold time.Duration `yaml:"expiry_threshold"`
-	Login           string        `env:"ABDATA_LOGIN, required"`
-	Password        string        `env:"ABDATA_PASSWORD, required"`
+	Login           string        `env:"MEDINFO_LOGIN, required"`
+	Password        string        `env:"MEDINFO_PASSWORD, required"`
 }
 
 type SchemaConfig struct {
 	PreCheck string `yaml:"precheck"`
-}
-
-type MailerConfig struct {
-	SendEmail string `env:"SEND_EMAIL, required"`
-	APIKey    string `env:"SEND_EMAIL_API_KEY, required"`
 }
 
 type MMCConfig struct {
@@ -138,7 +133,6 @@ type APIConfig struct {
 	Schema     SchemaConfig     `yaml:"schema"`
 	Models     Models           `yaml:"models"`
 	MMCAPI     MMCConfig        `yaml:"mmc"`
-	Mailer     MailerConfig     // TODO: kill this and the endpoints that are not used
 }
 
 // Read reads the configuration file and environment variables

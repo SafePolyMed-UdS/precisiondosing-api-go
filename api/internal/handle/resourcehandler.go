@@ -3,7 +3,6 @@ package handle
 import (
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/mongodb"
-	"precisiondosing-api-go/internal/responder"
 	"precisiondosing-api-go/internal/utils/callr"
 	"precisiondosing-api-go/internal/utils/helper"
 	"precisiondosing-api-go/internal/utils/precheck"
@@ -18,7 +17,6 @@ type ResourceHandle struct {
 	MetaCfg        cfg.MetaConfig
 	AuthCfg        cfg.AuthTokenConfig
 	ResetCfg       cfg.ResetTokenConfig
-	Mailer         *responder.Mailer
 	Databases      Databases
 	JSONValidators JSONValidators
 	Prechecker     *precheck.PreCheck
@@ -40,7 +38,6 @@ func NewResourceHandle(
 	databases Databases,
 	prechecker *precheck.PreCheck,
 	callR *callr.CallR,
-	mailer *responder.Mailer,
 	jsonValidators JSONValidators,
 	debug bool,
 ) *ResourceHandle {
@@ -53,7 +50,6 @@ func NewResourceHandle(
 		JSONValidators: jsonValidators,
 		Prechecker:     prechecker,
 		CallR:          callR,
-		Mailer:         mailer,
 		DebugMode:      debug,
 	}
 
