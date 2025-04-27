@@ -188,9 +188,16 @@ Model Endpoints:
 
 ## TODO
 
-- [ ] Check in MedInfo for synonyms of active substances
+### Mandatory
+
+- [ ] Check in MedInfo for synonyms of active substances -> PreCheck
 - [x] Logging Framework with implementation in all functions
-- [ ] Endpoint for job queue overview
 - [ ] Test with real R call with return data
 - [ ] Handle failed R calls -> should we even send a response?
+- [ ] Real adjustment with R backend
+- [ ] Production push with Docker
+
+### Optional
+
+- [ ] Endpoint for job queue overview
 - [ ] Polish Swagger documentation

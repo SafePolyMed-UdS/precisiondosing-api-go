@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type Config struct {
@@ -103,13 +104,55 @@ func (jr *JobRunner) fetchJobs(ctx context.Context) []model.Order {
 	}
 
 	var orders []model.Order
-	err := jr.jobDB.WithContext(ctx).
-		Where("pre_checked IS FALSE").
+	now := time.Now()
+
+	tx := jr.jobDB.WithContext(ctx).Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 1. Find jobs not yet started
+	err := tx.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
+		Where("pre_checked = FALSE AND started_at IS NULL").
 		Limit(freeSlots).
 		Find(&orders).Error
 
 	if err != nil {
-		jr.logger.Error("fetching orders", log.Err(err))
+		jr.logger.Error("fetching orders with lock", log.Err(err))
+		tx.Rollback()
+		return nil
+	}
+
+	if len(orders) == 0 {
+		tx.Rollback()
+		return nil
+	}
+
+	// 2. Bulk update started_at in the database
+	ids := make([]uint, len(orders))
+	for i, order := range orders {
+		ids[i] = order.ID
+	}
+
+	err = tx.Model(&model.Order{}).
+		Where("id IN ?", ids).
+		Update("started_at", now).Error
+
+	if err != nil {
+		jr.logger.Error("bulk updating started_at", log.Err(err))
+		tx.Rollback()
+		return nil
+	}
+
+	// 3. Also update the Go structs, so later Save() will not mess up
+	for i := range orders {
+		orders[i].StartedAt = &now
+	}
+
+	if err = tx.Commit().Error; err != nil {
+		jr.logger.Error("committing transaction", log.Err(err))
 		return nil
 	}
 
@@ -171,32 +214,31 @@ func (jr *JobRunner) processJob(order *model.Order) {
 	// if unrecoverable error or precheck is done call R
 	if order.PreChecked {
 		jr.logger.Info("running order", log.Str("orderID", order.OrderID))
-		// TODO: Call R here and process result
+		_, err := jr.callr.Adjust(order.ID, jr.cfg.timeout)
+		if err != nil {
+			jr.logger.Error("calling R", log.Str("orderID", order.OrderID), log.Err(err))
+			return
+		}
 	}
 }
 
 func (jr *JobRunner) purgeOnStart(ctx context.Context) {
-	// on start purge orders that started but did not finish
-
-	var orders []model.Order
+	// On start, reset orders that started but did not finish
 	err := jr.jobDB.WithContext(ctx).
-		Where("pre_checked IS TRUE AND started_at IS NOT NULL AND completed_at IS NULL").
-		Find(&orders).Error
+		Model(&model.Order{}).
+		Where("pre_checked = TRUE AND started_at IS NOT NULL AND completed_at IS NULL").
+		Updates(map[string]interface{}{
+			"pre_checked":    false,
+			"precheck_error": nil,
+			"precheck":       nil,
+			"last_precheck":  nil,
+			"started_at":     nil,
+		}).Error
 
 	if err != nil {
-		jr.logger.Error("fetching purge orders", log.Err(err))
+		jr.logger.Error("purging incomplete orders", log.Err(err))
 		return
 	}
 
-	for _, order := range orders {
-		order.PreChecked = false
-		order.PrecheckError = nil
-		order.Precheck = nil
-		order.LastPrecheck = nil
-		order.StartedAt = nil
-
-		if err = jr.jobDB.Save(&order).Error; err != nil {
-			jr.logger.Error("purging order", log.Str("orderID", order.OrderID), log.Err(err))
-		}
-	}
+	jr.logger.Info("purged incomplete orders")
 }

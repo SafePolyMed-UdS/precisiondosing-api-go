@@ -51,7 +51,7 @@ type Resp struct {
 	ProcessLog string `json:"process_log"`
 }
 
-func (c *CallR) Adjust(jobID int64, maxExecutionTime time.Duration) Resp {
+func (c *CallR) Adjust(jobID uint, maxExecutionTime time.Duration) (*Resp, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), maxExecutionTime)
 	defer cancel()
 
@@ -59,7 +59,7 @@ func (c *CallR) Adjust(jobID int64, maxExecutionTime time.Duration) Resp {
 	script := filepath.Base(c.adjustScriptPath)
 
 	// Rscript script.R jobID
-	jobIDStr := strconv.FormatInt(jobID, 10)
+	jobIDStr := strconv.FormatUint(uint64(jobID), 10)
 	cmd := exec.CommandContext(ctx, c.rscriptPath, script, jobIDStr) //nolint:gosec // no problem here
 	cmd.Dir = wd
 	cmd.Env = append(os.Environ(),
@@ -75,25 +75,14 @@ func (c *CallR) Adjust(jobID int64, maxExecutionTime time.Duration) Resp {
 	out, err := cmd.Output()
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			return Resp{
-				Success:  false,
-				ErrorMsg: "Adjustment took too long and was aborted.",
-			}
-		}
-
-		return Resp{
-			Success:  false,
-			ErrorMsg: fmt.Sprintf("R script error: %s", err.Error()),
+			return nil, fmt.Errorf("script timeout: %w", err)
 		}
 	}
 
 	var resp Resp
 	if err = json.Unmarshal(out, &resp); err != nil {
-		return Resp{
-			Success:  false,
-			ErrorMsg: fmt.Sprintf("JSON unmarshal error: %v, output: %s", err, string(out)),
-		}
+		return nil, fmt.Errorf("cannot unmarshal script output: %w", err)
 	}
 
-	return resp
+	return &resp, nil
 }

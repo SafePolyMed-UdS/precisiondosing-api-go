@@ -40,7 +40,7 @@ models:
 rlang:
   rscript_path_win: "Rscript.exe"
   rscript_path_unix: "Rscript"
-  dose_adjust_script: "rscripts/adjust_dose.R"
+  dose_adjust_script: "rscripts/mocks/test.r"
   r_worker: 4
 job_runner:
   fetch_interval: "5s"
