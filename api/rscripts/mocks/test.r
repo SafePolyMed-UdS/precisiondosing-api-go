@@ -1,17 +1,11 @@
-# RETURN MUST BE A SERIALIZED JSON WITH THE FOLLOWING STRUCTURE
-# {
-# "success"    : Boolean,
-# "error_msg"  : String with error message if success = FALSE,
-# "process_log": String with process log
-# }
-
 # -----------------------------------------------------------
 # Helpers
 # -----------------------------------------------------------
 # Use this function to create a JSON Output to standard out
-.returnJSON <- function(success, error_msg, process_log) {
+.returnJSON <- function(dose_adjustment, error, error_msg, process_log) {
   result <- list(
-    success = success,
+    dose_adjustment = dose_adjustment,
+    error = error,
     error_msg = error_msg,
     process_log = process_log
   )
@@ -48,11 +42,12 @@ safeReturn <- function(fun) {
   tryCatch(
     {
       out <- .reallySilent(fun())
-      .returnJSON(out$success, out$error_msg, out$process_log)
+      .returnJSON(out$dose_adjustment, out$error, out$error_msg, out$process_log)
     },
     error = function(e) {
       .returnJSON(
-        success = FALSE,
+        dose_adjustment = FALSE,
+        error = TRUE,
         error_msg = e$message,
         process_log = ""
       )
@@ -73,7 +68,8 @@ basic_success <- function() {
   }
 
   list(
-    success = TRUE,
+    dose_adjustment = TRUE,
+    error = FALSE,
     error_msg = "",
     process_log = paste("Success: Order ID", id, "processed successfully.")
   )
