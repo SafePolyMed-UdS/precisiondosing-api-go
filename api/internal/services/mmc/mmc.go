@@ -117,7 +117,7 @@ func (a *API) Send(pdf []byte, orderID string) error {
 		return nil
 	}
 
-	sendURL := helper.AddLeadingSlash(a.sendURL) + orderID
+	sendURL := helper.RemoveTrailingSlash(a.sendURL) + "/" + orderID
 	_, err = post(sendURL, &buf, writer.FormDataContentType(), &bearerToken)
 	if err != nil {
 		return fmt.Errorf("failed to send to MMC: %w", err)
