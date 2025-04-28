@@ -3,12 +3,13 @@ package callr
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"precisiondosing-api-go/internal/utils/log"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -45,14 +46,46 @@ func New(
 }
 
 type Resp struct {
-	DoseAdjusted bool   `json:"dose_adjusted"`
-	Error        bool   `json:"error"`     // only if R fails -> stops with error
-	ErrorMsg     string `json:"error_msg"` // R error message from stop
-	ProcessLog   string `json:"process_log"`
+	DoseAdjusted bool     `json:"dose_adjusted"`
+	Error        bool     `json:"error"`     // only if R fails -> stops with error
+	ErrorMsg     string   `json:"error_msg"` // R error message from stop
+	CallStack    []string `json:"call_stack"`
+	ProcessLog   string   `json:"process_log"`
+}
+
+type RError struct {
+	error     error
+	CallStack []string
+}
+
+func (e *RError) Error() string {
+	var parts []string
+	parts = append(parts, "R script error")
+
+	if len(e.CallStack) > 0 {
+		parts = append(parts, "with call stack")
+	}
+
+	if e.error != nil {
+		parts = append(parts, e.error.Error())
+	}
+
+	return strings.Join(parts, ": ")
+}
+
+func (e *RError) Unwrap() error {
+	return e.error
+}
+
+func newRError(err error, callStack []string) *RError {
+	return &RError{
+		error:     err,
+		CallStack: callStack,
+	}
 }
 
 // error is always a non-recoverable system error
-func (c *CallR) Adjust(jobID uint, adjust bool, errorMsg string, maxExecutionTime time.Duration) (*Resp, error) {
+func (c *CallR) Adjust(jobID uint, adjust bool, errorMsg string, maxExecutionTime time.Duration) (*Resp, *RError) {
 	bytes, err := c.call(jobID, adjust, errorMsg, maxExecutionTime)
 	if err != nil {
 		if err.Timeout {
@@ -62,19 +95,18 @@ func (c *CallR) Adjust(jobID uint, adjust bool, errorMsg string, maxExecutionTim
 			msg := "The adjustment timed out (took too long)"
 			retryBytes, retryErr := c.call(jobID, false, msg, maxExecutionTime)
 			if retryErr != nil {
-				return nil, fmt.Errorf("retry script: %s", retryErr.ErrorMsg)
+				return nil, newRError(retryErr, nil)
 			}
 			bytes = retryBytes
 		} else {
 			// real system error
-			return nil, fmt.Errorf("script: %s", err.ErrorMsg)
+			return nil, newRError(err, nil)
 		}
 	}
 
 	var resp Resp
-	fmt.Println(string(bytes))
 	if marshalErr := json.Unmarshal(bytes, &resp); marshalErr != nil {
-		return nil, fmt.Errorf("cannot unmarshal script output: %w", marshalErr)
+		return nil, newRError(marshalErr, nil)
 	}
 
 	// log process from R script
@@ -87,18 +119,32 @@ func (c *CallR) Adjust(jobID uint, adjust bool, errorMsg string, maxExecutionTim
 
 	// Error in response -> R script stopped with error -> system error
 	if resp.Error {
-		return nil, fmt.Errorf("script error: %s", resp.ErrorMsg)
+		return nil, newRError(errors.New(resp.ErrorMsg), resp.CallStack)
 	}
 
 	return &resp, nil
 }
 
-type Error struct {
+type callError struct {
 	ErrorMsg string `json:"error_msg"`
 	Timeout  bool   `json:"timeout"`
 }
 
-func (c *CallR) call(jobID uint, adjust bool, errorMsg string, maxExecutionTime time.Duration) ([]byte, *Error) {
+func (e *callError) Error() string {
+	if e.ErrorMsg != "" {
+		return e.ErrorMsg
+	}
+	return "R script error"
+}
+
+func newCallError(errorMsg string, timeout bool) *callError {
+	return &callError{
+		ErrorMsg: errorMsg,
+		Timeout:  timeout,
+	}
+}
+
+func (c *CallR) call(jobID uint, adjust bool, errorMsg string, maxExecutionTime time.Duration) ([]byte, *callError) {
 	wd := filepath.Dir(c.adjustScriptPath)
 	script := filepath.Base(c.adjustScriptPath)
 
@@ -127,16 +173,10 @@ func (c *CallR) call(jobID uint, adjust bool, errorMsg string, maxExecutionTime 
 	out, err := cmd.Output()
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			return nil, &Error{
-				ErrorMsg: "script timeout",
-				Timeout:  true,
-			}
+			return nil, newCallError("script timeout", true)
 		}
 
-		return nil, &Error{
-			ErrorMsg: err.Error(),
-			Timeout:  false,
-		}
+		return nil, newCallError(err.Error(), false)
 	}
 
 	return out, nil

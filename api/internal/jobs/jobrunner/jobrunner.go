@@ -222,22 +222,34 @@ func (jr *JobRunner) processJob(order *model.Order) {
 
 	adjust := order.PrecheckPassed
 	errMsg := precheck.Message
-	resp, adjustErr := jr.callr.Adjust(order.ID, adjust, errMsg, jr.cfg.timeout)
+	resp, rError := jr.callr.Adjust(order.ID, adjust, errMsg, jr.cfg.timeout)
 	order.ProcessedAt = &now
 
-	if adjustErr != nil {
-		jr.logger.Error("calling R", log.Str("orderID", order.OrderID), log.Err(err))
+	if rError != nil {
+		jr.logger.Error("calling R",
+			log.Str("orderID", order.OrderID),
+			log.Err(rError),
+			log.Strs("stack", rError.CallStack),
+		)
+
 		order.Status = "error"
-		adjErrMsg := adjustErr.Error()
+		adjErrMsg := rError.Error()
 		order.ProcessErrorMessage = &adjErrMsg
 	} else {
 		order.Status = "processed"
 		order.DoseAdjusted = resp.DoseAdjusted
 	}
 
-	if saveErr := jr.jobDB.Save(order).Error; saveErr != nil {
+	// This is imortant: we need to NOT Touch the ProcessResultPDF field
+	// This might be set by callr.Adjust() if the process was successful
+	saveErr := jr.jobDB.Model(&model.Order{}).
+		Where("id = ?", order.ID).
+		Select("*").
+		Omit("ProcessResultPDF").
+		Updates(order).Error
+
+	if saveErr != nil {
 		jr.logger.Error("updating order", log.Str("orderID", order.OrderID), log.Err(saveErr))
-		return
 	}
 }
 

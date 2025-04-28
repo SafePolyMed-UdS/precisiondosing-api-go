@@ -3,7 +3,6 @@ package admincontroller
 import (
 	"errors"
 	"fmt"
-	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/model"
 	"precisiondosing-api-go/internal/utils/hash"
@@ -14,14 +13,12 @@ import (
 )
 
 type AdminController struct {
-	DB       *gorm.DB
-	ResetCfg cfg.ResetTokenConfig
+	DB *gorm.DB
 }
 
 func New(resourceHandle *handle.ResourceHandle) *AdminController {
 	return &AdminController{
-		DB:       resourceHandle.Databases.GormDB,
-		ResetCfg: resourceHandle.ResetCfg,
+		DB: resourceHandle.Databases.GormDB,
 	}
 }
 

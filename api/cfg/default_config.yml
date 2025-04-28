@@ -1,7 +1,7 @@
 meta:
   api_name: "SafePolymed Precision Dosing API"
   api_description: "A REST-like API for SafePolymed Precision Dosing System"
-  api_version: "0.0.1"
+  api_version: "0.1.0"
   api_url: "http://127.0.0.1:3333"
   group: "/api/v1"
 server:
@@ -9,11 +9,11 @@ server:
   idle_timeout: "30s"
   address: "127.0.0.1:3333"
 log:
-  level: "INFO"
+  level: "INFO" # DEBUG, INFO, WARN, ERROR
   json_format: false
   slow_query_theshold: "2s"
-  db_level: "SILENT"
-  log_caller: false
+  db_level: "SILENT" # SILENT, INFO, WARN, ERROR
+  log_caller: false # log calling site (file+line) in the log
 database:
   db_name: "doseadjustservice"
   max_open_conns: 50
@@ -26,12 +26,9 @@ induvidual_db:
   database: "individuals_db"
   collection: "characteristics"
 auth_token:
-  access_expiration_time: "15m"
+  access_expiration_time: "8h"
   refresh_expiration_time: "24h"
   issuer: "https://doseadjustservice.clinicalpharmacy.me/"
-reset_token:
-  expiration_time: "48h"
-  retry_interval: "24h"
 schema:
   precheck: "file:///schemas/precheck_input.schema.json"
 models:
@@ -54,5 +51,8 @@ mmc:
   batch_size: 2
   expiry_threshold: "2m"
   pdf_prefix: "doseadjust"
+  max_retries: 5
+  production_spec: true # set to true for production auth/send specs
+  mock_send: true # mock the sending of the pdf to the endpoint
   result_endpoint: "http://127.0.0.1:3333/api/v1/test/acceptresult"
-  auth_endpoint: "http://127.0.0.1:3333/api/v1/user/login"
+  auth_endpoint: "https://safepolymed.fraunhofer.de/api/login/"

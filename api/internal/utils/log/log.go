@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 	"precisiondosing-api-go/cfg"
-	"time"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/rs/zerolog"
@@ -30,11 +30,33 @@ func MustInit(logConfig cfg.LogConfig, debug bool) {
 	zerolog.SetGlobalLevel(zerLogLevel)
 }
 
-func writer(debug bool, json bool) io.Writer {
-	if !json {
-		return zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339, NoColor: !debug}
+func writer(debug bool, useJSON bool) io.Writer {
+	if useJSON {
+		return os.Stdout
 	}
-	return os.Stdout
+
+	return &zerolog.ConsoleWriter{
+		Out:        os.Stdout,
+		TimeFormat: "2006-01-02 15:04:05",
+		NoColor:    !debug,
+		FormatLevel: func(i any) string {
+			level := strings.ToUpper(fmt.Sprintf("%s", i))
+			switch level {
+			case "DEBUG":
+				return "| \033[36mDBG\033[0m |"
+			case "INFO":
+				return "| \033[32mINF\033[0m |"
+			case "WARN":
+				return "| \033[33mWRN\033[0m |"
+			case "ERROR":
+				return "| \033[31mERR\033[0m |"
+			case "FATAL":
+				return "| \033[35mFTL\033[0m |"
+			default:
+				return level
+			}
+		},
+	}
 }
 
 func logLevel(logLevel string, debug bool) (zerolog.Level, error) {
@@ -103,6 +125,12 @@ func (lg Logger) Panic(msg string, fields ...func(e *zerolog.Event)) {
 func Str(key, val string) func(e *zerolog.Event) {
 	return func(e *zerolog.Event) {
 		e.Str(key, val)
+	}
+}
+
+func Strs(key string, val []string) func(e *zerolog.Event) {
+	return func(e *zerolog.Event) {
+		e.Strs(key, val)
 	}
 }
 

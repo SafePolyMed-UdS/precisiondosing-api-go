@@ -16,7 +16,6 @@ type ResourceHandle struct {
 	ServerCfg      cfg.ServerConfig
 	MetaCfg        cfg.MetaConfig
 	AuthCfg        cfg.AuthTokenConfig
-	ResetCfg       cfg.ResetTokenConfig
 	Databases      Databases
 	JSONValidators JSONValidators
 	Prechecker     *precheck.PreCheck
@@ -45,7 +44,6 @@ func NewResourceHandle(
 		ServerCfg:      apiCfg.Server,
 		MetaCfg:        apiCfg.Meta,
 		AuthCfg:        apiCfg.AuthToken,
-		ResetCfg:       apiCfg.ResetToken,
 		Databases:      databases,
 		JSONValidators: jsonValidators,
 		Prechecker:     prechecker,

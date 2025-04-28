@@ -77,11 +77,6 @@ type AuthTokenConfig struct {
 	Issuer                string        `yaml:"issuer"`
 }
 
-type ResetTokenConfig struct {
-	ExpirationTime time.Duration `yaml:"expiration_time"`
-	RetryInterval  time.Duration `yaml:"retry_interval"`
-}
-
 type MedInfoConfig struct {
 	URL             string        `yaml:"url"`
 	ExpiryThreshold time.Duration `yaml:"expiry_threshold"`
@@ -99,7 +94,10 @@ type MMCConfig struct {
 	Interval        time.Duration `yaml:"fetch_interval"`
 	BatchSize       int           `yaml:"batch_size"`
 	ExpiryThreshold time.Duration `yaml:"expiry_threshold"`
+	MaxRetries      int           `yaml:"max_retries"`
 	PDFPrefix       string        `yaml:"pdf_prefix"`
+	MockSend        bool          `yaml:"mock_send"`
+	ProductionSpec  bool          `yaml:"production_spec"`
 	Login           string        `env:"MMC_LOGIN, required"`
 	Password        string        `env:"MMC_PASSWORD, required"`
 }
@@ -128,7 +126,6 @@ type APIConfig struct {
 	IndividualDB IndividualDBConfig `yaml:"induvidual_db"`
 	Log          LogConfig          `yaml:"log"`
 	AuthToken    AuthTokenConfig    `yaml:"auth_token"`
-	ResetToken   ResetTokenConfig   `yaml:"reset_token"`
 	MedInfoAPI   MedInfoConfig      `yaml:"medinfo"`
 	Schema       SchemaConfig       `yaml:"schema"`
 	Models       Models             `yaml:"models"`

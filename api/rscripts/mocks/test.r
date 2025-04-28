@@ -2,16 +2,20 @@
 # Helpers
 # -----------------------------------------------------------
 # Use this function to create a JSON Output to standard out
-.returnJSON <- function(dose_adjustment, error, error_msg, process_log) {
+.returnJSON <- function(dose_adjusted, process_log, error, error_msg, call_stack = character(0)) {
   result <- list(
-    dose_adjusted = dose_adjustment,
-    error = error,
-    error_msg = error_msg,
-    process_log = process_log
+    dose_adjusted = jsonlite::unbox(dose_adjusted),
+    error = jsonlite::unbox(error),
+    error_msg = jsonlite::unbox(error_msg),
+    process_log = jsonlite::unbox(process_log)
   )
 
+  if (length(call_stack) > 0) {
+    result$call_stack <- call_stack
+  }
+
   json_str <- suppressMessages(suppressWarnings({
-    jsonlite::toJSON(result, auto_unbox = TRUE)
+    jsonlite::toJSON(result, auto_unbox = FALSE)
   }))
   cat(json_str)
   cat("\n")
@@ -24,13 +28,13 @@
   on.exit(
     {
       sink()
-      if (file.exists(tf)) file.remove(tf)
+      suppressWarnings(try(unlink(tf), silent = TRUE))
     },
     add = TRUE
   )
 
   result <- suppressMessages(suppressWarnings(
-    force(expr)
+    force(expr)()
   ))
 
   invisible(result)
@@ -41,14 +45,21 @@
 safeReturn <- function(fun) {
   tryCatch(
     {
-      out <- .reallySilent(fun())
-      .returnJSON(out$dose_adjustment, out$error, out$error_msg, out$process_log)
+      out <- .reallySilent(fun)
+      .returnJSON(out$dose_adjustment, out$process_log, out$error, out$error_msg)
     },
     error = function(e) {
+      calls <- sys.calls()
+      filtered_calls <- calls[!grepl("tryCatch|withCallingHandlers", sapply(calls, deparse))]
+      call_stack <- unname(
+        sapply(filtered_calls, function(call) paste(deparse(call), collapse = " "))
+      )
+
       .returnJSON(
         dose_adjusted = FALSE,
         error = TRUE,
         error_msg = e$message,
+        call_stack = call_stack,
         process_log = ""
       )
     }
@@ -59,21 +70,60 @@ safeReturn <- function(fun) {
 # Main functions
 # -----------------------------------------------------------
 basic_success <- function() {
-  Sys.sleep(5)
-  id <- commandArgs(trailingOnly = TRUE) |>
-    as.numeric()
-
-  if (length(id) < 1) {
-    stop("need orderID as script argument")
+  library(DBI)
+  library(RMariaDB)
+  library(base64enc)
+  library(jsonlite)
+  cmdArgs <- commandArgs(trailingOnly = TRUE)
+  if (length(cmdArgs) != 3) {
+    stop("need 3 commandline arguments")
   }
 
-  id <- id[1]
+  id <- cmdArgs[1] |> as.numeric()
+  mysql_host <- Sys.getenv("R_MYSQL_HOST") |>
+    strsplit(":") |>
+    unlist()
+  mysql_user <- Sys.getenv("R_MYSQL_USER")
+  mysql_password <- Sys.getenv("R_MYSQL_PASSWORD")
+  mysql_db <- Sys.getenv("R_MYSQL_DB")
+  mysql_table <- Sys.getenv("R_MYSQL_TABLE")
+
+  # Simulate the order processing
+  Sys.sleep(1)
+
+  # DB
+  con <- dbConnect(
+    RMariaDB::MariaDB(),
+    host = mysql_host[1],
+    port = as.numeric(mysql_host[2]),
+    user = mysql_user,
+    password = mysql_password,
+    dbname = mysql_db
+  )
+  on.exit(dbDisconnect(con), add = TRUE)
+
+  encoded_pdf <- base64encode("test.pdf")
+  if (is.null(encoded_pdf)) {
+    stop("Failed to read PDF file")
+  }
+
+  query <- sprintf("UPDATE `%s` SET process_result_pdf = ? WHERE id = ? LIMIT 1", mysql_table)
+
+  a <- dbExecute(
+    con, query,
+    params = list(encoded_pdf, id)
+  )
+
+  process_log <- sprintf(
+    "Order %d processed successfully. PDF saved to database. %d rows updated.",
+    id, a
+  )
 
   list(
     dose_adjustment = TRUE,
+    process_log = process_log,
     error = FALSE,
-    error_msg = "",
-    process_log = paste("Success: Order ID", id, "processed successfully.")
+    error_msg = ""
   )
 }
 

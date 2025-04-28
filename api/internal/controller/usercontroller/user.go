@@ -15,16 +15,14 @@ import (
 )
 
 type UserController struct {
-	DB       *gorm.DB
-	AuthCfg  cfg.AuthTokenConfig
-	ResetCfg cfg.ResetTokenConfig
+	DB      *gorm.DB
+	AuthCfg cfg.AuthTokenConfig
 }
 
 func New(resourceHandle *handle.ResourceHandle) *UserController {
 	return &UserController{
-		DB:       resourceHandle.Databases.GormDB,
-		AuthCfg:  resourceHandle.AuthCfg,
-		ResetCfg: resourceHandle.ResetCfg,
+		DB:      resourceHandle.Databases.GormDB,
+		AuthCfg: resourceHandle.AuthCfg,
 	}
 }
 

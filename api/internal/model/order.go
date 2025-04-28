@@ -8,6 +8,17 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	StatusQueued     = "queued"
+	StatusStaged     = "staged"
+	StatusPrechecked = "prechecked"
+	StatusProcessing = "processing"
+	StatusProcessed  = "processed"
+	StatusError      = "error"
+	StatusSent       = "sent"
+	StatusSendFailed = "send_failed"
+)
+
 type Order struct {
 	gorm.Model
 	OrderID string `gorm:"type:char(36);not null;uniqueIndex"` // UUID
@@ -27,12 +38,15 @@ type Order struct {
 	ProcessedAt         *time.Time `gorm:"type:timestamp"` // When processing completed
 
 	// Sending stage
-	SentAt    *time.Time `gorm:"type:timestamp"` // When sent
-	SendTries int        `gorm:"default:0"`      // How many tries to send
+	SentAt            *time.Time `gorm:"type:timestamp"`
+	SendTries         int        `gorm:"default:0"`
+	LastSendAttemptAt *time.Time `gorm:"type:timestamp"`
+	LastSendError     *string    `gorm:"type:text"`
+	NextSendAttemptAt *time.Time `gorm:"type:timestamp"`
 
-	// Status
-	// queued -> staged -> prechecked -> processing -> (processed, error) -> sent
-	// !!!! error -> system error -> no PDF
+	// queued -> staged -> prechecked -> processing -> (processed, error) -> (sent, send_failed)
+	//
+	// error -> system error (e.g., processing error, no PDF, send failed after retries)
 	Status string `gorm:"type:varchar(50);not null;default:'queued'"`
 }
 

@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
 	"net/http"
+	"precisiondosing-api-go/cfg"
+	"precisiondosing-api-go/internal/utils/helper"
+	"precisiondosing-api-go/internal/utils/log"
 	"precisiondosing-api-go/internal/utils/tokens"
 	"sync"
 	"time"
@@ -20,25 +24,54 @@ type Token struct {
 	expiresIn time.Time
 }
 
+type PayloadBuilder func(a *API) (any, error)
+type ResponseParser func(responseBody []byte) (accessToken string, err error)
+
 type API struct {
-	accessToken     *Token        `json:"-"`
-	login           string        `json:"-"`
-	password        string        `json:"-"`
-	loginURL        string        `json:"-"`
-	sendURL         string        `json:"-"`
-	expiryThreshold time.Duration `json:"-"`
-	pdfPrefix       string        `json:"-"`
-	mutex           sync.Mutex    `json:"-"`
+	accessToken     *Token         `json:"-"`
+	login           string         `json:"-"`
+	password        string         `json:"-"`
+	loginURL        string         `json:"-"`
+	sendURL         string         `json:"-"`
+	expiryThreshold time.Duration  `json:"-"`
+	pdfPrefix       string         `json:"-"`
+	mutex           sync.Mutex     `json:"-"`
+	logger          log.Logger     `json:"-"`
+	mockSend        bool           `json:"-"`
+	productionSpec  bool           `json:"-"`
+	payloadBuilder  PayloadBuilder `json:"-"`
+	responseParser  ResponseParser `json:"-"`
 }
 
-func NewAPI(login, password, loginURL, sendURL, pdfPrefix string, expiryThreshold time.Duration) *API {
+func NewAPI(config cfg.MMCConfig) *API {
+	payloadBuilder := debugPayload
+	responseParser := debugResponseParser
+	if config.ProductionSpec {
+		payloadBuilder = productionPayload
+		responseParser = productionResponseParser
+	}
+
+	logger := log.WithComponent("MMC")
+	if config.MockSend {
+		logger.Warn("mock send enabled")
+	}
+
+	if !config.ProductionSpec {
+		logger.Warn("API debug spec enabled")
+	}
+
 	return &API{
-		login:           login,
-		password:        password,
-		loginURL:        loginURL,
-		sendURL:         sendURL,
-		expiryThreshold: expiryThreshold,
-		pdfPrefix:       pdfPrefix,
+		login:           config.Login,
+		password:        config.Password,
+		loginURL:        config.AuthEndpoint,
+		sendURL:         config.ResultEndpoint,
+		expiryThreshold: config.ExpiryThreshold,
+		pdfPrefix:       config.PDFPrefix,
+		mockSend:        config.MockSend,
+		productionSpec:  config.ProductionSpec,
+		logger:          logger,
+		payloadBuilder:  payloadBuilder,
+		responseParser:  responseParser,
 	}
 }
 
@@ -80,7 +113,11 @@ func (a *API) Send(pdf []byte, orderID string) error {
 	}
 	writer.Close()
 
-	sendURL := a.sendURL + "/" + orderID
+	if a.mockSend {
+		return nil
+	}
+
+	sendURL := helper.AddLeadingSlash(a.sendURL) + orderID
 	_, err = post(sendURL, &buf, writer.FormDataContentType(), &bearerToken)
 	if err != nil {
 		return fmt.Errorf("failed to send to MMC: %w", err)
@@ -105,10 +142,12 @@ func (a *API) RefreshToken() error {
 		return nil
 	}
 
-	err := a.authenticate()
+	err := a.authenticate(a.payloadBuilder, a.responseParser)
 	if err != nil {
 		return err
 	}
+
+	a.logger.Info("token refreshed", log.Str("expires", time.Until(a.accessToken.expiresIn).String()))
 	return nil
 }
 
@@ -116,22 +155,40 @@ func bearerHeader(token string) string {
 	return fmt.Sprintf("Bearer %s", token)
 }
 
-func (a *API) authenticate() error {
-	// TODO: CHANGE THIS TO MMC version
-	payload := map[string]string{"login": a.login, "password": a.password}
+func (a *API) authenticate(buildPayload PayloadBuilder, parseResponse ResponseParser) error {
+	payload, err := buildPayload(a)
+	if err != nil {
+		return fmt.Errorf("failed to build payload: %w", err)
+	}
 
-	url := a.loginURL
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return fmt.Errorf("failed to marshal payload: %w", err)
 	}
 
-	responseBody, postErr := post(url, bytes.NewReader(body), "application/json", nil)
+	responseBody, postErr := post(a.loginURL, bytes.NewReader(body), "application/json", nil)
 	if postErr != nil {
 		return fmt.Errorf("failed to authenticate: %w", postErr)
 	}
 
-	// TODO: CHANGE THIS TO MMC version
+	accessToken, err := parseResponse(responseBody)
+	if err != nil {
+		return fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	a.accessToken, err = processToken(accessToken, &a.logger)
+	if err != nil {
+		return fmt.Errorf("failed to process access token: %w", err)
+	}
+	return nil
+}
+
+// Debugging functions for local testing
+func debugPayload(a *API) (any, error) {
+	return map[string]string{"login": a.login, "password": a.password}, nil
+}
+
+func debugResponseParser(responseBody []byte) (string, error) {
 	type Response struct {
 		Status string `json:"status"`
 		Data   struct {
@@ -139,25 +196,40 @@ func (a *API) authenticate() error {
 		} `json:"data"`
 	}
 
-	// Unmarshal JSON into a temporary variable
 	var tmp Response
-	if err = json.Unmarshal(responseBody, &tmp); err != nil {
-		return fmt.Errorf("failed to unmarshal JSON: %w", err)
+	if err := json.Unmarshal(responseBody, &tmp); err != nil {
+		return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
-
-	// Check if response status is not "success"
 	if tmp.Status != "success" {
-		return fmt.Errorf("unexpected status: %s", tmp.Status)
+		return "", fmt.Errorf("unexpected status: %s", tmp.Status)
 	}
-
-	a.accessToken, err = processToken(tmp.Data.AccessToken)
-	if err != nil {
-		return fmt.Errorf("failed to process access token: %w", err)
-	}
-	return nil
+	return tmp.Data.AccessToken, nil
 }
 
-func processToken(tokenStr string) (*Token, error) {
+// Production functions for actual use
+func productionPayload(a *API) (any, error) {
+	return map[string]string{"name": a.login, "password": a.password}, nil
+}
+
+func productionResponseParser(responseBody []byte) (string, error) {
+	type Response struct {
+		Code    int `json:"mmc_status_code"`
+		Payload struct {
+			AccessToken string `json:"token"`
+		} `json:"mmc_payload"`
+	}
+
+	var tmp Response
+	if err := json.Unmarshal(responseBody, &tmp); err != nil {
+		return "", fmt.Errorf("failed to unmarshal JSON: %w", err)
+	}
+	if tmp.Code != 200 {
+		return "", fmt.Errorf("unexpected code: %d", tmp.Code)
+	}
+	return tmp.Payload.AccessToken, nil
+}
+
+func processToken(tokenStr string, logger *log.Logger) (*Token, error) {
 	claims := jwt.MapClaims{}
 	_, _, err := new(jwt.Parser).ParseUnverified(tokenStr, claims)
 	if err != nil {
@@ -171,12 +243,12 @@ func processToken(tokenStr string) (*Token, error) {
 
 	exp, ok := claims["exp"]
 	if !ok {
-		// TODO: LOG THAT EXP IS NOT FOUND -> WARNING
+		logger.Warn("exp not found in token claims")
 	}
 
 	expFloat, ok := exp.(float64)
 	if !ok {
-		// TODO:LOG THAT EXP IS NOT FLOAT -> ERROR
+		return nil, errors.New("exp is not a float64")
 	}
 
 	res.expiresIn = time.Unix(int64(expFloat), 0)
