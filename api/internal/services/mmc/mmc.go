@@ -123,6 +123,7 @@ func (a *API) Send(pdf []byte, orderID string) error {
 		return fmt.Errorf("failed to send to MMC: %w", err)
 	}
 
+	a.logger.Info("file sent to MMC", log.Str("order_id", orderID))
 	return nil
 }
 

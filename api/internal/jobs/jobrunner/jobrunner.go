@@ -113,7 +113,7 @@ func (jr *JobRunner) fetchJobs(ctx context.Context) []model.Order {
 
 	// 1. Find jobs not yet started
 	err := tx.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
-		Where(&model.Order{Status: "queued"}).
+		Where(&model.Order{Status: model.StatusQueued}).
 		Limit(freeSlots).
 		Find(&orders).Error
 
@@ -136,7 +136,7 @@ func (jr *JobRunner) fetchJobs(ctx context.Context) []model.Order {
 
 	err = tx.Model(&model.Order{}).
 		Where("id IN ?", ids).
-		Updates(map[string]interface{}{"status": "staged"}).Error
+		Updates(map[string]interface{}{"status": model.StatusStaged}).Error
 
 	if err != nil {
 		jr.logger.Error("bulk updating to staged", log.Err(err))
@@ -146,7 +146,7 @@ func (jr *JobRunner) fetchJobs(ctx context.Context) []model.Order {
 
 	// 3. Also update the Go structs, so later Save() will not mess up
 	for i := range orders {
-		orders[i].Status = "staged"
+		orders[i].Status = model.StatusStaged
 	}
 
 	if err = tx.Commit().Error; err != nil {
@@ -190,7 +190,7 @@ func (jr *JobRunner) processJob(order *model.Order) {
 	} else {
 		order.PrecheckPassed = false
 		if err.Recoverable {
-			order.Status = "queued"
+			order.Status = model.StatusQueued
 		}
 
 		jr.logger.Warn("precheck error",
@@ -214,7 +214,7 @@ func (jr *JobRunner) processJob(order *model.Order) {
 
 	// run order
 	jr.logger.Info("running order", log.Str("orderID", order.OrderID))
-	order.Status = "processing"
+	order.Status = model.StatusProcessing
 	if saveErr := jr.jobDB.Save(order).Error; saveErr != nil {
 		jr.logger.Error("updating order", log.Str("orderID", order.OrderID), log.Err(saveErr))
 		return
@@ -232,11 +232,11 @@ func (jr *JobRunner) processJob(order *model.Order) {
 			log.Strs("stack", rError.CallStack),
 		)
 
-		order.Status = "error"
+		order.Status = model.StatusError
 		adjErrMsg := rError.Error()
 		order.ProcessErrorMessage = &adjErrMsg
 	} else {
-		order.Status = "processed"
+		order.Status = model.StatusProcessed
 		order.DoseAdjusted = resp.DoseAdjusted
 	}
 
@@ -261,7 +261,7 @@ func (jr *JobRunner) purgeOnStart(ctx context.Context) {
 		Or(&model.Order{Status: "prechecked"}).
 		Or(&model.Order{Status: "processing"}).
 		Updates(map[string]interface{}{
-			"status":                "queued",
+			"status":                model.StatusQueued,
 			"precheck_result":       nil,
 			"precheck_passed":       false,
 			"prechecked_at":         nil,
