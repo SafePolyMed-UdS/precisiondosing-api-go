@@ -4,7 +4,7 @@
 # Use this function to create a JSON Output to standard out
 .returnJSON <- function(dose_adjustment, error, error_msg, process_log) {
   result <- list(
-    dose_adjustment = dose_adjustment,
+    dose_adjusted = dose_adjustment,
     error = error,
     error_msg = error_msg,
     process_log = process_log
@@ -46,7 +46,7 @@ safeReturn <- function(fun) {
     },
     error = function(e) {
       .returnJSON(
-        dose_adjustment = FALSE,
+        dose_adjusted = FALSE,
         error = TRUE,
         error_msg = e$message,
         process_log = ""
@@ -66,6 +66,8 @@ basic_success <- function() {
   if (length(id) < 1) {
     stop("need orderID as script argument")
   }
+
+  id <- id[1]
 
   list(
     dose_adjustment = TRUE,

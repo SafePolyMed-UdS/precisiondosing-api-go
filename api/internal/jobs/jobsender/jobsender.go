@@ -77,36 +77,39 @@ func (js *JobSender) run() {
 func (js *JobSender) processJobs(ctx context.Context) {
 	var orders []model.Order
 	if err := js.jobDB.WithContext(ctx).
-		Where("completed_at IS NOT NULL AND sent_at IS NULL").
-		Order("COALESCE(sent_trys, 0) ASC").
+		Where(&model.Order{Status: "processed"}).
+		Order("COALESCE(send_tries, 0) ASC").
 		Limit(js.batchSize).
 		Find(&orders).Error; err != nil {
 		js.logger.Error("fetching orders", log.Err(err))
 		return
 	}
+
 	if len(orders) == 0 {
 		return
 	}
 
 	js.logger.Info("fetched orders", log.Int("count", len(orders)))
-	for _, order := range orders {
-		if order.ResultPDF == nil {
+	for i := range orders {
+		order := &orders[i]
+		if order.ProcessResultPDF == nil {
 			js.logger.Error("order has no result PDF", log.Str("orderID", order.OrderID))
+			order.Status = "error"
+			errorMessage := "no result PDF created"
+			order.ProcessErrorMessage = &errorMessage
 			continue
 		}
 
-		pdfBytes, err := base64.StdEncoding.DecodeString(*order.ResultPDF)
+		pdfBytes, err := base64.StdEncoding.DecodeString(*order.ProcessResultPDF)
 		if err != nil {
 			js.logger.Error("decoding PDF", log.Str("orderID", order.OrderID), log.Err(err))
+			order.Status = "error"
+			errorMessage := "decoding PDF failed"
+			order.ProcessErrorMessage = &errorMessage
 			continue
 		}
 
-		order.SentTrys++
-		if err = js.jobDB.WithContext(ctx).Save(&order).Error; err != nil {
-			js.logger.Error("updating order sent_trys", log.Str("orderID", order.OrderID), log.Err(err))
-			continue
-		}
-
+		order.SendTries++
 		if err = js.mmcAPI.Send(pdfBytes, order.OrderID); err != nil {
 			js.logger.Warn("sending PDF", log.Str("orderID", order.OrderID), log.Err(err))
 			continue
@@ -115,8 +118,10 @@ func (js *JobSender) processJobs(ctx context.Context) {
 
 		now := time.Now()
 		order.SentAt = &now
-		if err = js.jobDB.WithContext(ctx).Save(&order).Error; err != nil {
-			js.logger.Error("updating order sent_at", log.Str("orderID", order.OrderID), log.Err(err))
-		}
+	}
+
+	if err := js.jobDB.WithContext(ctx).Save(&orders).Error; err != nil {
+		js.logger.Error("saving orders", log.Err(err))
+		return
 	}
 }

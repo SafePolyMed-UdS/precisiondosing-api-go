@@ -192,7 +192,7 @@ Model Endpoints:
 
 - [ ] Check in MedInfo for synonyms of active substances -> PreCheck
 - [x] Logging Framework with implementation in all functions
-- [ ] Test with real R call with return data
+- [x] Test with real R call with return data
 - [ ] Handle failed R calls -> should we even send a response?
 - [ ] Real adjustment with R backend
 - [ ] Production push with Docker

@@ -70,7 +70,7 @@ func (sc *DSSController) PostAdjust(c *gin.Context) {
 	}
 
 	marshalledData, _ := json.Marshal(patientData)
-	newOrder := model.Order{Order: marshalledData}
+	newOrder := model.Order{OrderData: marshalledData}
 	if err = sc.DB.Create(&newOrder).Error; err != nil {
 		handle.ServerError(c, err)
 		return

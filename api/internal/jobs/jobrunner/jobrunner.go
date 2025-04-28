@@ -104,8 +104,6 @@ func (jr *JobRunner) fetchJobs(ctx context.Context) []model.Order {
 	}
 
 	var orders []model.Order
-	now := time.Now()
-
 	tx := jr.jobDB.WithContext(ctx).Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -115,7 +113,7 @@ func (jr *JobRunner) fetchJobs(ctx context.Context) []model.Order {
 
 	// 1. Find jobs not yet started
 	err := tx.Clauses(clause.Locking{Strength: "UPDATE", Options: "SKIP LOCKED"}).
-		Where("pre_checked = FALSE AND started_at IS NULL").
+		Where(&model.Order{Status: "queued"}).
 		Limit(freeSlots).
 		Find(&orders).Error
 
@@ -138,17 +136,17 @@ func (jr *JobRunner) fetchJobs(ctx context.Context) []model.Order {
 
 	err = tx.Model(&model.Order{}).
 		Where("id IN ?", ids).
-		Update("started_at", now).Error
+		Updates(map[string]interface{}{"status": "staged"}).Error
 
 	if err != nil {
-		jr.logger.Error("bulk updating started_at", log.Err(err))
+		jr.logger.Error("bulk updating to staged", log.Err(err))
 		tx.Rollback()
 		return nil
 	}
 
 	// 3. Also update the Go structs, so later Save() will not mess up
 	for i := range orders {
-		orders[i].StartedAt = &now
+		orders[i].Status = "staged"
 	}
 
 	if err = tx.Commit().Error; err != nil {
@@ -176,29 +174,26 @@ func (jr *JobRunner) worker() {
 
 func (jr *JobRunner) processJob(order *model.Order) {
 	patientData := model.PatientData{}
-	_ = json.Unmarshal(order.Order, &patientData)
+	_ = json.Unmarshal(order.OrderData, &patientData)
 
 	now := time.Now()
-	order.LastPrecheck = &now
+	order.PrecheckedAt = &now
 
 	precheck, err := jr.preckecker.Check(&patientData)
-	if err == nil {
-		precheckByte, _ := json.Marshal(precheck)
-		precheckRaw := json.RawMessage(precheckByte)
-		order.PreChecked = true
-		order.PrecheckError = nil
-		order.Precheck = &precheckRaw
-		order.StartedAt = &now
-	} else {
-		errMsg := err.Error()
-		order.PrecheckError = &errMsg
+	precheckByte, _ := json.Marshal(precheck)
+	precheckRaw := json.RawMessage(precheckByte)
+	order.PrecheckResult = &precheckRaw
 
-		if !err.Recoverable {
-			order.PreChecked = true
-			order.StartedAt = &now
+	if err == nil {
+		// precheck passed
+		order.PrecheckPassed = true
+	} else {
+		order.PrecheckPassed = false
+		if err.Recoverable {
+			order.Status = "queued"
 		}
 
-		jr.logger.Error("precheck error",
+		jr.logger.Warn("precheck error",
 			log.Str("orderID", order.OrderID),
 			log.Bool("recoverable", err.Recoverable),
 			log.Err(err),
@@ -211,14 +206,38 @@ func (jr *JobRunner) processJob(order *model.Order) {
 		return
 	}
 
-	// if unrecoverable error or precheck is done call R
-	if order.PreChecked {
-		jr.logger.Info("running order", log.Str("orderID", order.OrderID))
-		_, err := jr.callr.Adjust(order.ID, jr.cfg.timeout)
-		if err != nil {
-			jr.logger.Error("calling R", log.Str("orderID", order.OrderID), log.Err(err))
-			return
-		}
+	// if precheck failed and is recoverable, return
+	if order.Status == "queued" {
+		jr.logger.Info("order precheck failed, re-queued", log.Str("orderID", order.OrderID))
+		return
+	}
+
+	// run order
+	jr.logger.Info("running order", log.Str("orderID", order.OrderID))
+	order.Status = "processing"
+	if saveErr := jr.jobDB.Save(order).Error; saveErr != nil {
+		jr.logger.Error("updating order", log.Str("orderID", order.OrderID), log.Err(saveErr))
+		return
+	}
+
+	adjust := order.PrecheckPassed
+	errMsg := precheck.Message
+	resp, adjustErr := jr.callr.Adjust(order.ID, adjust, errMsg, jr.cfg.timeout)
+	order.ProcessedAt = &now
+
+	if adjustErr != nil {
+		jr.logger.Error("calling R", log.Str("orderID", order.OrderID), log.Err(err))
+		order.Status = "error"
+		adjErrMsg := adjustErr.Error()
+		order.ProcessErrorMessage = &adjErrMsg
+	} else {
+		order.Status = "processed"
+		order.DoseAdjusted = resp.DoseAdjusted
+	}
+
+	if saveErr := jr.jobDB.Save(order).Error; saveErr != nil {
+		jr.logger.Error("updating order", log.Str("orderID", order.OrderID), log.Err(saveErr))
+		return
 	}
 }
 
@@ -226,13 +245,17 @@ func (jr *JobRunner) purgeOnStart(ctx context.Context) {
 	// On start, reset orders that started but did not finish
 	err := jr.jobDB.WithContext(ctx).
 		Model(&model.Order{}).
-		Where("pre_checked = TRUE AND started_at IS NOT NULL AND completed_at IS NULL").
+		Where(&model.Order{Status: "staged"}).
+		Or(&model.Order{Status: "prechecked"}).
+		Or(&model.Order{Status: "processing"}).
 		Updates(map[string]interface{}{
-			"pre_checked":    false,
-			"precheck_error": nil,
-			"precheck":       nil,
-			"last_precheck":  nil,
-			"started_at":     nil,
+			"status":                "queued",
+			"precheck_result":       nil,
+			"precheck_passed":       false,
+			"prechecked_at":         nil,
+			"process_result_PDF":    nil,
+			"process_error_message": nil,
+			"processed_at":          nil,
 		}).Error
 
 	if err != nil {

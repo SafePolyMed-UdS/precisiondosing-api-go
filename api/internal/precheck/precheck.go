@@ -302,9 +302,10 @@ func (p *PreCheck) medinfoCheck(resp *Result) *Error {
 	resp.Interactions = interactions
 	if err != nil {
 		if err.StatusCode == http.StatusNotFound {
+			// TODO: Humand readable error message for compound not found
 			p.logger.Warn("MedInfo compound not found", log.Err(err))
 		}
-		resp.Message = appendMsg(resp.Message, "MedinfoCheck: Failed to fetch interactions")
+		resp.Message = appendMsg(resp.Message, "Medinfo Check: Failed to fetch interactions")
 		// if compound cannot be found, it is not a recoverable error
 		return NewError("fetching interactions", err.StatusCode != http.StatusNotFound, err)
 	}
