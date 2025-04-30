@@ -36,8 +36,8 @@ RUN chmod +x /setup/*.sh && \
 RUN setup/install_osp_pkg.sh
 
 # Optional install of user R packages
-COPY ${R_PKG_FILE} rbase-dockerfiles/scripts/packages.R
-RUN rbase-dockerfiles/scripts/install_user_r_pkg.sh
+COPY ${R_PKG_FILE} setup/packages.R
+RUN setup/install_user_r_pkg.sh
 
 RUN mkdir -p /app /app/schemas /app/models /app/rscripts && \
     chown -R appuser:appuser /app \
