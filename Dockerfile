@@ -20,6 +20,7 @@ LABEL org.opencontainers.image.licenses=MIT
 ARG DOCKERBASE=rbase-dockerfiles
 ARG INSTALL_OSP=true
 ARG PROD_BUILD=true
+ARG R_PKG_FILE=api/rscripts/startup/packages.R
 
 WORKDIR /
 COPY ${DOCKERBASE}/scripts/install_base_pkg.sh \
@@ -35,17 +36,17 @@ RUN chmod +x /setup/*.sh && \
 RUN setup/install_osp_pkg.sh
 
 # Optional install of user R packages
-#COPY ${R_PKG_FILE} rbase-dockerfiles/scripts/packages.R
-#RUN rbase-dockerfiles/scripts/install_user_r_pkg.sh
+COPY ${R_PKG_FILE} rbase-dockerfiles/scripts/packages.R
+RUN rbase-dockerfiles/scripts/install_user_r_pkg.sh
 
-RUN mkdir -p /app /app/schemas /app/models /logs && \
-    chown -R appuser:appuser /app /logs \
-    && chmod -R 755 /app \
-    && chmod -R 755 /logs
+RUN mkdir -p /app /app/schemas /app/models /app/rscripts && \
+    chown -R appuser:appuser /app \
+    && chmod -R 755 /app
 
 COPY --from=builder /app/api /app/api
 COPY api/cfg/prod_config.yml /app/config.yml
 COPY api/schemas/* /app/schemas/
+COPY api/rscripts/* /app/rscripts/
 COPY models/* /app/models/
 
 USER appuser

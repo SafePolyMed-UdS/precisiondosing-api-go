@@ -54,5 +54,5 @@ mmc:
   max_retries: 5
   production_spec: true # set to true for production auth/send specs
   mock_send: true # mock the sending of the pdf to the endpoint
-  result_endpoint: "http://127.0.0.1:3333/api/v1/test/acceptresult"
+  result_endpoint: "https://safepolymed.fraunhofer.de/api/precisionDosing/order/finish/"
   auth_endpoint: "https://safepolymed.fraunhofer.de/api/login/"
