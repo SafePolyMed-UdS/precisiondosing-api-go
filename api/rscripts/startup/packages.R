@@ -59,7 +59,7 @@ install_tinytex <- function() {
     "fancyhdr", "lipsum", "colortbl",
     "environ", "fp", "pgf", "tcolorbox",
     "trimspaces", "tikzfill", "listings",
-    "pdfcol", "listingsutf8"
+    "pdfcol", "listingsutf8", "bookmark"
   )
   tinytex::tlmgr_install(tl_packages)
 }

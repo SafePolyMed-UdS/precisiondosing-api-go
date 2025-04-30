@@ -41,17 +41,19 @@ create_settings <- function() {
     VALUES = list(
       MODEL_CONFIG = .read_model_definitions("../../models"),
       POPULATIONS = list(
-        "European" = "European_ICRP_2002",
-        "Black American" = "BlackAmerican_NHANES_1997",
-        "White American" = "WhiteAmerican_NHANES_1997",
-        "Asian" = "Asian_Tanaka_1996",
-        "Japanese" = "Japanese_Population",
-        "Mexican American - White" = "MexicanAmericanWhite_NHANES_1997"
+        "european" = "European_ICRP_2002",
+        "white american" = "WhiteAmerican_NHANES_1997",
+        "black american" = "BlackAmerican_NHANES_1997",
+        "mexican" = "MexicanAmericanWhite_NHANES_1997",
+        "asian" = "Asian_Tanaka_1996",
+        "japanese" = "Japanese_Population",
+        "other" = "European_ICRP_2002",
+        "unknown" = "European_ICRP_2002"
       ),
       SEXES = list(
-        "Male" = "MALE",
-        "Female" = "FEMALE",
-        "Unknown" = "MALE"
+        "male" = "MALE",
+        "female" = "FEMALE",
+        "unknown" = "MALE"
       ),
       model_defaults = list(
         SIM_CORES = 5L

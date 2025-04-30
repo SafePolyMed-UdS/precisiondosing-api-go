@@ -2,17 +2,15 @@
 # Description: Test script for the report generation
 # Author     : Simeon Rüdesheim
 # Date       : 2025-04-22
-# Notes      : -
-#              -
 # -----------------------------------
 
 # Dependencies
 # -----------------------------------
 source("startup/packages.R")
-source("helpers.R")
+source("helpers/io-helpers.R")
 source("settings.R")
 source("report/create_report.R")
-source("service-adjust_dose.R")
+source("helpers/service-adjust_dose.R")
 
 load_packages()
 run <- FALSE
