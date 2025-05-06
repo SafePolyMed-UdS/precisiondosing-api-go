@@ -3,7 +3,6 @@ title: "Precision Dosing Summary Report"
 author: "Saarland University"
 version: "0.1"
 linkcolor: "blue"
-mainfont: "Arial"
 output:
   pdf_document:
     number_sections: yes

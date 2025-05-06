@@ -8,11 +8,6 @@ server:
   read_write_timeout: "120s"
   idle_timeout: "30s"
   address: ":3333"
-rlang:
-  rscript_path_win: "Rscript.exe"
-  rscript_path_unix: "Rscript"
-  dose_adjust_script: "/app/rscripts/mocks/test.r"
-  r_worker: 4
 log:
   level: "INFO" # DEBUG, INFO, WARN, ERROR
   json_format: false
@@ -24,7 +19,7 @@ database:
   max_open_conns: 50
   max_idle_conns: 10
   max_conn_lifetime: "1h"
-induvidual_db:
+individual_db:
   max_pool_size: 50
   min_pool_size: 10
   max_idle_time: "10m"
@@ -34,21 +29,23 @@ auth_token:
   access_expiration_time: "8h"
   refresh_expiration_time: "24h"
   issuer: "https://doseadjustservice.precisiondosing.de/"
-reset_token:
-  expiration_time: "48h"
-  retry_interval: "24h"
-medinfo:
-  url: "https://medinfo.precisiondosing.de/api/v1"
-  expiry_threshold: "2m"
 schema:
   precheck: "file:///app/schemas/precheck_input.schema.json"
 models:
   path: "/app/models"
   max_doses: 20
+rlang:
+  rscript_path_win: "Rscript.exe"
+  rscript_path_unix: "Rscript"
+  dose_adjust_script: "/app/rscripts/adjust_dose.r"
+  r_worker: 4
 job_runner:
   fetch_interval: "5s"
   max_concurrent_jobs: 5
   timeout: "24h"
+medinfo:
+  url: "https://medinfo.precisiondosing.de/api/v1"
+  expiry_threshold: "2m"
 mmc:
   fetch_interval: "5s"
   batch_size: 2

@@ -37,12 +37,12 @@ models:
 rlang:
   rscript_path_win: "Rscript.exe"
   rscript_path_unix: "Rscript"
-  dose_adjust_script: "rscripts/mocks/test.r"
+  dose_adjust_script: "rscripts/adjust_dose.r"
   r_worker: 4
 job_runner:
   fetch_interval: "5s"
   max_concurrent_jobs: 5
-  timeout: "60s"
+  timeout: "86400s"
 medinfo:
   url: "https://medinfo.precisiondosing.de/api/v1"
   expiry_threshold: "2m"
@@ -53,6 +53,6 @@ mmc:
   pdf_prefix: "doseadjust"
   max_retries: 5
   production_spec: true # set to true for production auth/send specs
-  mock_send: true # mock the sending of the pdf to the endpoint
+  mock_send: false # mock the sending of the pdf to the endpoint
   result_endpoint: "https://safepolymed.fraunhofer.de/api/precisionDosing/order/finish/"
   auth_endpoint: "https://safepolymed.fraunhofer.de/api/login/"

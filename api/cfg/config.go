@@ -123,7 +123,7 @@ type APIConfig struct {
 	RLang        RConfig            `yaml:"rlang"`
 	JobRunner    JobRunnerConfig    `yaml:"job_runner"`
 	Database     DatabaseConfig     `yaml:"database"`
-	IndividualDB IndividualDBConfig `yaml:"induvidual_db"`
+	IndividualDB IndividualDBConfig `yaml:"individual_db"`
 	Log          LogConfig          `yaml:"log"`
 	AuthToken    AuthTokenConfig    `yaml:"auth_token"`
 	MedInfoAPI   MedInfoConfig      `yaml:"medinfo"`

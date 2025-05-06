@@ -169,6 +169,7 @@ func (c *CallR) call(jobID uint, adjust bool, errorMsg string, maxExecutionTime 
 		"R_MYSQL_TABLE=orders",
 		"R_WORKER="+strconv.Itoa(c.rWorker),
 	)
+	cmd.WaitDelay = 1 * time.Second
 
 	out, err := cmd.Output()
 	if err != nil {

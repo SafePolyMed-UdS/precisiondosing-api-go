@@ -33,7 +33,7 @@ read_settings <- function() {
     mysql_password = get_env_or_stop("R_MYSQL_PASSWORD"),
     mysql_db = get_env_or_stop("R_MYSQL_DB"),
     mysql_table = get_env_or_stop("R_MYSQL_TABLE"),
-    r_worker = get_env_or_stop("R_WORKER"),
+    r_worker = as.numeric(get_env_or_stop("R_WORKER")),
     id = id,
     adjust_dose = adjust_dose,
     error_msg = error_msg
@@ -90,7 +90,11 @@ write_order <- function(settings, success, results_json, pdf_path) {
     password = settings$mysql_password,
     dbname = settings$mysql_db
   )
+  on.exit(dbDisconnect(con), add = TRUE)
 
+  if (!file.exists(pdf_path)) {
+    stop(sprintf("PDF file does not exist: %s", pdf_path))
+  }
   encoded_pdf <- base64encode(pdf_path)
   if (is.null(encoded_pdf)) {
     stop(sprintf("Failed to read PDF file: %s", pdf_path))
@@ -98,15 +102,17 @@ write_order <- function(settings, success, results_json, pdf_path) {
   # delete_tmp_folder(pdf_path)
 
   query <- sprintf(
-    "UPDATE `%s` SET result_success = ?, result_json = ?, result_pdf = ? WHERE id = ? LIMIT 1",
+    "UPDATE `%s` SET process_result_pdf = ? WHERE id = ? LIMIT 1",
     settings$mysql_table
   )
 
-  dbExecute(
+  rows_affected <- dbExecute(
     con, query,
-    params = list(success, results_json, encoded_pdf, settings$id)
+    params = list(encoded_pdf, settings$id)
   )
-  dbDisconnect(con)
+  if (rows_affected != 1) {
+    stop(sprintf("Failed to update order with ID %d", settings$id))
+  }
 
   invisible(NULL)
 }

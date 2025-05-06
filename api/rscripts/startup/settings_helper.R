@@ -21,6 +21,8 @@
         stringr::str_remove_all("shiny-models-") |>
         stringr::str_remove_all("[^[:alnum:]]")
       pkml_paths[[model_name]] <- file.path(child, "pkml")
+    } else {
+      stop(paste0("No pkml folder found in ", child))
     }
   }
   return(pkml_paths)
