@@ -38,10 +38,11 @@ execute <- function(order, settings) {
         )
         write_order(settings, TRUE, jsonlite::toJSON(order$order_data, auto_unbox = TRUE), report)
 
-        process_log <- sprintf(
-          "Error occured during dose adaptation for order %d. PDF saved to database. %d rows updated.",
-          id, a
+        process_log <- paste(
+          "Error occured during dose adaptation for order", order$id,
+          ". PDF saved to database."
         )
+
         list(
           dose_adjustment = FALSE,
           process_log = process_log,
@@ -76,10 +77,10 @@ execute <- function(order, settings) {
     }
   )
 
-  process_log <- sprintf(
-    "Order %d processed successfully. PDF saved to database. %d rows updated.",
-    id, a
+  process_log <- paste(
+    "Order ID", order$order_id, "processed successfully. PDF saved to database."
   )
+
   list(
     dose_adjustment = TRUE,
     process_log = process_log,

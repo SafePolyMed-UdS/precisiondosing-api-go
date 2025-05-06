@@ -6,7 +6,7 @@
 #              - Loads libraries and sets up the environment
 # -----------------------------------
 source("helpers/return-helpers.R")
-debugging <- FALSE
+debugging <- TRUE
 
 main <- function() {
   source("startup/packages.R")
@@ -28,7 +28,7 @@ main <- function() {
     mysql_db = get_env_or_stop("R_MYSQL_DB"),
     mysql_table = get_env_or_stop("R_MYSQL_TABLE"),
     r_worker = get_env_or_stop("R_WORKER"),
-    id = 1,
+    id = 3,
     adjust_dose = TRUE,
     error_msg = ""
   )
@@ -36,6 +36,7 @@ main <- function() {
     settings <- read_settings()
   }
   order <- read_order(settings)
+  API_SETTINGS$VALUES$model_defaults$SIM_CORES <- settings$r_worker
 
   # -----------------------------------
   # HANDLING

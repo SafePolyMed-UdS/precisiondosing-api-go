@@ -1,0 +1,81 @@
+---
+title: "Precision Dosing Summary Report"
+author: "Saarland University"
+version: "0.1"
+linkcolor: "blue"
+mainfont: "Arial"
+output:
+  pdf_document:
+    number_sections: yes
+    fig_caption: yes
+    keep_tex: no
+    latex_engine: xelatex
+    toc: no
+    toc_depth: 2
+documentclass: article
+header-includes:
+  - \usepackage{graphicx}
+  - \usepackage{fancyhdr}
+  - \usepackage{geometry}
+  - \geometry{a4paper, left=25mm, right=25mm, top=30mm, bottom=30mm}
+  - \usepackage{lipsum}
+  - \usepackage[table,xcdraw]{xcolor} 
+  - \usepackage{hyperref} 
+  - \usepackage[most]{tcolorbox}
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{array}
+  - \usepackage{float}
+  - \definecolor{turquoise}{RGB}{64,224,208}
+  - |
+    \fancypagestyle{titlepage}{
+      \fancyhf{}
+      \fancyhead[R]{\includegraphics[width=7cm]{spm_logo.png}}
+      \fancyfoot[C]{\includegraphics[width=5cm]{eu_funding_logo.png}}
+      \renewcommand{\headrulewidth}{2pt}
+      \renewcommand{\headrule}{{\color{turquoise}\hrule width\headwidth height\headrulewidth}}
+      \renewcommand{\footrulewidth}{2pt}
+      \renewcommand{\footrule}{{\color{turquoise}\hrule width\headwidth height\footrulewidth}}
+    }
+  - |
+    \fancypagestyle{normal}{
+      \fancyhf{}
+      \fancyfoot[C]{\includegraphics[width=5cm]{eu_funding_logo.png}}
+      \renewcommand{\headrulewidth}{0pt}
+      \renewcommand{\footrulewidth}{0pt}
+    }
+params:
+  errors: NULL
+  order: NULL
+---
+
+\thispagestyle{titlepage}
+
+\begin{center}
+\vspace*{4cm}
+
+{\Huge \textbf{Dosing Report}} \\
+
+\vspace{1.5cm}
+{\Large for Patient: `r params$order$order_id`} \\
+
+\vspace{1cm}
+{Date: `r format(Sys.Date(), "%d.%m.%Y")`} \\
+{Report version: `r rmarkdown::metadata$version`}
+
+\begin{tcolorbox}[colback=red!5!white,colframe=red!75!black]
+\Large{
+\textbf{Error:} The precision dosing service was not successful. The following error occurred: `r params$errors`\\
+}
+\end{tcolorbox}
+
+\vspace{1cm}
+{developed by} \\
+{Simeon Rüdesheim, Dominik Selzer, Helena Loer, Laura Fuhr, Fatima Marok, and Thorsten Lehr} \\
+\textbf{Clinical Pharmacy, Saarland University, Germany}
+
+\vfill
+
+Grant No. 101057639
+
+\end{center}
