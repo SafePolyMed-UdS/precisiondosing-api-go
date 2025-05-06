@@ -49,7 +49,7 @@ remote_packages <- function() {
 }
 
 install_packages <- function() {
-  install.packages("pak")
+  if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
   pak::pkg_install(packages())
 }
 
