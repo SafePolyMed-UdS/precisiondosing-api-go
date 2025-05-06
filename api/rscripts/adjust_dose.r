@@ -6,7 +6,7 @@
 #              - Loads libraries and sets up the environment
 # -----------------------------------
 source("helpers/return-helpers.R")
-debugging <- TRUE
+debugging <- FALSE
 
 main <- function() {
   source("startup/packages.R")

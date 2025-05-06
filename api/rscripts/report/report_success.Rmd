@@ -51,7 +51,7 @@ params:
   user_data: NULL
 ---
 
-```{r libraries, echo = FALSE, results = 'asis', error = TRUE}
+```{r libraries, echo = FALSE, results = 'asis', error = TRUE, warning = FALSE, message = FALSE}
 knitr::opts_chunk$set(warning = FALSE)
 # define libraries
 suppressMessages(library(dplyr))

@@ -8,7 +8,7 @@ source("startup/settings_helper.R")
 create_settings <- function() {
   settings <- list(
     DEBUG_MODE = FALSE,
-    DEBUG_CREATE_FAKE = FALSE,
+    DEBUG_CREATE_FAKE = TRUE,
     DEBUG_LOAD_FAKE = FALSE,
     SERVER_OPTIONS = list(
       WORKERS = 4L,
@@ -34,8 +34,8 @@ create_settings <- function() {
     TIMEZONE = "CET",
     DARK_MODE = TRUE,
     REPORT = list(
-      markdown_success = file.path("report", "report_success.Rmd"),
-      markdown_failed = file.path("report", "report_failed.Rmd"),
+      markdown_success = file.path("report_success.Rmd"),
+      markdown_failed = file.path("report_failed.Rmd"),
       outfile_name = "Report"
     ),
     VALUES = list(

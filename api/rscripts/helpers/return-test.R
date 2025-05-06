@@ -19,7 +19,11 @@
 execute <- function(order, settings) {
   sim_results <- tryCatch(
     {
-      api_dose_adjustments(order, settings)
+      if (API_SETTINGS$DEBUG_LOAD_FAKE) {
+        readRDS("mocks/mock_sim_results.rds")
+      } else {
+        api_dose_adjustments(order, settings)
+      }
     },
     error = function(e) {
       if (inherits(e, "report_error")) {
@@ -54,6 +58,9 @@ execute <- function(order, settings) {
       }
     }
   )
+  if (API_SETTINGS$DEBUG_CREATE_FAKE) {
+    sim_results <- saveRDS(sim_results, "mocks/mock_sim_results.rds")
+  }
 
   tryCatch(
     {
@@ -66,14 +73,7 @@ execute <- function(order, settings) {
       write_order(settings, TRUE, jsonlite::toJSON(order$order_data, auto_unbox = TRUE), report)
     },
     error = function(e) {
-      return(
-        list(
-          dose_adjustment = FALSE,
-          error = TRUE,
-          error_msg = paste("Could not create report for Order ID", order$order_id, ":", e$message),
-          process_log = ""
-        )
-      )
+      stop(paste("Could not create report for Order ID", order$order_id, ":", e$message))
     }
   )
 
