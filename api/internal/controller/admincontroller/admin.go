@@ -1,8 +1,13 @@
 package admincontroller
 
 import (
+	"bytes"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"io"
+	"os"
+	"path/filepath"
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/model"
 	"precisiondosing-api-go/internal/utils/hash"
@@ -20,6 +25,54 @@ func New(resourceHandle *handle.ResourceHandle) *AdminController {
 	return &AdminController{
 		DB: resourceHandle.Databases.GormDB,
 	}
+}
+
+func (ac *AdminController) downloadPDF(c *gin.Context) {
+	orderID := c.Param("orderId")
+
+	// seach in database for orderID
+	var order model.Order
+	if err := ac.DB.Where("order_id = ?", orderID).First(&order).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			handle.NotFoundError(c, "Order not found")
+			return
+		}
+		handle.ServerError(c, err)
+		return
+	}
+
+	if order.ProcessResultPDF == nil {
+		handle.NotFoundError(c, "No PDF found for this order")
+		return
+	}
+
+	pdfBytes, err := base64.StdEncoding.DecodeString(*order.ProcessResultPDF)
+	if err != nil {
+		handle.ServerError(c, fmt.Errorf("failed to decode PDF: %w", err))
+		return
+	}
+
+	filename := "./tmp/uploads/" + order.OrderID + "pdf"
+	if err := os.MkdirAll(filepath.Dir(filename), 0750); err != nil {
+		handle.ServerError(c, fmt.Errorf("failed to create directory: %w", err))
+		return
+	}
+
+	out, err := os.Create(filename)
+	if err != nil {
+		handle.ServerError(c, fmt.Errorf("failed to create file: %w", err))
+		return
+	}
+	defer out.Close()
+
+	_, err = io.Copy(out, bytes.NewReader(pdfBytes))
+	if err != nil {
+		handle.ServerError(c, fmt.Errorf("failed to write file: %w", err))
+		return
+	}
+
+	// Respond OK
+	handle.Success(c, gin.H{"message": "File for order " + order.OrderID + " downloaded", "filename": filename})
 }
 
 // @Summary		Create a new service user

@@ -27,11 +27,13 @@ type Intake struct {
 }
 
 type Compound struct {
-	Name       string   `json:"name"`
-	Adjust     bool     `json:"adjust"`
-	DoseAmount float64  `json:"dose_amount"`
-	DoseUnit   string   `json:"dose_unit"`
-	Schedule   []Intake `json:"schedule"`
+	Name        string   `json:"name"`
+	NameInModel string   `json:"name_in_model"`
+	Synonyms    []string `json:"synonyms"`
+	Adjust      bool     `json:"adjust"`
+	DoseAmount  float64  `json:"dose_amount"`
+	DoseUnit    string   `json:"dose_unit"`
+	Schedule    []Intake `json:"schedule"`
 }
 
 type Result struct {
@@ -103,12 +105,18 @@ func (p *PreCheck) Check(data *model.PatientData) (*Result, *Error) {
 
 	nDrugs := len(data.Drugs)
 	if nDrugs == 0 {
-		response.Message = "No drugs provided. No adjustment can be performed"
+		response.Message = "No drugs provided. No adjustment can be performed."
 		return response, NewError("no drugs provided", false)
 	}
 
 	// get compounds (unique and lowercase)
 	err := p.drugCompounds(response, data)
+	if err != nil {
+		return response, err
+	}
+
+	// get compound synonyms
+	err = p.commpoundSynonyms(response)
 	if err != nil {
 		return response, err
 	}
@@ -175,7 +183,7 @@ func (p *PreCheck) pbpkModelCheck(resp *Result) *Error {
 	}
 
 	if modelID == "" {
-		resp.Message = appendMsg(resp.Message, "PBPK Model Check: No model found for victim and perpetrators")
+		resp.Message = appendMsg(resp.Message, "PBPK Model Check: No model found for victim and perpetrators.")
 		return NewError("no model found for victim and perpetrators", false)
 	}
 
@@ -188,10 +196,10 @@ func (p *PreCheck) impairmentCheck(resp *Result, data *model.PatientData) {
 	kd := data.PatientCharacteristics.KidneyDisease
 
 	if ld {
-		resp.Message = appendMsg(resp.Message, "Impairment Check: Liver disease")
+		resp.Message = appendMsg(resp.Message, "Impairment Check: Liver disease.")
 	}
 	if kd {
-		resp.Message = appendMsg(resp.Message, "Impairment Check: Kidney disease")
+		resp.Message = appendMsg(resp.Message, "Impairment Check: Kidney disease.")
 	}
 
 	resp.OrganImpairment = ld || kd
@@ -224,7 +232,7 @@ func (p *PreCheck) virtualIndividualCheck(resp *Result, data *model.PatientData)
 			log.Str("ethnicity", helper.DerefOrDefault(population, "unknown")),
 		)
 
-		resp.Message = appendMsg(resp.Message, "Virtual Individual Check: No virtual individual matched demographic data")
+		resp.Message = appendMsg(resp.Message, "Virtual Individual Check: No virtual individual matched demographic data.")
 		return NewError("no virtual individual matched demographic data", false)
 	}
 
@@ -283,13 +291,48 @@ func (p *PreCheck) drugCompounds(resp *Result, data *model.PatientData) *Error {
 	for _, k := range compounds {
 		resp.Compounds = append(resp.Compounds, k)
 	}
+
+	return nil
+}
+
+func (p *PreCheck) commpoundSynonyms(resp *Result) *Error {
+	var compoundNames []string
+	for _, compound := range resp.Compounds {
+		compoundNames = append(compoundNames, compound.Name)
+	}
+
+	matches, err := p.MedInfoAPI.GetCommpoundSynonyms(compoundNames)
+	if err != nil {
+		if err.StatusCode == http.StatusNotFound {
+			resp.Message = appendMsg(resp.Message, "MedInfo Check: "+string(err.Error()))
+		}
+		return NewError("fetching synonyms", err.StatusCode != http.StatusNotFound, err)
+	}
+
+	for _, match := range matches {
+		var synonyms []string
+		c := match.Input
+		for _, m := range match.Matches {
+			for _, s := range m {
+				synonyms = append(synonyms, strings.ToLower(s.Name))
+			}
+		}
+		slices.Sort(synonyms)
+		for i := range resp.Compounds {
+			if resp.Compounds[i].Name == c {
+				resp.Compounds[i].Synonyms = synonyms
+				break
+			}
+		}
+	}
+
 	return nil
 }
 
 func (p *PreCheck) medinfoCheck(resp *Result) *Error {
 	compounds := resp.Compounds
 	if len(compounds) < 2 {
-		resp.Message = appendMsg(resp.Message, "MedInfo Check: Less than 2 compounds. No interaction check performed")
+		resp.Message = appendMsg(resp.Message, "MedInfo Check: Less than 2 compounds. No interaction check performed.")
 		return nil
 	}
 
@@ -301,17 +344,15 @@ func (p *PreCheck) medinfoCheck(resp *Result) *Error {
 	interactions, err := p.MedInfoAPI.GetCommpoundInteractions(compoundNames)
 	resp.Interactions = interactions
 	if err != nil {
+		p.logger.Warn("medInfo interaction check:", log.Err(err))
 		if err.StatusCode == http.StatusNotFound {
-			// TODO: Humand readable error message for compound not found
-			p.logger.Warn("MedInfo compound not found", log.Err(err))
+			resp.Message = appendMsg(resp.Message, "MedInfo Check: "+string(err.Error()))
 		}
-		resp.Message = appendMsg(resp.Message, "Medinfo Check: Failed to fetch interactions")
-		// if compound cannot be found, it is not a recoverable error
-		return NewError("fetching interactions", err.StatusCode != http.StatusNotFound, err)
+		return NewError("fetching interactions", !err.InputError, err)
 	}
 
 	if len(interactions) == 0 {
-		resp.Message = appendMsg(resp.Message, "MedInfo Check: No interactions expected")
+		resp.Message = appendMsg(resp.Message, "MedInfo Check: No interactions expected.")
 	}
 
 	return nil
