@@ -20,8 +20,10 @@ build:
 
 [group('deploy')]
 deploy-build:
-    @ docker build --no-cache \
+    @ docker build \
     -t ghcr.io/safepolymed-uds/precisiondosing-api-go:latest .
+run-deploy:
+    @ docker run --rm -it --env-file api/.env -p 3333:3333 ghcr.io/safepolymed-uds/precisiondosing-api-go:latest
 
 # Deletes feature branch after merging
 [group('git')]

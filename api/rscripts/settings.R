@@ -9,14 +9,15 @@ create_settings <- function() {
   settings <- list(
     DEBUG_MODE = FALSE,
     DEBUG_CREATE_FAKE = FALSE,
-    DEBUG_LOAD_FAKE = FALSE,
+    DEBUG_LOAD_FAKE = TRUE,
     SERVER_OPTIONS = list(
       WORKERS = 4L,
       MULTISESSION = FALSE
     ),
     INSTALL_TINYTEX = TRUE,
     PATHS = list(
-      MODELS = .get_pkml_paths("../../models"),
+      MODELS = .get_pkml_paths("../models"),
+      # MODELS = .get_pkml_paths("../../models"),
       REPORTS = "report",
       REPORT_EXAMPLE = "assets/tests/example_report.pdf",
       TEST_DATA = "assets/test_data",
@@ -39,7 +40,8 @@ create_settings <- function() {
       outfile_name = "Report"
     ),
     VALUES = list(
-      MODEL_CONFIG = .read_model_definitions("../../models"),
+      # MODEL_CONFIG = .read_model_definitions("../../models"),
+      MODEL_CONFIG = .read_model_definitions("../models"),
       POPULATIONS = list(
         "european" = "European_ICRP_2002",
         "white american" = "WhiteAmerican_NHANES_1997",

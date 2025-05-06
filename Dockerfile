@@ -35,6 +35,28 @@ RUN chmod +x /setup/*.sh && \
 # Optional install of OSPSuite packages and dependencies
 RUN setup/install_osp_pkg.sh
 
+# Install TeXLive for PDF generation
+# ENV CTAN_REPO=https://mirror.ctan.org/systems/texlive/tlnet
+ENV PATH=$PATH:/usr/local/texlive/bin/linux
+RUN /rocker_scripts/install_texlive.sh && \
+    tlmgr install \
+        fancyhdr \
+        lipsum \
+        colortbl \
+        environ \
+        fp \
+        pgf \
+        float \
+        tcolorbox \
+        trimspaces \
+        tikzfill \
+        listings \
+        pdfcol \
+        unicode-math \
+        booktabs \
+        listingsutf8 \
+        bookmark
+
 # Optional install of user R packages
 COPY ${R_PKG_FILE} setup/packages.R
 RUN setup/install_user_r_pkg.sh
@@ -45,9 +67,9 @@ RUN mkdir -p /app /app/schemas /app/models /app/rscripts && \
 
 COPY --from=builder /app/api /app/api
 COPY api/cfg/prod_config.yml /app/config.yml
-COPY api/schemas/* /app/schemas/
-COPY api/rscripts/* /app/rscripts/
-COPY models/* /app/models/
+COPY api/schemas/ /app/schemas/
+COPY api/rscripts/ /app/rscripts/
+COPY models/ /app/models/
 
 USER appuser
 WORKDIR /app

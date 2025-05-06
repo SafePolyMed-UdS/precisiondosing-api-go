@@ -51,10 +51,11 @@ remote_packages <- function() {
 install_packages <- function() {
   if (!requireNamespace("pak", quietly = TRUE)) install.packages("pak")
   pak::pkg_install(packages())
+  install_tinytex()
 }
 
 install_tinytex <- function() {
-  tinytex::install_tinytex()
+  tinytex::install_tinytex(force = TRUE)
   tl_packages <- c(
     "fancyhdr", "lipsum", "colortbl",
     "environ", "fp", "pgf", "tcolorbox",

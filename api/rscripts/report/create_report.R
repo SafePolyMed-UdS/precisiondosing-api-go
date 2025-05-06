@@ -17,15 +17,27 @@ render_pdf <- function(markdown_template, outfile_name, params) {
 
   markdown_dest <- file.path(markdown_folder, markdown_template)
 
-  result <- rmarkdown::render(
-    input = markdown_dest,
-    output_file = outfile_name,
-    output_dir = markdown_folder,
-    params = params,
-    quiet = TRUE,
-    envir = new.env(parent = globalenv())
-  ) |>
-    suppressWarnings()
+  tryCatch(
+    {
+      result <- rmarkdown::render(
+        input = markdown_dest,
+        output_file = outfile_name,
+        output_dir = markdown_folder,
+        params = params,
+        quiet = TRUE,
+        envir = new.env(parent = globalenv())
+      ) |>
+        suppressWarnings()
+    },
+    error = function(e) {
+      logfile <- file.path(markdown_folder, "report_success.log")
+      if (file.exists(logfile)) {
+        log_content <- paste(readLines(logfile), collapse = "\n")
+        stop(paste("Error rendering PDF with log:", log_content))
+      }
+      stop(paste("Error rendering PDF:", e$message))
+    }
+  )
 
   return(result)
 }
