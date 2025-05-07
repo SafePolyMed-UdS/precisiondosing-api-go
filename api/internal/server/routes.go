@@ -21,10 +21,17 @@ import (
 func RegisterSysRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
 	c := syscontroller.New(resourceHandle)
 
-	users := r.Group("/sys")
+	sys := r.Group("/sys")
 	{
-		users.GET("/ping", c.GetPing)
-		users.GET("/info", c.GetInfo)
+		sys.GET("/ping", c.GetPing)
+		sys.GET("/info", c.GetInfo)
+	}
+
+	server := r.Group("/sys/server")
+	server.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
+	{
+		server.GET("/stats", c.GetServerStats)
+		server.GET("/procs", c.GetProcessStats)
 	}
 }
 

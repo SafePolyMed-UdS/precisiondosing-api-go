@@ -3,6 +3,7 @@ package syscontroller
 import (
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/handle"
+	"precisiondosing-api-go/internal/utils/srvstats"
 
 	"github.com/gin-gonic/gin"
 )
@@ -47,4 +48,39 @@ func (sc *SysController) GetInfo(c *gin.Context) {
 	}
 
 	handle.Success(c, res)
+}
+
+func (sc *SysController) GetServerStats(c *gin.Context) {
+
+	cpuStats, err := srvstats.CPU()
+	if err != nil {
+		handle.ServerError(c, err)
+		return
+	}
+
+	memStats, err := srvstats.Memory()
+	if err != nil {
+		handle.ServerError(c, err)
+		return
+	}
+
+	res := struct {
+		CPU srvstats.CPUStats    `json:"cpu"` // CPU stats
+		Mem srvstats.MemoryStats `json:"mem"` // Memory stats
+	}{
+		CPU: cpuStats,
+		Mem: memStats,
+	}
+
+	handle.Success(c, res)
+}
+
+func (sc *SysController) GetProcessStats(c *gin.Context) {
+	processStasts, err := srvstats.Process()
+	if err != nil {
+		handle.ServerError(c, err)
+		return
+	}
+
+	handle.Success(c, processStasts)
 }
