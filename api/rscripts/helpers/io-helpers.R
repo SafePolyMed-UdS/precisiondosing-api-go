@@ -42,18 +42,31 @@ read_settings <- function() {
   return(settings)
 }
 
-read_order <- function(settings) {
+connect_db <- function(settings) {
   host_s <- strsplit(settings$mysql_host, ":") |>
     unlist()
 
+  host <- host_s[1]
+  port <- 3306
+
+  if (length(host_s) == 2) {
+    port <- as.numeric(host_s[2])
+  }
+
   con <- dbConnect(
     RMariaDB::MariaDB(),
-    host = host_s[1],
-    port = as.numeric(host_s[2]),
+    host = host,
+    port = port,
     user = settings$mysql_user,
     password = settings$mysql_password,
     dbname = settings$mysql_db
   )
+
+  return(con)
+}
+
+read_order <- function(settings) {
+  con <- connect_db(settings)
   on.exit(dbDisconnect(con), add = TRUE)
 
   query <- sprintf("SELECT * FROM `%s` WHERE id = ? LIMIT 1", settings$mysql_table)
@@ -80,17 +93,7 @@ read_order <- function(settings) {
 }
 
 write_order <- function(settings, results_json, pdf_path) {
-  host_s <- strsplit(settings$mysql_host, ":") |>
-    unlist()
-
-  con <- dbConnect(
-    RMariaDB::MariaDB(),
-    host = host_s[1],
-    port = as.numeric(host_s[2]),
-    user = settings$mysql_user,
-    password = settings$mysql_password,
-    dbname = settings$mysql_db
-  )
+  con <- connect_db(settings)
   on.exit(dbDisconnect(con), add = TRUE)
 
   if (!file.exists(pdf_path)) {
