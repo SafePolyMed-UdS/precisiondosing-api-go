@@ -54,6 +54,8 @@ type Order struct {
 }
 
 func (j *Order) BeforeCreate(_ *gorm.DB) error {
-	j.OrderID = uuid.New().String()
+	if j.OrderID == "" {
+		j.OrderID = uuid.New().String()
+	}
 	return nil
 }

@@ -47,7 +47,7 @@
 safeReturn <- function(fun) {
   tryCatch(
     {
-      out <- .reallySilent(fun())
+      out <- fun()
       .returnJSON(out$dose_adjustment, out$error, out$error_msg, out$process_log)
     },
     error = function(e) {

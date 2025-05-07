@@ -6,7 +6,6 @@
 #              - read_settings: Reads settings from environment variables and command line arguments
 #              - read_order: Reads an order from a MySQL database based on the provided settings
 #              - write_order: Writes the result of the order processing back to the MySQL database
-#              - execute: Main function that orchestrates the reading and writing of orders
 # -----------------------------------
 # Helper functions
 get_env_or_stop <- function(var_name) {
@@ -22,6 +21,7 @@ read_settings <- function() {
   id <- as.numeric(args[1])
   adjust_dose <- as.logical(args[2])
   error_msg <- args[3]
+  model_path <- args[4]
 
   if (length(args) < 1) {
     stop("Not enough arguments provided")
@@ -36,6 +36,7 @@ read_settings <- function() {
     r_worker = as.numeric(get_env_or_stop("R_WORKER")),
     id = id,
     adjust_dose = adjust_dose,
+    model_path = model_path,
     error_msg = error_msg
   )
   return(settings)
@@ -53,10 +54,10 @@ read_order <- function(settings) {
     password = settings$mysql_password,
     dbname = settings$mysql_db
   )
+  on.exit(dbDisconnect(con), add = TRUE)
 
   query <- sprintf("SELECT * FROM `%s` WHERE id = ? LIMIT 1", settings$mysql_table)
   result <- dbGetQuery(con, query, params = list(settings$id))
-  dbDisconnect(con)
 
   if (nrow(result) == 0) {
     stop(sprintf("No order found for ID %d", settings$id))
@@ -78,7 +79,7 @@ read_order <- function(settings) {
   return(order)
 }
 
-write_order <- function(settings, success, results_json, pdf_path) {
+write_order <- function(settings, results_json, pdf_path) {
   host_s <- strsplit(settings$mysql_host, ":") |>
     unlist()
 
@@ -99,7 +100,6 @@ write_order <- function(settings, success, results_json, pdf_path) {
   if (is.null(encoded_pdf)) {
     stop(sprintf("Failed to read PDF file: %s", pdf_path))
   }
-  # delete_tmp_folder(pdf_path)
 
   query <- sprintf(
     "UPDATE `%s` SET process_result_pdf = ? WHERE id = ? LIMIT 1",
@@ -115,4 +115,9 @@ write_order <- function(settings, success, results_json, pdf_path) {
   }
 
   invisible(NULL)
+}
+
+dbg_out <- function(...) {
+  cat(..., file = stderr())
+  cat("\n", file = stderr())
 }

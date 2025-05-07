@@ -23,7 +23,7 @@ source("helpers/input-tables.R")
 
 # Main function
 # -----------------------------------
-api_dose_adjustments <- function(order, settings) {
+api_dose_adjustments <- function(order, settings, API_SETTINGS) {
   payload <- fromJSON(order$precheck_result)
   payload_order <- fromJSON(order$order_data)
 

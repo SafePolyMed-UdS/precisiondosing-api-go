@@ -5,19 +5,18 @@
 # -----------------------------------
 source("startup/settings_helper.R")
 
-create_settings <- function() {
+create_settings <- function(model_path) {
   settings <- list(
     DEBUG_MODE = FALSE,
     DEBUG_CREATE_FAKE = FALSE,
-    DEBUG_LOAD_FAKE = TRUE,
+    DEBUG_LOAD_FAKE = FALSE,
     SERVER_OPTIONS = list(
       WORKERS = 4L,
       MULTISESSION = FALSE
     ),
     INSTALL_TINYTEX = TRUE,
     PATHS = list(
-      MODELS = .get_pkml_paths("../models"),
-      # MODELS = .get_pkml_paths("../../models"),
+      MODELS = .get_pkml_paths(model_path),
       REPORTS = "report",
       REPORT_EXAMPLE = "assets/tests/example_report.pdf",
       TEST_DATA = "assets/test_data",
@@ -40,8 +39,7 @@ create_settings <- function() {
       outfile_name = "Report"
     ),
     VALUES = list(
-      # MODEL_CONFIG = .read_model_definitions("../../models"),
-      MODEL_CONFIG = .read_model_definitions("../models"),
+      MODEL_CONFIG = .read_model_definitions(model_path),
       POPULATIONS = list(
         "european" = "European_ICRP_2002",
         "white american" = "WhiteAmerican_NHANES_1997",
@@ -79,4 +77,3 @@ create_settings <- function() {
 
   return(settings)
 }
-API_SETTINGS <- create_settings()

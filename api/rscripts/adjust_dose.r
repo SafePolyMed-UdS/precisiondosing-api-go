@@ -4,14 +4,18 @@
 # Date       : 2025-04-17
 # Notes      : - Calls the helper functions to read and write orders
 #              - Loads libraries and sets up the environment
+# TODO       : - [ ] Add handling for unknown/known genes, alleles, activities
+#              - [ ] Print interaction table in rmd report
+#              - [ ] Print genetics table in rmd report
 # -----------------------------------
 source("helpers/return-helpers.R")
 debugging <- FALSE
 
 main <- function() {
+  source("helpers/io-helpers.R")
+  dbg_out("Starting adjust_dose script")
   source("startup/packages.R")
   source("report/create_report.R")
-  source("helpers/io-helpers.R")
   source("helpers/return-test.R")
   source("helpers/service-adjust_dose.R")
   source("settings.R")
@@ -35,6 +39,8 @@ main <- function() {
   if (!debugging) {
     settings <- read_settings()
   }
+  API_SETTINGS <- create_settings(settings$model_path)
+
   order <- read_order(settings)
   API_SETTINGS$VALUES$model_defaults$SIM_CORES <- settings$r_worker
 
@@ -47,7 +53,8 @@ main <- function() {
   ## CONDITION: settings$adjust_dose == FALSE
   ## CREATE ERROR PDF AND RETURN
   if (!settings$adjust_dose) {
-    precheck_error_pdf(order, settings)
+    dbg_out("Precheck error - creating error PDF")
+    res <- precheck_error_pdf(order, settings, API_SETTINGS)
   }
 
   # Case 2: Simulate
@@ -57,8 +64,10 @@ main <- function() {
   ## SIMULATE, POSTPROCESS AND CREATE REPORT
   ## ON ERROR: CREATE ERROR PDF AND RETURN
   if (settings$adjust_dose) {
-    execute(order, settings)
+    dbg_out("Running dose adjustment")
+    res <- execute(order, settings, API_SETTINGS)
   }
+  return(res)
 }
 
 safeReturn(main)

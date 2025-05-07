@@ -1,0 +1,114 @@
+meta {
+  name: adjust-success-imatinib-rifampicin-clopidogrel
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{url}}/api/v1/dose/adjust
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "patient_id": 3,
+    "patient_characteristics": {
+      "age": 55,
+      "weight": 70,
+      "height": 165,
+      "sex": "male",
+      "ethnicity": "european",
+      "kidney_disease": false,
+      "liver_disease": false
+    },
+    "patient_pgx_profile": [
+      {
+        "gene": "CYP2C19",
+        "allele1": "*2",
+        "allele1_cnv_multiplier": 1,
+        "allele2": "*17",
+        "allele2_cnv_multiplier": 1,
+        "phenotype": "Intermediate metabolizer"
+      }
+    ],
+    "drugs": [
+      {
+        "adjust_dose": true,
+        "product": {
+          "product_name": "Gleevec 400mg",
+          "atc": "L01XE01",
+          "strength": 400,
+          "strength_unit": "milligram"
+        },
+        "active_substances": [
+          "Imatinib"
+        ],
+        "intake_cycle": {
+          "starting_at": "2024-12-01",
+          "frequency": "daily",
+          "frequency_modifier": 1,
+          "intakes": [
+            {
+              "cron": "0 8 */1 * *",
+              "raw_time_str": "08:00",
+              "dosage": 1,
+              "dosage_unit": "tablet"
+            }
+          ]
+        }
+      },
+      {
+        "adjust_dose": false,
+        "product": {
+          "product_name": "Rifadin 300mg",
+          "atc": "J04AB02",
+          "strength": 300,
+          "strength_unit": "milligram"
+        },
+        "active_substances": [
+          "Rifampicin"
+        ],
+        "intake_cycle": {
+          "starting_at": "2024-12-01",
+          "frequency": "daily",
+          "frequency_modifier": 1,
+          "intakes": [
+            {
+              "cron": "0 12 */1 * *",
+              "raw_time_str": "12:00",
+              "dosage": 1,
+              "dosage_unit": "tablet"
+            }
+          ]
+        }
+      },
+      {
+        "adjust_dose": false,
+        "product": {
+          "product_name": "Plavix 75mg",
+          "atc": "B01AC04",
+          "strength": 75,
+          "strength_unit": "milligram"
+        },
+        "active_substances": [
+          "Clopidogrel"
+        ],
+        "intake_cycle": {
+          "starting_at": "2024-12-01",
+          "frequency": "daily",
+          "frequency_modifier": 1,
+          "intakes": [
+            {
+              "cron": "0 18 */1 * *",
+              "raw_time_str": "18:00",
+              "dosage": 1,
+              "dosage_unit": "tablet"
+            }
+          ]
+        }
+      }
+    ]
+  }
+  
+}

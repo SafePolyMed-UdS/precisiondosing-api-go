@@ -56,7 +56,7 @@ params:
 {\Huge \textbf{Dosing Report}} \\
 
 \vspace{1.5cm}
-{\Large for Patient: `r params$order$order_id`} \\
+{\Large for Patient: `r params$order$order$patient_id`} \\
 
 \vspace{1cm}
 {Date: `r format(Sys.Date(), "%d.%m.%Y")`} \\

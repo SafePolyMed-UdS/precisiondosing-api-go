@@ -16,7 +16,7 @@
 # -----------------------------------------------------------
 # Main functions
 # -----------------------------------------------------------
-execute <- function(order, settings) {
+execute <- function(order, settings, API_SETTINGS) {
   sim_results <- tryCatch(
     {
       if (API_SETTINGS$DEBUG_LOAD_FAKE) {
@@ -31,8 +31,7 @@ execute <- function(order, settings) {
         report_data <- list(
           order = order,
           errors = list(
-            "No dose adjusted possible",
-            "due to errors \n Traceback: ",
+            "No dose adjustment possible due to errors.",
             e$message
           )
         )
@@ -40,7 +39,7 @@ execute <- function(order, settings) {
           results = report_data,
           api_settings = API_SETTINGS
         )
-        write_order(settings, TRUE, jsonlite::toJSON(order$order_data, auto_unbox = TRUE), report)
+        write_order(settings, jsonlite::toJSON(order$order_data, auto_unbox = TRUE), report)
 
         process_log <- paste(
           "Error occured during dose adaptation for order", order$id,
@@ -48,7 +47,7 @@ execute <- function(order, settings) {
         )
 
         list(
-          dose_adjustment = FALSE,
+          dose_adjusted = FALSE,
           process_log = process_log,
           error = FALSE,
           error_msg = ""
@@ -70,7 +69,7 @@ execute <- function(order, settings) {
         dose_pk = sim_results$output_data$dose_pk$data,
         api_settings = API_SETTINGS
       )
-      write_order(settings, TRUE, jsonlite::toJSON(order$order_data, auto_unbox = TRUE), report)
+      write_order(settings, jsonlite::toJSON(order$order_data, auto_unbox = TRUE), report)
     },
     error = function(e) {
       stop(paste("Could not create report for Order ID", order$order_id, ":", e$message))
@@ -80,48 +79,45 @@ execute <- function(order, settings) {
   process_log <- paste(
     "Order ID", order$order_id, "processed successfully. PDF saved to database."
   )
+  dbg_out(process_log)
 
-  list(
-    dose_adjustment = TRUE,
+  res <- list(
+    dose_adjusted = TRUE,
     process_log = process_log,
     error = FALSE,
     error_msg = ""
   )
+  return(res)
 }
 
-precheck_error_pdf <- function(order, settings) {
+precheck_error_pdf <- function(order, settings, API_SETTINGS) {
   precheck_results <- list(
     order = order,
     errors = list(
-      "No dose adjusted possible",
-      "due to errors in the order precheck\n Traceback: ",
-      settings$error_msg
+      paste("No dose adjustment possible due to errors in the order precheck.", settings$error_msg)
     )
   )
   tryCatch(
     {
+      dbg_out("Creating error report for order precheck...")
       report <- render_error_pdf(
         results = precheck_results,
         api_settings = API_SETTINGS
       )
-
-      write_order(settings, TRUE, jsonlite::toJSON(order$order_data, auto_unbox = TRUE), report)
-
-      res <- list(
-        dose_adjusted = FALSE,
-        error = FALSE,
-        error_msg = "",
-        process_log = paste("Success: Order ID", order$order_id, "processed successfully.")
-      )
+      dbg_out("Successfully created error report for order precheck.")
+      write_order(settings, jsonlite::toJSON(order$order_data, auto_unbox = TRUE), report)
+      dbg_out("Successfully saved error report to database.")
     },
     error = function(e) {
-      res <- list(
-        dose_adjusted = FALSE,
-        error = TRUE,
-        error_msg = paste("Could not create error report for Order ID", order$order_id, ":", e$message),
-        process_log = ""
-      )
+      stop(paste("Could not create error report for Order ID", order$order_id, ":", e$message))
     }
   )
+  res <- list(
+    dose_adjusted = FALSE,
+    error = FALSE,
+    error_msg = "",
+    process_log = paste("Success: Order ID", order$order_id, "processed successfully.")
+  )
+  dbg_out(toJSON(res, auto_unbox = TRUE))
   return(res)
 }
