@@ -1,9 +1,13 @@
 package callr
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -55,7 +59,6 @@ type Resp struct {
 	Error        bool     `json:"error"`     // only if R fails -> stops with error
 	ErrorMsg     string   `json:"error_msg"` // R error message from stop
 	CallStack    []string `json:"call_stack"`
-	ProcessLog   string   `json:"process_log"`
 }
 
 type RError struct {
@@ -114,14 +117,6 @@ func (c *CallR) Adjust(jobID uint, adjust bool, errorMsg string, maxExecutionTim
 		return nil, newRError(marshalErr, nil)
 	}
 
-	// log process from R script
-	if resp.ProcessLog != "" {
-		c.logger.Info("script process log",
-			log.Str("jobID", strconv.FormatUint(uint64(jobID), 10)),
-			log.Str("process_log", resp.ProcessLog),
-		)
-	}
-
 	// Error in response -> R script stopped with error -> system error
 	if resp.Error {
 		return nil, newRError(errors.New(resp.ErrorMsg), resp.CallStack)
@@ -150,6 +145,67 @@ func newCallError(errorMsg string, timeout bool) *callError {
 }
 
 func (c *CallR) call(jobID uint, adjust bool, errorMsg string, maxExecutionTime time.Duration) ([]byte, *callError) {
+	cmd, pipes, err := c.prepareCommand(jobID, adjust, errorMsg)
+	if err != nil {
+		return nil, newCallError(err.Error(), false)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), maxExecutionTime)
+	defer cancel()
+
+	if err = cmd.Start(); err != nil {
+		return nil, newCallError("failed to start script: "+err.Error(), false)
+	}
+
+	if err = assignProcessToJobObject(cmd); err != nil {
+		c.logger.Warn("could not assign process to job object", log.Str("error", err.Error()))
+	}
+
+	var outputBuf bytes.Buffer
+	done := make(chan error, 1)
+
+	go c.captureOutput(pipes.stdout, cmd, &outputBuf, done)
+	go c.captureAndLogStderr(pipes.stderr, jobID)
+
+	select {
+	case <-ctx.Done():
+		killProcessGroup(cmd)
+		return nil, newCallError("script timeout", true)
+	case err = <-done:
+		if err != nil {
+			return nil, newCallError("script failed: "+err.Error(), false)
+		}
+	}
+
+	return outputBuf.Bytes(), nil
+}
+
+func (c *CallR) captureAndLogStderr(stderr io.ReadCloser, jobID uint) {
+	scanner := bufio.NewScanner(stderr)
+	jobIDStr := strconv.FormatUint(uint64(jobID), 10)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		c.logger.Debug("R output",
+			log.Str("jobID", jobIDStr),
+			log.Str("msg", line),
+		)
+	}
+
+	if err := scanner.Err(); err != nil {
+		c.logger.Error("stderr read error",
+			log.Str("jobID", jobIDStr),
+			log.Err(err),
+		)
+	}
+}
+
+type pipes struct {
+	stdout io.ReadCloser
+	stderr io.ReadCloser
+}
+
+func (c *CallR) prepareCommand(jobID uint, adjust bool, errorMsg string) (*exec.Cmd, *pipes, error) {
 	wd := filepath.Dir(c.adjustScriptPath)
 	script := filepath.Base(c.adjustScriptPath)
 
@@ -159,17 +215,13 @@ func (c *CallR) call(jobID uint, adjust bool, errorMsg string, maxExecutionTime 
 		adjustStr = "TRUE"
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), maxExecutionTime)
-	defer cancel()
-
 	fullModelPath, err := filepath.Abs(c.modelPath)
 	if err != nil {
-		return nil, newCallError(err.Error(), false)
+		return nil, nil, fmt.Errorf("cannot get absolute path of model: %w", err)
 	}
 
-	// Rscript script.R jobID Adjust ErrorMsg ModelPath
-	// Rscript script.R int Bool(TRUE/FALSE) String
-	cmd := exec.CommandContext(ctx, //nolint:gosec // no problem here
+	//nolint:gosec // args are controlled and validated
+	cmd := exec.Command(
 		c.rscriptPath,
 		script,
 		jobIDStr,
@@ -187,19 +239,32 @@ func (c *CallR) call(jobID uint, adjust bool, errorMsg string, maxExecutionTime 
 		"R_MYSQL_TABLE=orders",
 		"R_WORKER="+strconv.Itoa(c.rWorker),
 	)
-	cmd.WaitDelay = 1 * time.Second
-	if c.debugMode {
-		cmd.Stderr = os.Stderr
-	}
 
-	out, err := cmd.Output()
+	setCmdSysProcAttr(cmd)
+
+	stderrPipe, err := cmd.StderrPipe()
 	if err != nil {
-		if ctx.Err() == context.DeadlineExceeded {
-			return nil, newCallError("script timeout", true)
-		}
-
-		return nil, newCallError(err.Error(), false)
+		return nil, nil, fmt.Errorf("cannot get stderr pipe: %w", err)
 	}
 
-	return out, nil
+	stdoutPipe, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, nil, fmt.Errorf("cannot get stdout pipe: %w", err)
+	}
+
+	pipes := &pipes{
+		stdout: stdoutPipe,
+		stderr: stderrPipe,
+	}
+
+	return cmd, pipes, nil
+}
+
+func (c *CallR) captureOutput(stdout io.Reader, cmd *exec.Cmd, buf *bytes.Buffer, done chan<- error) {
+	_, copyErr := io.Copy(buf, stdout)
+	if copyErr != nil {
+		done <- copyErr
+		return
+	}
+	done <- cmd.Wait()
 }

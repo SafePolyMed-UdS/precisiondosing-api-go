@@ -87,7 +87,7 @@ func (oc *OrderController) GetOrders(c *gin.Context) {
 }
 
 func (oc *OrderController) GetOrderByID(c *gin.Context) {
-	orderID := c.Param("orderId")
+	orderID := c.Param("order_id")
 	var order model.Order
 
 	// You could add validation here to make sure orderID is an integer if needed
@@ -145,7 +145,7 @@ func (oc *OrderController) ResetFailedSends(c *gin.Context) {
 }
 
 func (oc *OrderController) ResendOrder(c *gin.Context) {
-	orderID := c.Param("orderId")
+	orderID := c.Param("order_id")
 
 	var order model.Order
 	if err := oc.DB.
@@ -185,7 +185,7 @@ func (oc *OrderController) ResendOrder(c *gin.Context) {
 }
 
 func (oc *OrderController) RequeueOrderByID(c *gin.Context) {
-	orderID := c.Param("orderId")
+	orderID := c.Param("order_id")
 
 	var status string
 	if err := oc.DB.
@@ -265,7 +265,7 @@ func (oc *OrderController) RequeueErrorOrders(c *gin.Context) {
 }
 
 func (oc *OrderController) DeleteOrderByID(c *gin.Context) {
-	orderID := c.Param("orderId")
+	orderID := c.Param("order_id")
 
 	if err := oc.DB.
 		Where("order_id = ?", orderID).

@@ -61,9 +61,9 @@ func RegisterDownloadRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceH
 	download.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
 	{
 		// download endpoints
-		download.GET("/pdf/:orderId", c.DownloadPDF)
-		download.GET("/order/:orderId", c.DownloadOrder)
-		download.GET("/precheck/:orderId", c.DownloadPrecheck)
+		download.GET("/pdf/:order_id", c.DownloadPDF)
+		download.GET("/order/:order_id", c.DownloadOrder)
+		download.GET("/precheck/:order_id", c.DownloadPrecheck)
 	}
 }
 
@@ -74,17 +74,17 @@ func RegisterOrderRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHand
 	order.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
 	{
 		order.GET("/", c.GetOrders)
-		order.GET("/:orderId", c.GetOrderByID)
+		order.GET("/:order_id", c.GetOrderByID)
 
 		order.PATCH("/send/failed", c.ResetFailedSends)
-		order.PATCH("/send/:orderId", c.ResendOrder)
+		order.PATCH("/send/:order_id", c.ResendOrder)
 
 		// reset endpoints
-		order.PATCH("/orders/requeue/errors", c.RequeueErrorOrders)
-		order.PATCH("/orders/requeue/:id", c.RequeueOrderByID)
+		order.PATCH("/requeue/errors", c.RequeueErrorOrders)
+		order.PATCH("/requeue/:order_id", c.RequeueOrderByID)
 
 		// delete endpoints
-		order.DELETE("/orders/delete/:orderId", c.DeleteOrderByID)
+		order.DELETE("/delete/:order_id", c.DeleteOrderByID)
 	}
 }
 

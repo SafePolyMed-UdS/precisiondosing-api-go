@@ -25,7 +25,7 @@ func New(resourceHandle *handle.ResourceHandle) *DownloadController {
 }
 
 func (ac *DownloadController) DownloadPDF(c *gin.Context) {
-	orderID := c.Param("orderId")
+	orderID := c.Param("order_id")
 
 	var order model.Order
 	if err := ac.DB.
@@ -63,7 +63,7 @@ func (ac *DownloadController) DownloadPDF(c *gin.Context) {
 }
 
 func (ac *DownloadController) DownloadOrder(c *gin.Context) {
-	orderID := c.Param("orderId")
+	orderID := c.Param("order_id")
 
 	var order model.Order
 	if err := ac.DB.Select("order_id", "order_data").
@@ -80,7 +80,7 @@ func (ac *DownloadController) DownloadOrder(c *gin.Context) {
 }
 
 func (ac *DownloadController) DownloadPrecheck(c *gin.Context) {
-	orderID := c.Param("orderId")
+	orderID := c.Param("order_id")
 
 	var order model.Order
 	if err := ac.DB.Select("order_id", "precheck_passed", "precheck_result", "prechecked_at").
