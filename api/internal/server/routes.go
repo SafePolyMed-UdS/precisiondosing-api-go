@@ -3,8 +3,10 @@ package server
 import (
 	"precisiondosing-api-go/docs"
 	"precisiondosing-api-go/internal/controller/admincontroller"
+	"precisiondosing-api-go/internal/controller/downloadcontroller"
 	"precisiondosing-api-go/internal/controller/dsscontroller"
 	"precisiondosing-api-go/internal/controller/modelcontroller"
+	"precisiondosing-api-go/internal/controller/ordercontroller"
 	"precisiondosing-api-go/internal/controller/syscontroller"
 	"precisiondosing-api-go/internal/controller/testcontroller"
 	"precisiondosing-api-go/internal/controller/usercontroller"
@@ -49,27 +51,40 @@ func RegisterAdminRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHand
 		admin.GET("/users/:email", c.GetUserByEmail)
 		admin.DELETE("/users/:email", c.DeleteUserByEmail)
 		admin.PATCH("/users/:email", c.ChangeUserProfile)
+	}
+}
 
+func RegisterDownloadRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
+	c := downloadcontroller.New(resourceHandle)
+
+	download := r.Group("/download")
+	download.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
+	{
 		// download endpoints
-		admin.GET("/download/pdf/:orderId", c.DownloadPDF)
-		admin.GET("/download/order/:orderId", c.DownloadOrder)
-		admin.GET("/download/precheck/:orderId", c.DownloadPrecheck)
+		download.GET("/pdf/:orderId", c.DownloadPDF)
+		download.GET("/order/:orderId", c.DownloadOrder)
+		download.GET("/precheck/:orderId", c.DownloadPrecheck)
+	}
+}
 
-		// order overview endpoints
-		admin.GET("/orders", c.GetOrders)
-		admin.GET("/orders/:orderId", c.GetOrderByID)
+func RegisterOrderRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
+	c := ordercontroller.New(resourceHandle)
 
-		// send endpoints
-		admin.PATCH("/orders/send/failed", c.ResetFailedSends)
-		admin.PATCH("/orders/send/:orderId", c.ResendOrder)
+	order := r.Group("/orders")
+	order.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
+	{
+		order.GET("/", c.GetOrders)
+		order.GET("/:orderId", c.GetOrderByID)
+
+		order.PATCH("/send/failed", c.ResetFailedSends)
+		order.PATCH("/send/:orderId", c.ResendOrder)
 
 		// reset endpoints
-		//admin.PATCH("/orders/requeue/errors", c.RequeFailedOrders)
-		//admin.PATCH("/orders/requeue/:id", RequeOrderByID)
+		order.PATCH("/orders/requeue/errors", c.RequeueErrorOrders)
+		order.PATCH("/orders/requeue/:id", c.RequeueOrderByID)
 
 		// delete endpoints
-		//admin.DELETE("/orders/:orderId", c.DeleteOrderByID)
-
+		order.DELETE("/orders/delete/:orderId", c.DeleteOrderByID)
 	}
 }
 

@@ -5,7 +5,11 @@ meta {
 }
 
 get {
-  url: {{url}}/api/v1/admin/download/precheck/6ad02bfd-3d3c-40db-b065-ccb8f36deb89
+  url: {{url}}/api/v1/download/precheck/:order_id
   body: none
   auth: inherit
+}
+
+params:path {
+  order_id: 
 }

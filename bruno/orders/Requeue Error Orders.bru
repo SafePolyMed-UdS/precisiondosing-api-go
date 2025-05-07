@@ -1,0 +1,11 @@
+meta {
+  name: Requeue Error Orders
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{url}}/api/v1/orders/requeue/errors
+  body: none
+  auth: inherit
+}

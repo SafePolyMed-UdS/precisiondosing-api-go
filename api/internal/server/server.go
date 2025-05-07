@@ -152,11 +152,10 @@ func initHandler(config *cfg.APIConfig, debug bool) (*handle.ResourceHandle, err
 	callR := callr.New(
 		rscriptPath,
 		config.RLang.DoseAdjustScript,
-		config.Database.Host,
-		config.Database.DBName,
-		config.Database.Username,
-		config.Database.Password,
+		config.Database,
+		config.Models.Path,
 		config.RLang.RWorker,
+		debug,
 	)
 
 	resourceHandle := handle.NewResourceHandle(config, databases, prechecker, callR, jsonValidators, debug)
@@ -170,6 +169,8 @@ func registerRoutes(r *gin.Engine, resourceHandle *handle.ResourceHandle) {
 	RegisterSysRoutes(api, resourceHandle)
 	RegisterUserRoutes(api, resourceHandle)
 	RegisterAdminRoutes(api, resourceHandle)
+	RegisterDownloadRoutes(api, resourceHandle)
+	RegisterOrderRoutes(api, resourceHandle)
 	RegisterDSSRoutes(api, resourceHandle)
 	RegisterModelRoutes(api, resourceHandle)
 	if resourceHandle.DebugMode {

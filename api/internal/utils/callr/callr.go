@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/utils/log"
 	"strconv"
 	"strings"
@@ -20,28 +21,32 @@ type CallR struct {
 	mysqlUser        string
 	mysqlHost        string
 	mysqlDB          string
+	modelPath        string
 	rWorker          int
+	debugMode        bool
 	logger           log.Logger
 }
 
 func New(
 	rscriptPath string,
 	adjustScriptPath string,
-	mysqlHost string,
-	mysqlDB string,
-	mysqlUser string,
-	mysqlPassword string,
+	dbConfig cfg.DatabaseConfig,
+	modelPath string,
 	rWorker int,
+	debug bool,
 ) *CallR {
 	return &CallR{
 		rscriptPath:      rscriptPath,
 		adjustScriptPath: adjustScriptPath,
-		mysqlPassword:    mysqlPassword,
-		mysqlUser:        mysqlUser,
-		mysqlHost:        mysqlHost,
-		mysqlDB:          mysqlDB,
+		mysqlPassword:    dbConfig.Password,
+		mysqlUser:        dbConfig.Username,
+		mysqlHost:        dbConfig.Host,
+		mysqlDB:          dbConfig.DBName,
 		rWorker:          rWorker,
-		logger:           log.WithComponent("callr"),
+		debugMode:        debug,
+		modelPath:        modelPath,
+
+		logger: log.WithComponent("callr"),
 	}
 }
 
@@ -157,9 +162,22 @@ func (c *CallR) call(jobID uint, adjust bool, errorMsg string, maxExecutionTime 
 	ctx, cancel := context.WithTimeout(context.Background(), maxExecutionTime)
 	defer cancel()
 
-	// Rscript script.R jobID Adjust ErrorMsg
+	fullModelPath, err := filepath.Abs(c.modelPath)
+	if err != nil {
+		return nil, newCallError(err.Error(), false)
+	}
+
+	// Rscript script.R jobID Adjust ErrorMsg ModelPath
 	// Rscript script.R int Bool(TRUE/FALSE) String
-	cmd := exec.CommandContext(ctx, c.rscriptPath, script, jobIDStr, adjustStr, errorMsg) //nolint:gosec // no problem here
+	cmd := exec.CommandContext(ctx, //nolint:gosec // no problem here
+		c.rscriptPath,
+		script,
+		jobIDStr,
+		adjustStr,
+		errorMsg,
+		fullModelPath,
+	)
+
 	cmd.Dir = wd
 	cmd.Env = append(os.Environ(),
 		"R_MYSQL_PASSWORD="+c.mysqlPassword,
@@ -170,6 +188,9 @@ func (c *CallR) call(jobID uint, adjust bool, errorMsg string, maxExecutionTime 
 		"R_WORKER="+strconv.Itoa(c.rWorker),
 	)
 	cmd.WaitDelay = 1 * time.Second
+	if c.debugMode {
+		cmd.Stderr = os.Stderr
+	}
 
 	out, err := cmd.Output()
 	if err != nil {

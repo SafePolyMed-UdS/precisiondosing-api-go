@@ -1,0 +1,15 @@
+meta {
+  name: Delete Order
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{url}}/api/v1/orders/delete/:order_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  order_id: 
+}

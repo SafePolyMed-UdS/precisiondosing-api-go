@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{url}}/api/v1/admin/orders
+  url: {{url}}/api/v1/orders/:order_id
   body: none
   auth: inherit
 }
@@ -13,4 +13,8 @@ get {
 params:query {
   ~status: 
   ~user: 
+}
+
+params:path {
+  order_id: 
 }

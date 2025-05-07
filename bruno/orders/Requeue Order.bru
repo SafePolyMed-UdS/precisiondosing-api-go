@@ -1,0 +1,15 @@
+meta {
+  name: Requeue Order
+  type: http
+  seq: 5
+}
+
+patch {
+  url: {{url}}/api/v1/orders/requeue/:order_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  order_id: 
+}
