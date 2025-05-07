@@ -64,11 +64,11 @@ func RegisterAdminRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHand
 		admin.PATCH("/orders/send/:orderId", c.ResendOrder)
 
 		// reset endpoints
-		admin.PATCH("/orders/requeue/errors", c.RequeFailedOrders)
-		admin.PATCH("/orders/requeue/:id", RequeOrderByID)
+		//admin.PATCH("/orders/requeue/errors", c.RequeFailedOrders)
+		//admin.PATCH("/orders/requeue/:id", RequeOrderByID)
 
 		// delete endpoints
-		admin.DELETE("/orders/:orderId", c.DeleteOrderByID)
+		//admin.DELETE("/orders/:orderId", c.DeleteOrderByID)
 
 	}
 }
