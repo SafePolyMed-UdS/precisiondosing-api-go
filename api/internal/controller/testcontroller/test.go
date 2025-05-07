@@ -13,7 +13,7 @@ type TestController struct {
 
 func New() *TestController {
 	return &TestController{
-		logger: log.WithComponent("TestController"),
+		logger: log.WithComponent("testcontroller"),
 	}
 }
 

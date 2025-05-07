@@ -1,19 +1,10 @@
 package callr
 
 import (
-	"bufio"
-	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
-	"os"
-	"os/exec"
-	"path/filepath"
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/utils/log"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -29,6 +20,7 @@ type CallR struct {
 	rWorker          int
 	debugMode        bool
 	logger           log.Logger
+	rLogger          log.Logger
 }
 
 func New(
@@ -50,7 +42,8 @@ func New(
 		debugMode:        debug,
 		modelPath:        modelPath,
 
-		logger: log.WithComponent("callr"),
+		logger:  log.WithComponent("callr"),
+		rLogger: log.WithComponent("rscript"),
 	}
 }
 
@@ -92,16 +85,21 @@ func newRError(err error, callStack []string) *RError {
 	}
 }
 
+type CallRIDs struct {
+	JobID  uint
+	OderID string
+}
+
 // error is always a non-recoverable system error
-func (c *CallR) Adjust(jobID uint, adjust bool, errorMsg string, maxExecutionTime time.Duration) (*Resp, *RError) {
-	bytes, err := c.call(jobID, adjust, errorMsg, maxExecutionTime)
+func (c *CallR) Adjust(ids CallRIDs, adjust bool, errorMsg string, maxExecutionTime time.Duration) (*Resp, *RError) {
+	bytes, err := c.run(ids, adjust, errorMsg, maxExecutionTime)
 	if err != nil {
 		if err.Timeout {
 			// timeout error -> we will retry one time with and error message job
-			c.logger.Warn("script timed out", log.Str("jobID", strconv.FormatUint(uint64(jobID), 10)))
+			c.logger.Warn("script timed out", log.Str("OrderID", ids.OderID))
 
-			msg := "The adjustment timed out (took too long)"
-			retryBytes, retryErr := c.call(jobID, false, msg, maxExecutionTime)
+			errorMsg := "The adjustment timed out (took too long)"
+			retryBytes, retryErr := c.run(ids, false, errorMsg, maxExecutionTime)
 			if retryErr != nil {
 				return nil, newRError(retryErr, nil)
 			}
@@ -123,148 +121,4 @@ func (c *CallR) Adjust(jobID uint, adjust bool, errorMsg string, maxExecutionTim
 	}
 
 	return &resp, nil
-}
-
-type callError struct {
-	ErrorMsg string `json:"error_msg"`
-	Timeout  bool   `json:"timeout"`
-}
-
-func (e *callError) Error() string {
-	if e.ErrorMsg != "" {
-		return e.ErrorMsg
-	}
-	return "R script error"
-}
-
-func newCallError(errorMsg string, timeout bool) *callError {
-	return &callError{
-		ErrorMsg: errorMsg,
-		Timeout:  timeout,
-	}
-}
-
-func (c *CallR) call(jobID uint, adjust bool, errorMsg string, maxExecutionTime time.Duration) ([]byte, *callError) {
-	cmd, pipes, err := c.prepareCommand(jobID, adjust, errorMsg)
-	if err != nil {
-		return nil, newCallError(err.Error(), false)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), maxExecutionTime)
-	defer cancel()
-
-	if err = cmd.Start(); err != nil {
-		return nil, newCallError("failed to start script: "+err.Error(), false)
-	}
-
-	if err = assignProcessToJobObject(cmd); err != nil {
-		c.logger.Warn("could not assign process to job object", log.Str("error", err.Error()))
-	}
-
-	var outputBuf bytes.Buffer
-	done := make(chan error, 1)
-
-	go c.captureOutput(pipes.stdout, cmd, &outputBuf, done)
-	go c.captureAndLogStderr(pipes.stderr, jobID)
-
-	select {
-	case <-ctx.Done():
-		killProcessGroup(cmd)
-		return nil, newCallError("script timeout", true)
-	case err = <-done:
-		if err != nil {
-			return nil, newCallError("script failed: "+err.Error(), false)
-		}
-	}
-
-	return outputBuf.Bytes(), nil
-}
-
-func (c *CallR) captureAndLogStderr(stderr io.ReadCloser, jobID uint) {
-	scanner := bufio.NewScanner(stderr)
-	jobIDStr := strconv.FormatUint(uint64(jobID), 10)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-		c.logger.Debug("R output",
-			log.Str("jobID", jobIDStr),
-			log.Str("msg", line),
-		)
-	}
-
-	if err := scanner.Err(); err != nil {
-		c.logger.Error("stderr read error",
-			log.Str("jobID", jobIDStr),
-			log.Err(err),
-		)
-	}
-}
-
-type pipes struct {
-	stdout io.ReadCloser
-	stderr io.ReadCloser
-}
-
-func (c *CallR) prepareCommand(jobID uint, adjust bool, errorMsg string) (*exec.Cmd, *pipes, error) {
-	wd := filepath.Dir(c.adjustScriptPath)
-	script := filepath.Base(c.adjustScriptPath)
-
-	jobIDStr := strconv.FormatUint(uint64(jobID), 10)
-	adjustStr := "FALSE"
-	if adjust {
-		adjustStr = "TRUE"
-	}
-
-	fullModelPath, err := filepath.Abs(c.modelPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot get absolute path of model: %w", err)
-	}
-
-	//nolint:gosec // args are controlled and validated
-	cmd := exec.Command(
-		c.rscriptPath,
-		script,
-		jobIDStr,
-		adjustStr,
-		errorMsg,
-		fullModelPath,
-	)
-
-	cmd.Dir = wd
-	cmd.Env = append(os.Environ(),
-		"R_MYSQL_PASSWORD="+c.mysqlPassword,
-		"R_MYSQL_USER="+c.mysqlUser,
-		"R_MYSQL_HOST="+c.mysqlHost,
-		"R_MYSQL_DB="+c.mysqlDB,
-		"R_MYSQL_TABLE=orders",
-		"R_WORKER="+strconv.Itoa(c.rWorker),
-	)
-
-	setCmdSysProcAttr(cmd)
-
-	stderrPipe, err := cmd.StderrPipe()
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot get stderr pipe: %w", err)
-	}
-
-	stdoutPipe, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, nil, fmt.Errorf("cannot get stdout pipe: %w", err)
-	}
-
-	pipes := &pipes{
-		stdout: stdoutPipe,
-		stderr: stderrPipe,
-	}
-
-	return cmd, pipes, nil
-}
-
-func (c *CallR) captureOutput(stdout io.Reader, cmd *exec.Cmd, buf *bytes.Buffer, done chan<- error) {
-	_, copyErr := io.Copy(buf, stdout)
-	if copyErr != nil {
-		done <- copyErr
-		return
-	}
-	done <- cmd.Wait()
 }

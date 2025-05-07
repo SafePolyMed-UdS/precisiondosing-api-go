@@ -7,26 +7,24 @@ import (
 	"syscall"
 )
 
-func setCmdSysProcAttr(cmd *exec.Cmd) {
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid: true,
-	}
-}
+type unixPlat struct{}
 
-func killProcessGroup(cmd *exec.Cmd) {
-	if cmd.Process == nil {
-		return
-	}
+var plat platform = unixPlat{}
 
-	pgid, err := syscall.Getpgid(cmd.Process.Pid)
-	if err == nil {
-		syscall.Kill(-pgid, syscall.SIGKILL)
-	} else {
-		_ = cmd.Process.Kill()
-	}
-}
-
-func assignProcessToJobObject(_ *exec.Cmd) error {
-	// No-op on Unix (we use Setpgid there)
+func (unixPlat) Setup(cmd *exec.Cmd) error {
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
 	return nil
+}
+
+func (unixPlat) Assign(_ *exec.Cmd) error { return nil }
+
+func (unixPlat) Teardown(cmd *exec.Cmd) error {
+	if cmd.Process == nil {
+		return nil
+	}
+	pgid, err := syscall.Getpgid(cmd.Process.Pid)
+	if err != nil {
+		return cmd.Process.Kill()
+	}
+	return syscall.Kill(-pgid, syscall.SIGKILL)
 }

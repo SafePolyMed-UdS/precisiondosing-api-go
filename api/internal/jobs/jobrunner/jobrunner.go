@@ -222,7 +222,12 @@ func (jr *JobRunner) processJob(order *model.Order) {
 
 	adjust := order.PrecheckPassed
 	errMsg := precheck.Message
-	resp, rError := jr.callr.Adjust(order.ID, adjust, errMsg, jr.cfg.timeout)
+	ids := callr.CallRIDs{
+		JobID:  order.ID,
+		OderID: order.OrderID,
+	}
+
+	resp, rError := jr.callr.Adjust(ids, adjust, errMsg, jr.cfg.timeout)
 	order.ProcessedAt = &now
 
 	if rError != nil {
@@ -257,9 +262,9 @@ func (jr *JobRunner) purgeOnStart(ctx context.Context) {
 	// On start, reset orders that started but did not finish
 	err := jr.jobDB.WithContext(ctx).
 		Model(&model.Order{}).
-		Where(&model.Order{Status: "staged"}).
-		Or(&model.Order{Status: "prechecked"}).
-		Or(&model.Order{Status: "processing"}).
+		Where(&model.Order{Status: model.StatusStaged}).
+		Or(&model.Order{Status: model.StatusPrechecked}).
+		Or(&model.Order{Status: model.StatusProcessing}).
 		Updates(map[string]interface{}{
 			"status":                model.StatusQueued,
 			"precheck_result":       nil,

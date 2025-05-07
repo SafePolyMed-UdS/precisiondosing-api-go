@@ -4,6 +4,7 @@ import (
 	"errors"
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/model"
+	"precisiondosing-api-go/internal/utils/log"
 	"strconv"
 	"time"
 
@@ -12,12 +13,14 @@ import (
 )
 
 type OrderController struct {
-	DB *gorm.DB
+	DB     *gorm.DB
+	logger log.Logger
 }
 
 func New(resourceHandle *handle.ResourceHandle) *OrderController {
 	return &OrderController{
-		DB: resourceHandle.Databases.GormDB,
+		DB:     resourceHandle.Databases.GormDB,
+		logger: log.WithComponent("ordercontroller"),
 	}
 }
 
@@ -138,9 +141,12 @@ func (oc *OrderController) ResetFailedSends(c *gin.Context) {
 		return
 	}
 
+	orderAffected := result.RowsAffected
+
+	oc.logger.Info("Requeue orders for sending", log.Int("orders", int(orderAffected)))
 	handle.Success(c, gin.H{
 		"message": "Orders with failed sends resetted",
-		"orders":  result.RowsAffected,
+		"orders":  orderAffected,
 	})
 }
 
@@ -178,6 +184,7 @@ func (oc *OrderController) ResendOrder(c *gin.Context) {
 		return
 	}
 
+	oc.logger.Info("Requeue order for sending", log.Str("orderID", order.OrderID))
 	handle.Success(c, gin.H{
 		"message": "Order reset to processed state",
 		"orderId": order.OrderID,
@@ -227,6 +234,7 @@ func (oc *OrderController) RequeueOrderByID(c *gin.Context) {
 		return
 	}
 
+	oc.logger.Info("Requeue order for processing", log.Str("orderID", orderID))
 	handle.Success(c, gin.H{
 		"message": "Order requeued",
 		"orderId": orderID,
@@ -258,9 +266,12 @@ func (oc *OrderController) RequeueErrorOrders(c *gin.Context) {
 		return
 	}
 
+	ordersAffected := res.RowsAffected
+
+	oc.logger.Info("Requeue orders with error status", log.Int("orders", int(ordersAffected)))
 	handle.Success(c, gin.H{
 		"message":       "Requeued orders with error status",
-		"rows_affected": res.RowsAffected,
+		"rows_affected": ordersAffected,
 	})
 }
 
@@ -279,6 +290,7 @@ func (oc *OrderController) DeleteOrderByID(c *gin.Context) {
 		return
 	}
 
+	oc.logger.Info("Order deleted", log.Str("orderID", orderID))
 	handle.Success(c, gin.H{
 		"message": "Order deleted",
 	})

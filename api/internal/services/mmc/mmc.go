@@ -51,7 +51,7 @@ func NewAPI(config cfg.MMCConfig) *API {
 		responseParser = productionResponseParser
 	}
 
-	logger := log.WithComponent("MMC")
+	logger := log.WithComponent("mmc")
 	if config.MockSend {
 		logger.Warn("mock send enabled")
 	}
