@@ -22,7 +22,7 @@ execute <- function(order, settings, API_SETTINGS) {
       if (API_SETTINGS$DEBUG_LOAD_FAKE) {
         readRDS("mocks/mock_sim_results.rds")
       } else {
-        api_dose_adjustments(order, settings)
+        api_dose_adjustments(order, settings, API_SETTINGS)
       }
     },
     error = function(e) {
