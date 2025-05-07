@@ -14,7 +14,7 @@ import (
 func Migrate(db *gorm.DB) error {
 	db.Set("gorm:table_options", "ENGINE=InnoDB")
 
-	if err := db.AutoMigrate(&model.User{}, &model.UserEmailChange{}, &model.UserPwdReset{}); err != nil {
+	if err := db.AutoMigrate(&model.User{}); err != nil {
 		return fmt.Errorf("migrate user models: %w", err)
 	}
 

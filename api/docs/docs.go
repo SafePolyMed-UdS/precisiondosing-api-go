@@ -71,7 +71,7 @@ const docTemplate = `{
                         "Bearer": []
                     }
                 ],
-                "description": "__Admin role required__\nCreate a new service user for the API.\nYou can create users with the following roles: ` + "`" + `admin` + "`" + `, ` + "`" + `user` + "`" + `, ` + "`" + `approver` + "`" + `.",
+                "description": "__Admin role required__\nCreate a new service user for the API.\nYou can create users with the following roles: ` + "`" + `admin` + "`" + `, ` + "`" + `user` + "`" + `, ` + "`" + `debug` + "`" + `.",
                 "produces": [
                     "application/json"
                 ],
@@ -515,7 +515,7 @@ const docTemplate = `{
                     "enum": [
                         "admin",
                         "user",
-                        "approver"
+                        "debug"
                     ],
                     "example": "user"
                 },
@@ -573,7 +573,7 @@ const docTemplate = `{
                     "enum": [
                         "admin",
                         "user",
-                        "approver"
+                        "debug"
                     ]
                 }
             }
@@ -785,7 +785,7 @@ const docTemplate = `{
                     "enum": [
                         "admin",
                         "user",
-                        "approver"
+                        "debug"
                     ],
                     "example": "user"
                 }

@@ -1,0 +1,19 @@
+meta {
+  name: Download PDF
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/api/v1/admin/download/pdf/:order_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  order_id: 6ad02bfd-3d3c-40db-b065-ccb8f36deb89
+}
+
+vars:post-response {
+  ~: 
+}

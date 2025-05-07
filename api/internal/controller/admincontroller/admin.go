@@ -1,17 +1,17 @@
 package admincontroller
 
 import (
-	"bytes"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
-	"os"
-	"path/filepath"
+	"net/http"
 	"precisiondosing-api-go/internal/handle"
 	"precisiondosing-api-go/internal/model"
 	"precisiondosing-api-go/internal/utils/hash"
 	"precisiondosing-api-go/internal/utils/validate"
+	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -27,12 +27,13 @@ func New(resourceHandle *handle.ResourceHandle) *AdminController {
 	}
 }
 
-func (ac *AdminController) downloadPDF(c *gin.Context) {
+func (ac *AdminController) DownloadPDF(c *gin.Context) {
 	orderID := c.Param("orderId")
 
-	// seach in database for orderID
 	var order model.Order
-	if err := ac.DB.Where("order_id = ?", orderID).First(&order).Error; err != nil {
+	if err := ac.DB.
+		Select("order_id", "process_result_pdf").
+		Where("order_id = ?", orderID).First(&order).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			handle.NotFoundError(c, "Order not found")
 			return
@@ -42,7 +43,7 @@ func (ac *AdminController) downloadPDF(c *gin.Context) {
 	}
 
 	if order.ProcessResultPDF == nil {
-		handle.NotFoundError(c, "No PDF found for this order")
+		handle.NotFoundError(c, "No PDF attached for this order")
 		return
 	}
 
@@ -52,33 +53,235 @@ func (ac *AdminController) downloadPDF(c *gin.Context) {
 		return
 	}
 
-	filename := "./tmp/uploads/" + order.OrderID + "pdf"
-	if err := os.MkdirAll(filepath.Dir(filename), 0750); err != nil {
-		handle.ServerError(c, fmt.Errorf("failed to create directory: %w", err))
+	// Send the file
+	c.Writer.WriteHeader(http.StatusOK)
+	if _, err = c.Writer.Write(pdfBytes); err != nil {
+		handle.ServerError(c, fmt.Errorf("failed to write PDF to response: %w", err))
 		return
 	}
 
-	out, err := os.Create(filename)
-	if err != nil {
-		handle.ServerError(c, fmt.Errorf("failed to create file: %w", err))
+	c.Header("Content-Type", "application/pdf")
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=\"order_%s.pdf\"", order.OrderID))
+	c.Header("Content-Length", strconv.Itoa(len(pdfBytes)))
+}
+
+func (ac *AdminController) DownloadOrder(c *gin.Context) {
+	orderID := c.Param("orderId")
+
+	var order model.Order
+	if err := ac.DB.Select("order_id", "order_data").
+		Where("order_id = ?", orderID).First(&order).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			handle.NotFoundError(c, "Order not found")
+			return
+		}
+		handle.ServerError(c, err)
 		return
 	}
-	defer out.Close()
 
-	_, err = io.Copy(out, bytes.NewReader(pdfBytes))
-	if err != nil {
-		handle.ServerError(c, fmt.Errorf("failed to write file: %w", err))
+	handle.Success(c, order.OrderData)
+}
+
+func (ac *AdminController) DownloadPrecheck(c *gin.Context) {
+	orderID := c.Param("orderId")
+
+	var order model.Order
+	if err := ac.DB.Select("order_id", "precheck_passed", "precheck_result", "prechecked_at").
+		Where("order_id = ?", orderID).First(&order).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			handle.NotFoundError(c, "Order not found")
+			return
+		}
+		handle.ServerError(c, err)
 		return
 	}
 
-	// Respond OK
-	handle.Success(c, gin.H{"message": "File for order " + order.OrderID + " downloaded", "filename": filename})
+	if order.PrecheckedAt == nil {
+		handle.NotFoundError(c, "No precheck result available for this order")
+		return
+	}
+
+	type Result struct {
+		Passed    bool             `json:"passed"`
+		Result    *json.RawMessage `json:"result"`
+		CheckedAt string           `json:"checked_at"`
+	}
+
+	result := Result{
+		Passed:    order.PrecheckPassed,
+		Result:    order.PrecheckResult,
+		CheckedAt: order.PrecheckedAt.Format("2006-01-02 15:04:05"),
+	}
+
+	handle.Success(c, result)
+}
+
+type orderOverview struct {
+	OrderID             string     `json:"order_id"`
+	User                string     `json:"user"`
+	DoseAdjusted        bool       `json:"dose_adjusted"`
+	PrecheckPassed      bool       `json:"precheck_passed"`
+	PrecheckError       *string    `json:"precheck_error,omitempty"`
+	ProcessErrorMessage *string    `json:"process_error,omitempty"`
+	LastSendError       *string    `json:"last_send_error,omitempty"`
+	Status              string     `json:"status"`
+	CreatedAt           time.Time  `json:"created_at"`
+	ProcessedAt         *time.Time `json:"processed_at,omitempty"`
+	SentAt              *time.Time `json:"sent_at,omitempty"`
+}
+
+func (ac *AdminController) GetOrders(c *gin.Context) {
+	var orders []model.Order
+	query := ac.DB.Preload("User")
+
+	// Optional filters
+	status := c.Query("status")
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	owner := c.Query("user")
+	if owner != "" {
+		if id, err := strconv.Atoi(owner); err == nil {
+			query = query.Where("user_id = ?", id)
+		} else {
+			query = query.Joins("JOIN users ON users.id = orders.user_id").
+				Where("users.email = ?", owner)
+		}
+	}
+
+	if err := query.
+		Omit("order_data", "precheck_result", "process_result_pdf").
+		Order("created_at desc").Find(&orders).Error; err != nil {
+		handle.ServerError(c, err)
+		return
+	}
+
+	var response []orderOverview
+	for _, o := range orders {
+		response = append(response, orderOverview{
+			OrderID:             o.OrderID,
+			User:                o.User.Email,
+			DoseAdjusted:        o.DoseAdjusted,
+			PrecheckPassed:      o.PrecheckPassed,
+			ProcessErrorMessage: o.ProcessErrorMessage,
+			LastSendError:       o.LastSendError,
+			Status:              o.Status,
+			CreatedAt:           o.CreatedAt,
+			ProcessedAt:         o.ProcessedAt,
+			SentAt:              o.SentAt,
+		})
+	}
+
+	if len(response) == 0 {
+		handle.NotFoundError(c, "No orders found that match the query")
+		return
+	}
+
+	handle.Success(c, response)
+}
+
+func (ac *AdminController) GetOrderByID(c *gin.Context) {
+	orderID := c.Param("orderId")
+	var order model.Order
+
+	// You could add validation here to make sure orderID is an integer if needed
+	query := ac.DB.Preload("User")
+
+	if err := query.
+		Omit("order_data", "precheck_result", "process_result_pdf").
+		Where("order_id = ?", orderID).
+		First(&order).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			handle.NotFoundError(c, "Order not found")
+		} else {
+			handle.ServerError(c, err)
+		}
+		return
+	}
+
+	response := orderOverview{
+		OrderID:             order.OrderID,
+		User:                order.User.Email,
+		DoseAdjusted:        order.DoseAdjusted,
+		PrecheckPassed:      order.PrecheckPassed,
+		ProcessErrorMessage: order.ProcessErrorMessage,
+		LastSendError:       order.LastSendError,
+		Status:              order.Status,
+		CreatedAt:           order.CreatedAt,
+		ProcessedAt:         order.ProcessedAt,
+		SentAt:              order.SentAt,
+	}
+
+	handle.Success(c, response)
+}
+
+func (ac *AdminController) ResetFailedSends(c *gin.Context) {
+	result := ac.DB.Model(&model.Order{}).
+		Where("status = ?", model.StatusSendFailed).
+		Updates(map[string]interface{}{
+			"status":               model.StatusProcessed,
+			"last_send_error":      nil,
+			"last_send_attempt_at": nil,
+			"next_send_attempt_at": nil,
+			"sent_at":              nil,
+			"send_tries":           0,
+		})
+
+	if result.Error != nil {
+		handle.ServerError(c, result.Error)
+		return
+	}
+
+	handle.Success(c, gin.H{
+		"message": "Orders with failed sends resetted",
+		"orders":  result.RowsAffected,
+	})
+}
+
+func (ac *AdminController) ResendOrder(c *gin.Context) {
+	orderID := c.Param("orderId")
+
+	var order model.Order
+	if err := ac.DB.
+		Select("id", "order_id", "status").
+		Where("order_id = ?", orderID).
+		First(&order).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			handle.NotFoundError(c, "Order not found")
+			return
+		}
+		handle.ServerError(c, err)
+		return
+	}
+
+	if order.Status != model.StatusSendFailed &&
+		order.Status != model.StatusSent {
+		handle.BadRequestError(c, "Order must be in send_failed or sent state")
+		return
+	}
+
+	if err := ac.DB.Model(&order).Updates(map[string]interface{}{
+		"status":               model.StatusProcessed,
+		"last_send_error":      nil,
+		"last_send_attempt_at": nil,
+		"next_send_attempt_at": nil,
+		"sent_at":              nil,
+		"send_tries":           0,
+	}).Error; err != nil {
+		handle.ServerError(c, err)
+		return
+	}
+
+	handle.Success(c, gin.H{
+		"message": "Order reset to processing state",
+	})
 }
 
 // @Summary		Create a new service user
 // @Description	__Admin role required__
 // @Description	Create a new service user for the API.
-// @Description	You can create users with the following roles: `admin`, `user`, `approver`.
+// @Description	You can create users with the following roles: `admin`, `user`, `debug`.
 // @Tags			Admin
 // @Produce		json
 // @Param			request	body		CreateServiceUserQuery							true	"Request body"
@@ -98,7 +301,7 @@ func (ac *AdminController) CreateServiceUser(c *gin.Context) {
 		FirstName string `json:"first_name" binding:"required,min=2,max=255" example:"Joe"`
 		LastName  string `json:"last_name" binding:"required,min=2,max=255" example:"Doe"`
 		Org       string `json:"organization" binding:"required,min=2,max=255" example:"ACME"`
-		Role      string `json:"role" binding:"required,oneof=admin user approver"`
+		Role      string `json:"role" binding:"required,oneof=admin user debug"`
 		Password  string `json:"password" binding:"required" example:"password123"`
 	} //	@name	CreateServiceUserQuery
 
@@ -191,7 +394,7 @@ func (ac *AdminController) CreateServiceUser(c *gin.Context) {
 // @Router			/admin/users [get]
 func (ac *AdminController) GetUsers(c *gin.Context) {
 	var query struct {
-		Role   string `form:"role" binding:"omitempty,oneof=admin user approver"`
+		Role   string `form:"role" binding:"omitempty,oneof=admin user debug"`
 		Status string `form:"status" binding:"omitempty,oneof=active inactive"`
 	}
 
@@ -306,7 +509,7 @@ func (ac *AdminController) DeleteUserByEmail(c *gin.Context) {
 // @Router			/admin/users/{email} [patch]
 func (ac *AdminController) ChangeUserProfile(c *gin.Context) {
 	type Query struct {
-		Role   string `json:"role" binding:"omitempty,oneof=admin user approver" example:"user"`
+		Role   string `json:"role" binding:"omitempty,oneof=admin user debug" example:"user"`
 		Status string `json:"status" binding:"omitempty,oneof=active inactive" example:"inactive"`
 	} //	@name	ChangeUserProfileQuery
 	adminID := c.GetUint("user_id")

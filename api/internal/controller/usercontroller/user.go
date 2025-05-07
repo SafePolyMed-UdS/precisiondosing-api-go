@@ -72,7 +72,7 @@ func (uc *UserController) Login(c *gin.Context) {
 	type Query struct {
 		Login    string  `json:"login" binding:"required" example:"joe@me.com"`
 		Password string  `json:"password" binding:"required" example:"password"`
-		Role     *string `json:"role" binding:"omitempty,oneof=admin user approver" example:"user"`
+		Role     *string `json:"role" binding:"omitempty,oneof=admin user debug" example:"user"`
 	} //	@name	LoginQuery
 
 	var query Query

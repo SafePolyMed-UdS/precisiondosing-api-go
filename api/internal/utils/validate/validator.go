@@ -95,9 +95,9 @@ func Access(requiredRole, userRole string) error {
 
 func CanSwitchToRole(requestRole string, dbRole string) error {
 	var roleMap = map[string]int{
-		"admin":    3,
-		"approver": 2,
-		"user":     1,
+		"admin": 3,
+		"debug": 2,
+		"user":  1,
 	}
 
 	reqRoleValue := roleMap[requestRole]

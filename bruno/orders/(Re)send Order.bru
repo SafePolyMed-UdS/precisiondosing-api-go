@@ -1,0 +1,15 @@
+meta {
+  name: (Re)send Order
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{url}}/api/v1/admin/orders/send/:order_id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  order_id: df8dea6c-185e-44ed-b5f6-7f951e34b63c
+}

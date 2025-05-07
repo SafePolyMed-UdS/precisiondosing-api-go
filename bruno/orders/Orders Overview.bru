@@ -1,0 +1,16 @@
+meta {
+  name: Orders Overview
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{url}}/api/v1/admin/orders
+  body: none
+  auth: inherit
+}
+
+params:query {
+  ~status: 
+  ~user: 
+}

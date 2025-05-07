@@ -7,6 +7,7 @@ import (
 	"io"
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/handle"
+	"precisiondosing-api-go/internal/middleware"
 	"precisiondosing-api-go/internal/model"
 	"precisiondosing-api-go/internal/precheck"
 	"precisiondosing-api-go/internal/utils/log"
@@ -71,6 +72,8 @@ func (sc *DSSController) PostAdjust(c *gin.Context) {
 
 	marshalledData, _ := json.Marshal(patientData)
 	newOrder := model.Order{OrderData: marshalledData}
+	newOrder.UserID = middleware.UserID(c)
+
 	if err = sc.DB.Create(&newOrder).Error; err != nil {
 		handle.ServerError(c, err)
 		return

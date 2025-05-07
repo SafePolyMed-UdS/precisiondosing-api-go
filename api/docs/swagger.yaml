@@ -5,7 +5,7 @@ definitions:
         enum:
         - admin
         - user
-        - approver
+        - debug
         example: user
         type: string
       status:
@@ -44,7 +44,7 @@ definitions:
         enum:
         - admin
         - user
-        - approver
+        - debug
         type: string
     required:
     - email
@@ -183,7 +183,7 @@ definitions:
         enum:
         - admin
         - user
-        - approver
+        - debug
         example: user
         type: string
     required:
@@ -470,7 +470,7 @@ paths:
       description: |-
         __Admin role required__
         Create a new service user for the API.
-        You can create users with the following roles: `admin`, `user`, `approver`.
+        You can create users with the following roles: `admin`, `user`, `debug`.
       parameters:
       - description: Request body
         in: body

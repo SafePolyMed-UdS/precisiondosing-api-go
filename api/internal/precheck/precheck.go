@@ -304,7 +304,7 @@ func (p *PreCheck) commpoundSynonyms(resp *Result) *Error {
 	matches, err := p.MedInfoAPI.GetCommpoundSynonyms(compoundNames)
 	if err != nil {
 		if err.StatusCode == http.StatusNotFound {
-			resp.Message = appendMsg(resp.Message, "MedInfo Check: "+string(err.Error()))
+			resp.Message = appendMsg(resp.Message, "MedInfo Check: "+err.Err.Error())
 		}
 		return NewError("fetching synonyms", err.StatusCode != http.StatusNotFound, err)
 	}

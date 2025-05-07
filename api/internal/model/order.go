@@ -22,6 +22,9 @@ const (
 type Order struct {
 	gorm.Model
 	OrderID string `gorm:"type:char(36);not null;uniqueIndex"` // UUID
+	// Foreign key field
+	UserID uint `gorm:"not null"`
+	User   User `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 
 	// Input
 	OrderData json.RawMessage `gorm:"type:json;not null"` // Original input

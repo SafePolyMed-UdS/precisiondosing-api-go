@@ -40,14 +40,36 @@ func RegisterUserRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandl
 func RegisterAdminRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle) {
 	c := admincontroller.New(resourceHandle)
 
-	authUser := r.Group("/admin")
-	authUser.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
+	admin := r.Group("/admin")
+	admin.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
 	{
-		authUser.POST("/users/service", c.CreateServiceUser)
-		authUser.GET("/users", c.GetUsers)
-		authUser.GET("/users/:email", c.GetUserByEmail)
-		authUser.DELETE("/users/:email", c.DeleteUserByEmail)
-		authUser.PATCH("/users/:email", c.ChangeUserProfile)
+		// user endpoints
+		admin.POST("/users/service", c.CreateServiceUser)
+		admin.GET("/users", c.GetUsers)
+		admin.GET("/users/:email", c.GetUserByEmail)
+		admin.DELETE("/users/:email", c.DeleteUserByEmail)
+		admin.PATCH("/users/:email", c.ChangeUserProfile)
+
+		// download endpoints
+		admin.GET("/download/pdf/:orderId", c.DownloadPDF)
+		admin.GET("/download/order/:orderId", c.DownloadOrder)
+		admin.GET("/download/precheck/:orderId", c.DownloadPrecheck)
+
+		// order overview endpoints
+		admin.GET("/orders", c.GetOrders)
+		admin.GET("/orders/:orderId", c.GetOrderByID)
+
+		// send endpoints
+		admin.PATCH("/orders/send/failed", c.ResetFailedSends)
+		admin.PATCH("/orders/send/:orderId", c.ResendOrder)
+
+		// reset endpoints
+		admin.PATCH("/orders/requeue/errors", c.RequeFailedOrders)
+		admin.PATCH("/orders/requeue/:id", RequeOrderByID)
+
+		// delete endpoints
+		admin.DELETE("/orders/:orderId", c.DeleteOrderByID)
+
 	}
 }
 
