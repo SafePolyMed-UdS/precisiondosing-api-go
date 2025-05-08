@@ -13,7 +13,6 @@ import (
 	"precisiondosing-api-go/internal/utils/helper"
 	"precisiondosing-api-go/internal/utils/log"
 	"slices"
-	"sort"
 	"strings"
 	"time"
 
@@ -34,6 +33,18 @@ type Compound struct {
 	DoseAmount  float64  `json:"dose_amount"`
 	DoseUnit    string   `json:"dose_unit"`
 	Schedule    []Intake `json:"schedule"`
+}
+
+func (c *Compound) HasName(name string) bool {
+	if strings.EqualFold(c.Name, name) {
+		return true
+	}
+	for _, s := range c.Synonyms {
+		if strings.EqualFold(s, name) {
+			return true
+		}
+	}
+	return false
 }
 
 type Result struct {
@@ -146,49 +157,96 @@ func (p *PreCheck) Check(data *model.PatientData) (*Result, *Error) {
 }
 
 func (p *PreCheck) pbpkModelCheck(resp *Result) *Error {
-	// the potential victim that the user set to adjust
-	var victim string
-	for _, c := range resp.Compounds {
-		if c.Adjust {
-			victim = c.Name
-			break
-		}
-	}
-
-	if victim == "" {
+	// Step 1: Identify the victim compound
+	victim := findVictim(resp.Compounds)
+	if victim == nil {
 		return NewError("no victim for adjustment found in compounds", false)
 	}
 
-	var perpetrators []string
-	for _, interaction := range resp.Interactions {
-		v := strings.ToLower(interaction.CompoundsL[0])
-		if v == victim {
-			ps := interaction.CompoundsR
-			for _, p := range ps {
-				perpetrators = append(perpetrators, strings.ToLower(p))
-			}
-		}
-	}
-	sort.Strings(perpetrators)
+	// Step 2: Collect perpetrators interacting with the victim
+	perpetrators := findPerpetrators(victim, resp)
 
-	// find the model that matches the victim and perpetrators
-	var modelID string
-	for _, model := range p.PBPKModels.Definitions {
-		if model.Victim == victim {
-			if slices.Equal(model.Perpetrators, perpetrators) {
-				modelID = model.ID
-				break
-			}
-		}
-	}
-
-	if modelID == "" {
+	// Step 3: Match against available PBPK models
+	model, victimNameInModel := p.findMatchingModel(victim, perpetrators)
+	if model == nil {
 		resp.Message = appendMsg(resp.Message, "PBPK Model Check: No model found for victim and perpetrators.")
 		return NewError("no model found for victim and perpetrators", false)
 	}
 
-	resp.ModelID = modelID
+	// Step 4: Assign and return
+	resp.ModelID = model.ID
+	victim.NameInModel = victimNameInModel
 	return nil
+}
+
+func findVictim(comps []Compound) *Compound {
+	for i := range comps {
+		if comps[i].Adjust {
+			return &comps[i]
+		}
+	}
+	return nil
+}
+
+func findPerpetrators(victim *Compound, resp *Result) []*Compound {
+	var perps []*Compound
+	victimName := strings.ToLower(victim.Name)
+
+	for _, inter := range resp.Interactions {
+		if len(inter.CompoundsL) == 0 {
+			continue
+		}
+		if strings.ToLower(inter.CompoundsL[0]) != victimName {
+			continue
+		}
+		for _, nameR := range inter.CompoundsR {
+			for i := range resp.Compounds {
+				c := &resp.Compounds[i]
+				if c.HasName(nameR) {
+					perps = append(perps, c)
+					break
+				}
+			}
+		}
+	}
+	return perps
+}
+
+func (p *PreCheck) findMatchingModel(victim *Compound, perps []*Compound) (*pbpk.ModelDefinition, string) {
+	for _, m := range p.PBPKModels.Definitions {
+		if !victim.HasName(m.Victim) {
+			continue
+		}
+		victim.NameInModel = m.Victim
+
+		// Must have same count
+		if len(perps) != len(m.Perpetrators) {
+			continue
+		}
+
+		matchedNames := make(map[string]bool)
+		for _, nameMod := range m.Perpetrators {
+			matched := false
+			for _, c := range perps {
+				if c.HasName(nameMod) {
+					c.NameInModel = nameMod
+					matchedNames[nameMod] = true
+					matched = true
+					break
+				}
+			}
+			if !matched {
+				matchedNames = nil
+				break
+			}
+		}
+
+		// all perpetrators matched
+		if matchedNames != nil && len(m.Perpetrators) == len(matchedNames) {
+			return &m, m.Victim
+		}
+	}
+	return nil, ""
 }
 
 func (p *PreCheck) impairmentCheck(resp *Result, data *model.PatientData) {
@@ -346,7 +404,7 @@ func (p *PreCheck) medinfoCheck(resp *Result) *Error {
 	if err != nil {
 		p.logger.Warn("medInfo interaction check:", log.Err(err))
 		if err.StatusCode == http.StatusNotFound {
-			resp.Message = appendMsg(resp.Message, "MedInfo Check: "+string(err.Error()))
+			resp.Message = appendMsg(resp.Message, "MedInfo Check: "+err.Error())
 		}
 		return NewError("fetching interactions", !err.InputError, err)
 	}
