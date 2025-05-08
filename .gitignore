@@ -30,3 +30,6 @@ go.work.sum
 # upload files
 /api/tmp
 api/rscripts/mocks/mock_sim_results.rds
+
+# LOC Counter
+.VSCodeCounter/*
