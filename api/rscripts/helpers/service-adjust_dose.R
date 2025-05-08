@@ -70,10 +70,10 @@ api_dose_adjustments <- function(order, settings, API_SETTINGS) {
   }
 
   dosing_table <- bind_rows(compounds_parsed) |>
-    filter(name %in% model_compounds) |>
+    filter(name_in_model %in% model_compounds) |>
     mutate(time = lubridate::ymd_hm(time_str)) |>
     arrange(time) |>
-    group_by(name) |>
+    group_by(name_in_model) |>
     mutate(index = row_number()) |>
     as.data.frame()
 
@@ -91,7 +91,7 @@ api_dose_adjustments <- function(order, settings, API_SETTINGS) {
     mutate(`Clock time` = paste0(`Clock time`, ":00")) |>
     mutate(Dose = dose_amount * dosage) |>
     # FIXME: This unlikely to be robust
-    mutate(Drug = str_to_title(name)) |>
+    mutate(Drug = str_to_title(name_in_model)) |>
     select(Drug, Date, `Clock time`, Dose)
 
   module_data$user_data$doses$table <- dosing_table_truncated
