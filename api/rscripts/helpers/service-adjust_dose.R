@@ -33,6 +33,9 @@ api_dose_adjustments <- function(order, settings, API_SETTINGS) {
   # -----------------------------------
   model_id <- payload$model_id
   model_info <- api_get_model_from_id(API_SETTINGS, model_id)
+  victim_info <- get_compound_infos(API_SETTINGS, model_info) |>
+    pluck(1)
+  dbg_out("Loaded model info for model_id: ", model_id, " ...")
   model_compounds <- c(model_info$victim, model_info$perpetrators)
 
   module_data$user_data$model_family <- model_info$victim
@@ -47,6 +50,7 @@ api_dose_adjustments <- function(order, settings, API_SETTINGS) {
   compounds <- payload$compounds
 
   compounds_parsed <- list()
+  # TODO: MOVE TO NAME_IN_MODEL
   for (co in unique(compounds$name)) {
     co_data <- compounds |>
       filter(name == co)
@@ -91,18 +95,37 @@ api_dose_adjustments <- function(order, settings, API_SETTINGS) {
     select(Drug, Date, `Clock time`, Dose)
 
   module_data$user_data$doses$table <- dosing_table_truncated
-  # FIXME: Set dynamically
-  module_data$user_data$doses$value_unit <- "mg"
+  # FIXME: Read from input? Has to be normalized in dosing table
+  module_data$user_data$doses$value_unit <- victim_info$dosing_unit
 
 
   # Interactions
   # -----------------------------------
-  interactions <- payload$interactions
+  # TODO: Flag modeled interactions
+  module_data$user_data$interactions <- payload$interactions |>
+    mutate(`Victim Drug` = paste0(compounds_left)) |>
+    mutate(`Perpetrator Drug` = paste0(compounds_right)) |>
+    mutate(`Frequency` = case_when(
+      is.na(frequency) ~ "unknown",
+      .default = frequency
+    )) |>
+    mutate(`Relevance` = case_when(
+      is.na(relevance) ~ "unknown",
+      .default = relevance
+    )) |>
+    mutate(`Credibility` = case_when(
+      is.na(credibility) ~ "unknown",
+      .default = credibility
+    )) |>
+    mutate(`Plausibility` = case_when(
+      is.na(plausibility) ~ "unknown",
+      .default = plausibility
+    )) |>
+    select(`Victim Drug`, `Perpetrator Drug`, `Frequency`, `Relevance`, `Credibility`, `Plausibility`)
 
   # Clinical data
   # -----------------------------------
-  # FIXME: Set dynamically
-  module_data$user_data$clinical_conc$value_unit <- "mg/L"
+  module_data$user_data$clinical_conc$value_unit <- victim_info$std_measurement_unit
 
   # Patient Characteristics
   # -----------------------------------
@@ -122,16 +145,17 @@ api_dose_adjustments <- function(order, settings, API_SETTINGS) {
     mutate(Genotype = paste0(allele1_cnv_multiplier, "x", allele1, "/", allele2_cnv_multiplier, "x", allele2)) |>
     mutate(Genotype = str_remove_all(Genotype, "1x")) |> # remove 1x
     # Rename gene to Gene
-    rename(Gene = gene) |>
+    rename(Gene = gene)
+
+  genetic_mapping <- get_model_genetics(API_SETTINGS, model_info)
+
+  relevant_genetics <- patient_genetics |>
+    filter(Gene %in% genetic_mapping$phenotype_mapping$gene_name) |>
     select(Gene, Genotype)
 
-  # TODO: Check if genotypes are valid
-  # 1. If gene not in genetic mapping -> delete
-  # 2. If allele not in genetic mapping -> error
-  # 3. If activity score outside of range -> error
-
-  module_data$user_data$genetics$table <- patient_genetics
-  module_data$user_data$genetic_mapping <- get_model_genetics(API_SETTINGS, model_info)
+  module_data$user_data$genetics$table <- relevant_genetics
+  module_data$user_data$genetic_mapping <- genetic_mapping
+  module_data$user_data$genetics_raw <- patient_genetics
   module_data$user_data$kcat_table <- get_param_table(API_SETTINGS, model_info)
 
 

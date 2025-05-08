@@ -7,7 +7,6 @@ source("startup/settings_helper.R")
 
 create_settings <- function(model_path) {
   settings <- list(
-    DEBUG_MODE = FALSE,
     DEBUG_CREATE_FAKE = FALSE,
     DEBUG_LOAD_FAKE = FALSE,
     SERVER_OPTIONS = list(

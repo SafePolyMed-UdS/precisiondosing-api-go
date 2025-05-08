@@ -179,6 +179,21 @@ if (nrow(genetics) > 0) {
 }
 ```
 
+### Interactions
+The following interactions were identified in the `medinfo` DDI check.
+
+```{r interactions-tab, echo = F, results = 'asis', error = T}
+kable(
+  params$user_data$interactions,
+  format = "latex",
+  booktabs = TRUE,
+  escape = FALSE,
+  caption = glue("Drug-drug interactions for patient {patient}")
+) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"), font_size = 8) |>
+  row_spec(0, bold = TRUE)
+```
+
 ## Dosing Data
 The following table displays the administration schedules of `r compound` and the perpetrator drugs provided to the system. This dosing schedule is used to calculate individual `r compound` pharmacokinetics. 
 
@@ -266,6 +281,7 @@ pk_data <- params$dose_pk$summary |>
     `C\\textsubscript{trough}` = ctrough,
     `C\\textsubscript{ss, average}` = css_average
   ) |>
+  arrange(AUC) |>
   # round for nice visual presentation
   mutate_if(is.numeric, round, 2)
 
@@ -289,7 +305,7 @@ kable(pk_data,
   col.names = (names(pk_data)),
   caption = glue("Pharmacokinetic parameters of {compound} estimated for different dosing schedules")
 ) |>
-  kable_styling(latex_options = c("striped", "HOLD_position"), font_size = 10) |>
+  kable_styling(latex_options = c("striped", "HOLD_position"), font_size = 8) |>
   row_spec(0, bold = TRUE)
 
 cat("<br/>\n\n")
