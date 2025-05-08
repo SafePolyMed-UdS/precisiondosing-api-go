@@ -220,7 +220,7 @@ func (jr *JobRunner) processJob(order *model.Order) {
 		return
 	}
 
-	adjust := order.PrecheckPassed
+	adjust := order.PrecheckPassed && !precheck.OrganImpairment
 	errMsg := precheck.Message
 	ids := callr.CallRIDs{
 		JobID:  order.ID,
