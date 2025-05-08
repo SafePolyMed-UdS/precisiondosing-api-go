@@ -23,6 +23,12 @@ read_settings <- function() {
   error_msg <- args[3]
   model_path <- args[4]
 
+  dbg_out(
+    sprintf(
+      "Read settings from command line arguments. ID: %s, Adjust Dose: %s, Error Message: %s, Model Path: %s, Workers: %s",
+      id, adjust_dose, error_msg, model_path, as.numeric(get_env_or_stop("R_WORKER"))
+    )
+  )
   if (length(args) < 1) {
     stop("Not enough arguments provided")
   }

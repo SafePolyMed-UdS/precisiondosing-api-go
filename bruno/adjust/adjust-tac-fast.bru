@@ -1,0 +1,64 @@
+meta {
+  name: adjust-tac-fast
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{url}}/api/v1/dose/adjust
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "patient_id": 95,
+    "patient_characteristics": {
+      "age": 50,
+      "weight": 75,
+      "height": 170,
+      "sex": "male",
+      "ethnicity": "black american",
+      "kidney_disease": false,
+      "liver_disease": false
+    },
+    "patient_pgx_profile": [
+      {
+        "gene": "CYP3A5",
+        "allele1": "*3",
+        "allele1_cnv_multiplier": 1,
+        "allele2": "*3",
+        "allele2_cnv_multiplier": 1,
+        "phenotype": "Poor metabolizer"
+      }
+    ],
+    "drugs": [
+      {
+        "adjust_dose": true,
+        "product": {
+          "product_name": "Prograf 1mg",
+          "atc": "L04AD02",
+          "strength": 1,
+          "strength_unit": "milligram"
+        },
+        "active_substances": [
+          "Tacrolimus"
+        ],
+        "intake_cycle": {
+          "starting_at": "2024-12-01",
+          "frequency": "daily",
+          "frequency_modifier": 1,
+          "intakes": [
+            {
+              "cron": "0 8 */1 * *",
+              "raw_time_str": "08:00",
+              "dosage": 1,
+              "dosage_unit": "tablet"
+            }
+          ]
+        }
+      }
+    ]
+  }
+  
+}

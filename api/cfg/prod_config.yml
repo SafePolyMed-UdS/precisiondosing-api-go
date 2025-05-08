@@ -10,7 +10,7 @@ server:
   address: ":3333"
 log:
   level: "INFO" # DEBUG, INFO, WARN, ERROR
-  json_format: false
+  json_format: true
   slow_query_theshold: "2s"
   db_level: "SILENT" # SILENT, INFO, WARN, ERROR
   log_caller: false # log calling site (file+line) in the log

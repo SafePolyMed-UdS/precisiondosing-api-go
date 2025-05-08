@@ -20,6 +20,8 @@ userInputData <- function() {
     clinical_conc = inputTableData("Drug", "Date", "Clock time", "Concentration"),
     clinical_conc_unit = NA_character_,
     genetic_mapping = NULL,
+    genetics_raw = NULL,
+    interactions = NULL,
     kcat_table = NULL,
     map_table = NULL,
     model_id = NA_character_,

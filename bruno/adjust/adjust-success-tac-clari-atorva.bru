@@ -1,7 +1,7 @@
 meta {
-  name: adjust-success
+  name: adjust-success-tac-clari-atorva
   type: http
-  seq: 1
+  seq: 6
 }
 
 post {
@@ -12,68 +12,37 @@ post {
 
 body:json {
   {
-    "patient_id": 2,
+    "patient_id": 5,
     "patient_characteristics": {
-      "age": 60,
-      "weight": 40,
-      "height": 150,
-      "sex": "female",
-      "ethnicity": "asian",
+      "age": 50,
+      "weight": 75,
+      "height": 170,
+      "sex": "male",
+      "ethnicity": "black american",
       "kidney_disease": false,
       "liver_disease": false
     },
     "patient_pgx_profile": [
       {
-        "gene": "CYP2C19",
-        "allele1" : "*1",
+        "gene": "CYP3A5",
+        "allele1": "*3",
         "allele1_cnv_multiplier": 1,
-        "allele2": "*2",
+        "allele2": "*3",
         "allele2_cnv_multiplier": 1,
         "phenotype": "Poor metabolizer"
       }
     ],
     "drugs": [
       {
-        "adjust_dose" : true,
+        "adjust_dose": true,
         "product": {
-          "product_name": "Beloc-Zok 95mg",
-          "atc": "C07AB02",
-          "strength": 95,
+          "product_name": "Prograf 1mg",
+          "atc": "L04AD02",
+          "strength": 1,
           "strength_unit": "milligram"
         },
         "active_substances": [
-          "Voriconazole"
-        ],
-        "intake_cycle": {
-          "starting_at": "2024-11-03",
-          "frequency": "daily",
-          "frequency_modifier": 1,
-          "intakes": [
-            {
-              "cron": "0 8 */1 * *",
-              "raw_time_str": "08:00",
-              "dosage": 1,
-              "dosage_unit": "tablets"
-            },
-            {
-              "cron": "0 18 */1 * *",
-              "raw_time_str": "18:00",
-              "dosage": 1,
-              "dosage_unit": "tablets"
-            }
-          ]
-        }
-      },
-      {
-        "adjust_dose" : false,
-        "product": {
-          "product_name": "Amiodaron 200 Heumann",
-          "atc": "C01BD01",
-          "strength": 200,
-          "strength_unit": "milligram"
-        },
-        "active_substances": [
-          "Imatinib"
+          "Tacrolimus"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
@@ -84,33 +53,21 @@ body:json {
               "cron": "0 8 */1 * *",
               "raw_time_str": "08:00",
               "dosage": 1,
-              "dosage_unit": "tablets"
-            },
-            {
-              "cron": "0 13 */1 * *",
-              "raw_time_str": "13:00",
-              "dosage": 1,
-              "dosage_unit": "tablets"
-            },
-            {
-              "cron": "0 18 */1 * *",
-              "raw_time_str": "18:00",
-              "dosage": 1,
-              "dosage_unit": "tablets"
+              "dosage_unit": "tablet"
             }
           ]
         }
       },
       {
-        "adjust_dose" : false,
+        "adjust_dose": false,
         "product": {
-          "product_name": "Fevarin 100mg",
-          "atc": "N06AB08",
-          "strength": 100,
+          "product_name": "Clacid 500mg",
+          "atc": "J01FA09",
+          "strength": 500,
           "strength_unit": "milligram"
         },
         "active_substances": [
-          "Cimetidine"
+          "Clarithromycin"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
@@ -118,39 +75,65 @@ body:json {
           "frequency_modifier": 1,
           "intakes": [
             {
-              "cron": "0 8 */1 * *",
-              "raw_time_str": "08:00",
+              "cron": "0 12 */1 * *",
+              "raw_time_str": "12:00",
               "dosage": 1,
-              "dosage_unit": "tablets"
+              "dosage_unit": "tablet"
             }
           ]
         }
       },
       {
-        "adjust_dose" : false,
+        "adjust_dose": false,
         "product": {
-          "product_name": "ESOMEP 20mg",
-          "atc": "A02BC05",
+          "product_name": "Atorvastatin 20mg",
+          "atc": "C10AA05",
           "strength": 20,
           "strength_unit": "milligram"
         },
         "active_substances": [
-          "Clopidogrel"
+          "Atorvastatin"
         ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
-          "frequency": "weekly",
+          "frequency": "daily",
           "frequency_modifier": 1,
           "intakes": [
             {
-              "cron": "0 8 */7 * *",
+              "cron": "0 8 */1 * *",
               "raw_time_str": "08:00",
               "dosage": 1,
-              "dosage_unit": "tablets"
+              "dosage_unit": "tablet"
+            }
+          ]
+        }
+      },
+      {
+        "adjust_dose": false,
+        "product": {
+          "product_name": "Cetirizine 10mg",
+          "atc": "R06AE07",
+          "strength": 10,
+          "strength_unit": "milligram"
+        },
+        "active_substances": [
+          "Cetirizine"
+        ],
+        "intake_cycle": {
+          "starting_at": "2024-12-01",
+          "frequency": "daily",
+          "frequency_modifier": 1,
+          "intakes": [
+            {
+              "cron": "0 20 */1 * *",
+              "raw_time_str": "20:00",
+              "dosage": 1,
+              "dosage_unit": "tablet"
             }
           ]
         }
       }
     ]
   }
+  
 }

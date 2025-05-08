@@ -63,6 +63,7 @@ execute <- function(order, settings, API_SETTINGS) {
 
   tryCatch(
     {
+      dbg_out("Creating success report...")
       report <- render_success_pdf(
         user_data = sim_results$module_data$user_data,
         order = order,
@@ -104,9 +105,9 @@ precheck_error_pdf <- function(order, settings, API_SETTINGS) {
         results = precheck_results,
         api_settings = API_SETTINGS
       )
-      dbg_out("Successfully created error report for order precheck.")
+      dbg_out("Successfully created error report for order precheck...")
       write_order(settings, jsonlite::toJSON(order$order_data, auto_unbox = TRUE), report)
-      dbg_out("Successfully saved error report to database.")
+      dbg_out("Successfully saved error report to database...")
     },
     error = function(e) {
       stop(paste("Could not create error report for Order ID", order$order_id, ":", e$message))

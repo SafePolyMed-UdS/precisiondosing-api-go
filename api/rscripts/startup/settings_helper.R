@@ -4,16 +4,27 @@
 # Date       : 2025-04-17
 # -----------------------------------
 .read_model_definitions <- function(folder) {
+  dbg_out("Reading model definitions from folder: ", folder)
   models <- c(character(0))
   for (child in list.dirs(folder, full.names = TRUE, recursive = FALSE)) {
     if (file.exists(file.path(child, "models.yaml"))) {
-      models <- c(models, yaml::read_yaml(file.path(child, "models.yaml")))
+      child_model <- yaml::read_yaml(file.path(child, "models.yaml"))
+
+      models_contained <- child_model[[1]]$models |>
+        lapply(\(x) {
+          x$pkml_path <- file.path(child, "pkml")
+          return(x)
+        })
+      child_model[[1]]$models <- models_contained
+
+      models <- c(models, child_model)
     }
   }
   return(models)
 }
 
 .get_pkml_paths <- function(folder) {
+  dbg_out("Getting pkml paths from folder: ", folder)
   pkml_paths <- list()
   for (child in list.dirs(folder, full.names = TRUE, recursive = FALSE)) {
     if (file.exists(file.path(child, "pkml"))) {
@@ -26,30 +37,4 @@
     }
   }
   return(pkml_paths)
-}
-
-.get_example_paths <- function(folder) {
-  examples <- list()
-  for (child in list.dirs(folder, full.names = TRUE, recursive = FALSE)) {
-    if (file.exists(file.path(child, "assets/examples/examples.yaml"))) {
-      examples_inner <- yaml::read_yaml(file.path(child, "assets/examples/examples.yaml")) |>
-        lapply(\(x) {
-          list(
-            name = x$name,
-            file = file.path(child, x$file)
-          )
-        })
-
-      examples <- c(examples, examples_inner)
-    }
-  }
-
-  return(examples)
-}
-
-.get_template_path <- function(folder) {
-  examples <- .get_example_paths(folder)
-  template <- examples |>
-    purrr::pluck(2) |>
-    purrr::pluck("file")
 }
