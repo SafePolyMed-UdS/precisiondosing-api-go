@@ -102,26 +102,22 @@ api_dose_adjustments <- function(order, settings, API_SETTINGS) {
   # Interactions
   # -----------------------------------
   # TODO: Flag modeled interactions
-  module_data$user_data$interactions <- payload$interactions |>
-    mutate(`Victim Drug` = paste0(compounds_left)) |>
-    mutate(`Perpetrator Drug` = paste0(compounds_right)) |>
-    mutate(`Frequency` = case_when(
-      is.na(frequency) ~ "unknown",
-      .default = frequency
-    )) |>
-    mutate(`Relevance` = case_when(
-      is.na(relevance) ~ "unknown",
-      .default = relevance
-    )) |>
-    mutate(`Credibility` = case_when(
-      is.na(credibility) ~ "unknown",
-      .default = credibility
-    )) |>
-    mutate(`Plausibility` = case_when(
-      is.na(plausibility) ~ "unknown",
-      .default = plausibility
-    )) |>
-    select(`Victim Drug`, `Perpetrator Drug`, `Frequency`, `Relevance`, `Credibility`, `Plausibility`)
+  if (!is.null(payload$interactions)) {
+    interactions <- payload$interactions |>
+      tidyr::replace_na(list(
+        frequency = "unknown",
+        relevance = "unknown",
+        credibility = "unknown",
+        plausibility = "unknown"
+      )) |>
+      mutate(compounds_left = str_to_title(compounds_left)) |>
+      mutate(compounds_right = str_to_title(compounds_right)) |>
+      filter(compounds_left %in% model_compounds) |>
+      filter(compounds_right %in% model_compounds) |>
+      select(compounds_left, compounds_right, frequency, relevance, credibility, plausibility)
+  } else {
+    interactions <- NULL
+  }
 
   # Clinical data
   # -----------------------------------

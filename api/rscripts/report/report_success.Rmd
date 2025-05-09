@@ -183,15 +183,19 @@ if (nrow(genetics) > 0) {
 The following interactions were identified in the `medinfo` DDI check.
 
 ```{r interactions-tab, echo = F, results = 'asis', error = T}
-kable(
-  params$user_data$interactions,
-  format = "latex",
-  booktabs = TRUE,
-  escape = FALSE,
-  caption = glue("Drug-drug interactions for patient {patient}")
-) |>
-  kable_styling(latex_options = c("striped", "HOLD_position"), font_size = 8) |>
-  row_spec(0, bold = TRUE)
+if (!is.null(params$user_data$interactions)) {
+  kable(
+    params$user_data$interactions,
+    format = "latex",
+    booktabs = TRUE,
+    escape = FALSE,
+    caption = glue("Drug-drug interactions for patient {patient}")
+  ) |>
+    kable_styling(latex_options = c("striped", "HOLD_position"), font_size = 8) |>
+    row_spec(0, bold = TRUE)
+} else {
+  glue("No drug-drug interactions found for patient {patient}.")
+}
 ```
 
 ## Dosing Data
@@ -212,6 +216,7 @@ kable(dosing,
   row_spec(0, bold = TRUE)
 ```
 
+\pagebreak
 # Results
 ## Dose simulations
 The pharmacokinetics of `r compound` are calculated for different predefined doses. Results are displayed in the following figures and tables.
