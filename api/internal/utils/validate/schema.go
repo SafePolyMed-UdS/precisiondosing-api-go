@@ -1,24 +1,40 @@
 package validate
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/santhosh-tekuri/jsonschema/v5"
 )
 
 type JSONValidator struct {
-	Schema *jsonschema.Schema
+	Schema     *jsonschema.Schema
+	SchemaJSON json.RawMessage
 }
 
 func NewJSONValidator(schemaFile string) (*JSONValidator, error) {
-	c := jsonschema.NewCompiler()
-	schema, err := c.Compile(schemaFile)
+	schemaBytes, err := os.ReadFile(schemaFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read schema file: %w", err)
+	}
 
+	c := jsonschema.NewCompiler()
+
+	if err := c.AddResource(schemaFile, bytes.NewReader(schemaBytes)); err != nil {
+		return nil, fmt.Errorf("failed to add schema resource: %w", err)
+	}
+
+	schema, err := c.Compile(schemaFile)
 	if err != nil {
 		return nil, fmt.Errorf("error creating JSONValidator: %w", err)
 	}
 
-	return &JSONValidator{Schema: schema}, nil
+	return &JSONValidator{
+		Schema:     schema,
+		SchemaJSON: json.RawMessage(schemaBytes),
+	}, nil
 }
 
 func (v *JSONValidator) Validate(data interface{}) error {

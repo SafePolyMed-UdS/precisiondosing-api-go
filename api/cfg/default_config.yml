@@ -15,11 +15,11 @@ log:
   db_level: "SILENT" # SILENT, INFO, WARN, ERROR
   log_caller: false # log calling site (file+line) in the log
 database:
-  db_name: "doseadjustservice"
+  db_name: "doseadjustservice_dev"
   max_open_conns: 50
   max_idle_conns: 10
   max_conn_lifetime: "1h"
-induvidual_db:
+individual_db:
   max_pool_size: 50
   min_pool_size: 10
   max_idle_time: "10m"
@@ -30,7 +30,7 @@ auth_token:
   refresh_expiration_time: "24h"
   issuer: "https://doseadjustservice.clinicalpharmacy.me/"
 schema:
-  precheck: "file:///schemas/precheck_input.schema.json"
+  precheck: "schemas/precheck_input.schema.json"
 models:
   path: "../models"
   max_doses: 20
@@ -38,11 +38,11 @@ rlang:
   rscript_path_win: "Rscript.exe"
   rscript_path_unix: "Rscript"
   dose_adjust_script: "rscripts/adjust_dose.r"
-  r_worker: 4
+  r_worker: 1
 job_runner:
-  fetch_interval: "5s"
+  fetch_interval: "1s"
   max_concurrent_jobs: 5
-  timeout: "86400s"
+  timeout: "1m"
 medinfo:
   url: "https://medinfo.precisiondosing.de/api/v1"
   expiry_threshold: "2m"
@@ -53,6 +53,6 @@ mmc:
   pdf_prefix: "doseadjust"
   max_retries: 5
   production_spec: true # set to true for production auth/send specs
-  mock_send: false # mock the sending of the pdf to the endpoint
+  mock_send: true # mock the sending of the pdf to the endpoint
   result_endpoint: "https://safepolymed.fraunhofer.de/api/precisionDosing/order/finish/"
   auth_endpoint: "https://safepolymed.fraunhofer.de/api/login/"

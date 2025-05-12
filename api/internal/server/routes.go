@@ -103,6 +103,8 @@ func RegisterDSSRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle
 	{
 		dss.POST("/precheck/", c.PostPrecheck)
 		dss.POST("/adjust/", c.PostAdjust)
+		dss.GET("/precheck/schema", c.GetSchema)
+		dss.GET("/adjust/schema", c.GetSchema)
 	}
 }
 

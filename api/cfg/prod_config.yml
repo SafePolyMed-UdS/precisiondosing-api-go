@@ -30,7 +30,7 @@ auth_token:
   refresh_expiration_time: "24h"
   issuer: "https://doseadjustservice.precisiondosing.de/"
 schema:
-  precheck: "file:///app/schemas/precheck_input.schema.json"
+  precheck: "/app/schemas/precheck_input.schema.json"
 models:
   path: "/app/models"
   max_doses: 20
@@ -41,7 +41,7 @@ rlang:
   r_worker: 4
 job_runner:
   fetch_interval: "5s"
-  max_concurrent_jobs: 5
+  max_concurrent_jobs: 10
   timeout: "24h"
 medinfo:
   url: "https://medinfo.precisiondosing.de/api/v1"

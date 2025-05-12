@@ -146,3 +146,8 @@ func (sc *DSSController) readPatientData(c *gin.Context) (*model.PatientData, er
 
 	return &patientData, nil
 }
+
+func (sc *DSSController) GetSchema(c *gin.Context) {
+	schema := sc.JSONValidators.PreCheck.SchemaJSON
+	handle.Success(c, schema)
+}
