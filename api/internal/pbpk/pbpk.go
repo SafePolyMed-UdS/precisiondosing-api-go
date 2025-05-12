@@ -69,7 +69,7 @@ func mustParseYAML(configFile string) []ModelDefinition {
 	var root map[string]map[string]interface{}
 	err = decoder.Decode(&root)
 	if err != nil {
-		logger.Panic("cannot decode PBPK model config file", log.Err(err))
+		logger.Panic("cannot decode PBPK model config file", log.Str("path", configFile), log.Err(err))
 	}
 
 	var modelsWrapper struct {
@@ -79,12 +79,12 @@ func mustParseYAML(configFile string) []ModelDefinition {
 	for _, v := range root {
 		yamlBytes, errRoot := yaml.Marshal(v)
 		if errRoot != nil {
-			logger.Panic("cannot marshal nested YAML", log.Err(errRoot))
+			logger.Panic("cannot marshal nested YAML", log.Str("path", configFile), log.Err(errRoot))
 		}
 
 		errRoot = yaml.Unmarshal(yamlBytes, &modelsWrapper)
 		if errRoot != nil {
-			logger.Panic("cannot unmarshal models section", log.Err(errRoot))
+			logger.Panic("cannot unmarshal models section", log.Str("path", configFile), log.Err(errRoot))
 		}
 
 		break
