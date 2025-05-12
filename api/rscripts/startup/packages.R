@@ -8,10 +8,8 @@
 packages <- function() {
   c(
     "PKNCA", "DT", "dplyr", "tidyr", "purrr", "glue",
-    "stringr", "plotly", "gargoyle", "readxl",
-    "future", "promises", "R6", "lubridate", "fs", "configr",
-    "jsonlite", "mongolite", "units",
-    "cookies", "data.table", "checkmate", "hms", "tictoc",
+    "stringr", "readxl", "R6", "lubridate", "fs", "configr",
+    "jsonlite", "units", "data.table", "checkmate", "hms", "tictoc",
     "DBI", "RMariaDB", "base64enc", "rmarkdown", "tinytex",
     "bookdown", "kableExtra", "gt", "viridis", "paletteer"
   )
