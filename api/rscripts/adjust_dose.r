@@ -55,6 +55,7 @@ main <- function() {
     dbg_out("Running dose adjustment...")
     res <- execute(order, settings, API_SETTINGS)
   }
+  dbg_out(toJSON(res, auto_unbox = TRUE))
   return(res)
 }
 

@@ -12,144 +12,109 @@ post {
 
 body:json {
   {
-    "patient_id": 2,
+    "patient_id": 5,
     "patient_characteristics": {
-      "age": 60,
-      "weight": 40,
-      "height": 150,
-      "sex": "female",
-      "ethnicity": "asian",
+      "age": 50,
+      "weight": 75,
+      "height": 170,
+      "sex": "male",
+      "ethnicity": "black american",
       "kidney_disease": false,
       "liver_disease": false
     },
     "patient_pgx_profile": [
       {
         "gene": "CYP2D6",
-        "allele1": "*1",
-        "allele1_cnv_multiplier": 2,
-        "allele2": "*2",
-        "allele2_cnv_multiplier": 2
+        "allele1": "*4",
+        "allele1_cnv_multiplier": 1,
+        "allele2": "*5",
+        "allele2_cnv_multiplier": 1,
+        "phenotype": "Poor metabolizer"
       }
     ],
     "drugs": [
       {
-        "active_substances": [
-          "Voriconazol"
-        ],
         "adjust_dose": true,
         "product": {
-          "product_name": "Beloc-Zok 95mg",
+          "product_name": "Metoprolol Tartrate 50mg",
           "atc": "C07AB02",
-          "strength": 95,
+          "strength": 50,
           "strength_unit": "milligram"
         },
+        "active_substances": [
+          "Metoprolol"
+        ],
         "intake_cycle": {
-          "starting_at": "2024-11-03",
+          "starting_at": "2024-12-01",
           "frequency": "daily",
           "frequency_modifier": 1,
           "intakes": [
             {
-              "raw_time_str": "08:00",
               "cron": "0 8 */1 * *",
+              "raw_time_str": "08:00",
               "dosage": 1,
-              "dosage_unit": "tablets"
-            },
-            {
-              "raw_time_str": "18:00",
-              "cron": "0 18 */1 * *",
-              "dosage": 1,
-              "dosage_unit": "tablets"
+              "dosage_unit": "tablet"
             }
           ]
         }
       },
       {
-        "active_substances": [
-          "Imatinib"
-        ],
         "adjust_dose": false,
         "product": {
-          "product_name": "Amiodaron 200 Heumann",
-          "atc": "C01BD01",
+          "product_name": "Quinidine Sulfate 200mg",
+          "atc": "C01BA01",
           "strength": 200,
           "strength_unit": "milligram"
         },
+        "active_substances": [
+          "Quinidine"
+        ],
+        "intake_cycle": {
+          "starting_at": "2024-12-01",
+          "frequency": "daily",
+          "frequency_modifier": 2,
+          "intakes": [
+            {
+              "cron": "0 8 */1 * *",
+              "raw_time_str": "08:00",
+              "dosage": 1,
+              "dosage_unit": "tablet"
+            },
+            {
+              "cron": "0 20 */1 * *",
+              "raw_time_str": "20:00",
+              "dosage": 1,
+              "dosage_unit": "tablet"
+            }
+          ]
+        }
+      },
+      {
+        "adjust_dose": false,
+        "product": {
+          "product_name": "Rifadin 300mg",
+          "atc": "J04AB02",
+          "strength": 300,
+          "strength_unit": "milligram"
+        },
+        "active_substances": [
+          "Rifampicin"
+        ],
         "intake_cycle": {
           "starting_at": "2024-12-01",
           "frequency": "daily",
           "frequency_modifier": 1,
           "intakes": [
             {
-              "raw_time_str": "08:00",
-              "cron": "0 8 */1 * *",
+              "cron": "0 12 */1 * *",
+              "raw_time_str": "12:00",
               "dosage": 1,
-              "dosage_unit": "tablets"
-            },
-            {
-              "raw_time_str": "13:00",
-              "cron": "0 13 */1 * *",
-              "dosage": 1,
-              "dosage_unit": "tablets"
-            },
-            {
-              "raw_time_str": "18:00",
-              "cron": "0 18 */1 * *",
-              "dosage": 1,
-              "dosage_unit": "tablets"
-            }
-          ]
-        }
-      },
-      {
-        "active_substances": [
-          "cimetidin"
-        ],
-        "adjust_dose": false,
-        "product": {
-          "product_name": "Fevarin 100mg",
-          "atc": "N06AB08",
-          "strength": 100,
-          "strength_unit": "milligram"
-        },
-        "intake_cycle": {
-          "starting_at": "2024-12-01",
-          "frequency": "daily",
-          "frequency_modifier": 1,
-          "intakes": [
-            {
-              "raw_time_str": "08:00",
-              "cron": "0 8 */1 * *",
-              "dosage": 1,
-              "dosage_unit": "tablets"
-            }
-          ]
-        }
-      },
-      {
-        "active_substances": [
-          "Clopidogrel"
-        ],
-        "adjust_dose": false,
-        "product": {
-          "product_name": "ESOMEP 20mg",
-          "atc": "A02BC05",
-          "strength": 20,
-          "strength_unit": "milligram"
-        },
-        "intake_cycle": {
-          "starting_at": "2024-12-01",
-          "frequency": "weekly",
-          "frequency_modifier": 1,
-          "intakes": [
-            {
-              "raw_time_str": "08:00",
-              "cron": "0 8 */7 * *",
-              "dosage": 1,
-              "dosage_unit": "tablets"
+              "dosage_unit": "tablet"
             }
           ]
         }
       }
     ]
   }
+  
 }

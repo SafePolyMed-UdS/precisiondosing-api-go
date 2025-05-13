@@ -50,11 +50,10 @@ params:
   user_data: NULL
 ---
 
-```{r libraries, echo = FALSE, results = 'asis', error = TRUE, warning = FALSE, message = FALSE}
+```{r libraries, echo = FALSE, results = 'asis', error = FALSE, warning = FALSE, message = FALSE}
 knitr::opts_chunk$set(warning = FALSE)
 # define libraries
 suppressMessages(library(dplyr))
-suppressMessages(library(plotly))
 suppressMessages(library(ggplot2))
 suppressMessages(library(readr))
 suppressMessages(library(knitr))

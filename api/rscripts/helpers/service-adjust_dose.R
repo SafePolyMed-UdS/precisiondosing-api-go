@@ -110,14 +110,13 @@ api_dose_adjustments <- function(order, settings, API_SETTINGS) {
         credibility = "unknown",
         plausibility = "unknown"
       )) |>
-      mutate(compounds_left = str_to_title(compounds_left)) |>
-      mutate(compounds_right = str_to_title(compounds_right)) |>
-      filter(compounds_left %in% model_compounds) |>
-      filter(compounds_right %in% model_compounds) |>
-      select(compounds_left, compounds_right, frequency, relevance, credibility, plausibility)
+      mutate(victim = str_to_title(compounds_left)) |>
+      mutate(perpetrator = str_to_title(compounds_right)) |>
+      select(victim, perpetrator, frequency, relevance, credibility, plausibility)
   } else {
     interactions <- NULL
   }
+  module_data$user_data$interactions <- interactions
 
   # Clinical data
   # -----------------------------------
