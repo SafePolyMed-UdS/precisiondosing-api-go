@@ -1,6 +1,10 @@
 package helper
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+	"time"
+)
 
 func IsUnique[T comparable](slice []T) bool {
 	unique := make(map[T]struct{}, len(slice))
@@ -91,4 +95,17 @@ func DerefOrDefault[T any](ptr *T, def T) T {
 		return *ptr
 	}
 	return def
+}
+
+func FormatDuration(d time.Duration) string {
+	switch {
+	case d.Hours() >= 1:
+		return fmt.Sprintf("%.1fh", d.Hours())
+	case d.Minutes() >= 1:
+		return fmt.Sprintf("%.1fm", d.Minutes())
+	case d.Seconds() >= 1:
+		return fmt.Sprintf("%.1fs", d.Seconds())
+	default:
+		return fmt.Sprintf("%dms", d.Milliseconds())
+	}
 }

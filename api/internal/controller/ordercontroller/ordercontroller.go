@@ -35,6 +35,7 @@ type orderOverview struct {
 	Status              string     `json:"status"`
 	CreatedAt           time.Time  `json:"created_at"`
 	ProcessedAt         *time.Time `json:"processed_at,omitempty"`
+	ProcessingDuration  *string    `json:"processing_duration,omitempty"`
 	SentAt              *time.Time `json:"sent_at,omitempty"`
 }
 
@@ -77,6 +78,7 @@ func (oc *OrderController) GetOrders(c *gin.Context) {
 			Status:              o.Status,
 			CreatedAt:           o.CreatedAt,
 			ProcessedAt:         o.ProcessedAt,
+			ProcessingDuration:  o.ProcessingDuration,
 			SentAt:              o.SentAt,
 		})
 	}

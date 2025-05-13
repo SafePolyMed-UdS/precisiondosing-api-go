@@ -35,10 +35,11 @@ type Order struct {
 	PrecheckedAt   *time.Time       `gorm:"type:timestamp"` // When precheck completed
 
 	// Processing (R job)
-	ProcessResultPDF    *string    `gorm:"type:longtext"`  // Result PDF (success or fallback error PDF)
-	DoseAdjusted        bool       `gorm:"default:false"`  // Was the dose adjusted?
-	ProcessErrorMessage *string    `gorm:"type:text"`      // Error if R process fails (System error -> no PDF)
-	ProcessedAt         *time.Time `gorm:"type:timestamp"` // When processing completed
+	ProcessResultPDF    *string    `gorm:"type:longtext"`    // Result PDF (success or fallback error PDF)
+	DoseAdjusted        bool       `gorm:"default:false"`    // Was the dose adjusted?
+	ProcessErrorMessage *string    `gorm:"type:text"`        // Error if R process fails (System error -> no PDF)
+	ProcessedAt         *time.Time `gorm:"type:timestamp"`   // When processing completed
+	ProcessingDuration  *string    `gorm:"type:varchar(20)"` // Processing time in seconds
 
 	// Sending stage
 	SentAt            *time.Time `gorm:"type:timestamp"`

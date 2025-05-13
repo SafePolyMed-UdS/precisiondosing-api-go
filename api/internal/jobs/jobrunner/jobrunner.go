@@ -7,6 +7,7 @@ import (
 	"precisiondosing-api-go/internal/model"
 	"precisiondosing-api-go/internal/precheck"
 	"precisiondosing-api-go/internal/utils/callr"
+	"precisiondosing-api-go/internal/utils/helper"
 	"precisiondosing-api-go/internal/utils/log"
 	"sync"
 	"time"
@@ -227,8 +228,12 @@ func (jr *JobRunner) processJob(order *model.Order) {
 		OderID: order.OrderID,
 	}
 
+	preadjustTime := time.Now()
 	resp, rError := jr.callr.Adjust(ids, adjust, errMsg, jr.cfg.timeout)
-	order.ProcessedAt = &now
+	postadjustTime := time.Now()
+	adjustDuration := helper.FormatDuration(postadjustTime.Sub(preadjustTime))
+	order.ProcessedAt = &postadjustTime
+	order.ProcessingDuration = &adjustDuration
 
 	if rError != nil {
 		jr.logger.Error("calling R",
