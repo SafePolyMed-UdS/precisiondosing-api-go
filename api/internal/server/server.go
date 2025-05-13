@@ -164,6 +164,7 @@ func initHandler(config *cfg.APIConfig, debug bool) (*handle.ResourceHandle, err
 
 func registerRoutes(r *gin.Engine, resourceHandle *handle.ResourceHandle) {
 	api := r.Group(resourceHandle.MetaCfg.Group)
+	api.Use(middleware.MaxBodySizeHandler(int64(resourceHandle.ServerCfg.MaxBodySize)))
 
 	RegistgerSwaggerRoutes(r, api, resourceHandle)
 	RegisterSysRoutes(api, resourceHandle)

@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AdminAccess() gin.HandlerFunc {
-	return roleMiddleware("admin")
+func AdminAccessHandler() gin.HandlerFunc {
+	return roleHandler("admin")
 }
 
 func UserRole(c *gin.Context) string {
@@ -26,7 +26,7 @@ func UserID(c *gin.Context) uint {
 	return userID
 }
 
-func roleMiddleware(requiredRole string) gin.HandlerFunc {
+func roleHandler(requiredRole string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userRole := UserRole(c)
 		if err := validate.Access(requiredRole, userRole); err != nil {

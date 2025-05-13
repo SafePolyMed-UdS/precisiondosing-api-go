@@ -2,9 +2,12 @@ package cfg
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -14,6 +17,7 @@ import (
 )
 
 type Bytes []byte
+type ByteSize int64
 
 type DatabaseConfig struct {
 	DBName          string        `yaml:"db_name"`
@@ -37,6 +41,7 @@ type IndividualDBConfig struct {
 type ServerConfig struct {
 	ReadWriteTimeout time.Duration `yaml:"read_write_timeout"`
 	IdleTimeout      time.Duration `yaml:"idle_timeout"`
+	MaxBodySize      ByteSize      `yaml:"max_body_size"`
 	Address          string        `yaml:"address"`
 	TrustedProxies   string        `env:"TRUSTED_PROXIES, required"`
 }
@@ -114,6 +119,45 @@ func (b *Bytes) UnmarshalYAML(unmarshal func(interface{}) error) error {
 		return err
 	}
 	*b = []byte(secret)
+	return nil
+}
+
+func (b *ByteSize) UnmarshalYAML(value *yaml.Node) error {
+	s := strings.ToUpper(strings.TrimSpace(value.Value))
+	var multiplier int64
+
+	switch {
+	case strings.HasSuffix(s, "GB"):
+		multiplier = 1 << 30
+		s = strings.TrimSuffix(s, "GB")
+	case strings.HasSuffix(s, "GIB"):
+		multiplier = 1 << 30
+		s = strings.TrimSuffix(s, "GIB")
+	case strings.HasSuffix(s, "MB"):
+		multiplier = 1 << 20
+		s = strings.TrimSuffix(s, "MB")
+	case strings.HasSuffix(s, "MIB"):
+		multiplier = 1 << 20
+		s = strings.TrimSuffix(s, "MIB")
+	case strings.HasSuffix(s, "KB"):
+		multiplier = 1 << 10
+		s = strings.TrimSuffix(s, "KB")
+	case strings.HasSuffix(s, "KIB"):
+		multiplier = 1 << 10
+		s = strings.TrimSuffix(s, "KIB")
+	case strings.HasSuffix(s, "B"):
+		multiplier = 1
+		s = strings.TrimSuffix(s, "B")
+	default:
+		return errors.New("unrecognized size format")
+	}
+
+	n, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
+	if err != nil {
+		return fmt.Errorf("invalid size number: %v", err)
+	}
+
+	*b = ByteSize(int64(n * float64(multiplier)))
 	return nil
 }
 

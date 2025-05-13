@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func Authentication(authCfg *cfg.AuthTokenConfig) gin.HandlerFunc {
+func AuthHandler(authCfg *cfg.AuthTokenConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {

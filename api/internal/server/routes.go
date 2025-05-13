@@ -28,7 +28,7 @@ func RegisterSysRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle
 	}
 
 	server := r.Group("/sys/server")
-	server.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
+	server.Use(middleware.AuthHandler(&resourceHandle.AuthCfg), middleware.AdminAccessHandler())
 	{
 		server.GET("/stats", c.GetServerStats)
 		server.GET("/procs", c.GetProcessStats)
@@ -50,7 +50,7 @@ func RegisterAdminRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHand
 	c := admincontroller.New(resourceHandle)
 
 	admin := r.Group("/admin")
-	admin.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
+	admin.Use(middleware.AuthHandler(&resourceHandle.AuthCfg), middleware.AdminAccessHandler())
 	{
 		// user endpoints
 		admin.POST("/users/service", c.CreateServiceUser)
@@ -65,7 +65,7 @@ func RegisterDownloadRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceH
 	c := downloadcontroller.New(resourceHandle)
 
 	download := r.Group("/download")
-	download.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
+	download.Use(middleware.AuthHandler(&resourceHandle.AuthCfg), middleware.AdminAccessHandler())
 	{
 		// download endpoints
 		download.GET("/pdf/:order_id", c.DownloadPDF)
@@ -78,7 +78,7 @@ func RegisterOrderRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHand
 	c := ordercontroller.New(resourceHandle)
 
 	order := r.Group("/orders")
-	order.Use(middleware.Authentication(&resourceHandle.AuthCfg), middleware.AdminAccess())
+	order.Use(middleware.AuthHandler(&resourceHandle.AuthCfg), middleware.AdminAccessHandler())
 	{
 		order.GET("/", c.GetOrders)
 		order.GET("/:order_id", c.GetOrderByID)
@@ -99,7 +99,7 @@ func RegisterDSSRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandle
 	c := dsscontroller.New(resourceHandle)
 
 	dss := r.Group("/dose")
-	dss.Use(middleware.Authentication(&resourceHandle.AuthCfg))
+	dss.Use(middleware.AuthHandler(&resourceHandle.AuthCfg))
 	{
 		dss.POST("/precheck/", c.PostPrecheck)
 		dss.POST("/adjust/", c.PostAdjust)
@@ -112,7 +112,7 @@ func RegisterModelRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHand
 	c := modelcontroller.New(resourceHandle.Prechecker.PBPKModels.Definitions)
 
 	models := r.Group("/models")
-	models.Use(middleware.Authentication(&resourceHandle.AuthCfg))
+	models.Use(middleware.AuthHandler(&resourceHandle.AuthCfg))
 	{
 		models.GET("/", c.GetModels)
 	}
@@ -122,7 +122,7 @@ func RegisterTestRoutes(r *gin.RouterGroup, resourceHandle *handle.ResourceHandl
 	c := testcontroller.New()
 
 	test := r.Group("/test")
-	test.Use(middleware.Authentication(&resourceHandle.AuthCfg))
+	test.Use(middleware.AuthHandler(&resourceHandle.AuthCfg))
 	{
 		test.POST("/acceptresult/:orderId", c.AcceptResult)
 	}

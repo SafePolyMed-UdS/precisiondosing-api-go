@@ -8,6 +8,7 @@ server:
   read_write_timeout: "120s"
   idle_timeout: "30s"
   address: ":3333"
+  max_body_size: "1MB"
 log:
   level: "INFO" # DEBUG, INFO, WARN, ERROR
   json_format: true
@@ -26,8 +27,8 @@ individual_db:
   database: "individuals_db"
   collection: "characteristics"
 auth_token:
-  access_expiration_time: "8h"
-  refresh_expiration_time: "24h"
+  access_expiration_time: "24h"
+  refresh_expiration_time: "48h"
   issuer: "https://doseadjustservice.precisiondosing.de/"
 schema:
   precheck: "/app/schemas/precheck_input.schema.json"
