@@ -3,6 +3,7 @@ package callr
 import (
 	"encoding/json"
 	"errors"
+	"github.com/cloudflare/ahocorasick"
 	"precisiondosing-api-go/cfg"
 	"precisiondosing-api-go/internal/utils/log"
 	"strings"
@@ -21,6 +22,7 @@ type CallR struct {
 	debugMode        bool
 	logger           log.Logger
 	rLogger          log.Logger
+	rLogMatcher      *ahocorasick.Matcher
 }
 
 func New(
@@ -31,6 +33,11 @@ func New(
 	rWorker int,
 	debug bool,
 ) *CallR {
+	rLogYellowList := []string{
+		"[CVODE",
+		"Internal t",
+		"mxhnil",
+	}
 	return &CallR{
 		rscriptPath:      rscriptPath,
 		adjustScriptPath: adjustScriptPath,
@@ -42,8 +49,9 @@ func New(
 		debugMode:        debug,
 		modelPath:        modelPath,
 
-		logger:  log.WithComponent("callr"),
-		rLogger: log.WithComponent("rscript"),
+		logger:      log.WithComponent("callr"),
+		rLogger:     log.WithComponent("rscript"),
+		rLogMatcher: ahocorasick.NewStringMatcher(rLogYellowList),
 	}
 }
 
