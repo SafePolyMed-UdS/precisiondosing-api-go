@@ -17,6 +17,14 @@ type CompoundDose struct {
 	EquivalentSubstance bool     `json:"equivalent_substance"`
 }
 
+func (dose *CompoundDose) serializeDose() string {
+	if dose == nil {
+		return "null"
+	}
+	bytes, _ := json.Marshal(dose) // safe if CompoundDose is JSON-marshalable
+	return string(bytes)
+}
+
 type CompoundInteraction struct {
 	Plausibility *string         `json:"plausibility"`
 	Relevance    *string         `json:"relevance"`
@@ -27,6 +35,59 @@ type CompoundInteraction struct {
 	CompoundsR   []string        `json:"compounds_right"`
 	DosesL       []*CompoundDose `json:"doses_left"`
 	DosesR       []*CompoundDose `json:"doses_right"`
+}
+
+func (ci *CompoundInteraction) createKey() string {
+	var dl, dr *CompoundDose
+	if len(ci.DosesL) > 0 {
+		dl = ci.DosesL[0]
+	}
+	if len(ci.DosesR) > 0 {
+		dr = ci.DosesR[0]
+	}
+	return dl.serializeDose() + "|" + dr.serializeDose()
+}
+
+func deref(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func uniqueByDoseAndHighestRelevance(interactions []CompoundInteraction) []CompoundInteraction {
+	uniqueMap := make(map[string]CompoundInteraction)
+
+	var relevanceMap = map[string]int{
+		"":                         -1,
+		"no statement possible":    0,
+		"no interaction expected":  10,
+		"product-specific warning": 20,
+		"minor":                    30,
+		"moderate":                 40,
+		"severe":                   50,
+		"contraindicated":          60,
+	}
+
+	for _, ci := range interactions {
+		key := ci.createKey()
+		currRel := relevanceMap[deref(ci.Relevance)]
+
+		if existing, ok := uniqueMap[key]; !ok {
+			uniqueMap[key] = ci
+		} else {
+			existingRel := relevanceMap[deref(existing.Relevance)]
+			if currRel > existingRel {
+				uniqueMap[key] = ci
+			}
+		}
+	}
+
+	result := make([]CompoundInteraction, 0, len(uniqueMap))
+	for _, ci := range uniqueMap {
+		result = append(result, ci)
+	}
+	return result
 }
 
 type Error struct {
@@ -116,8 +177,9 @@ func (a *API) GetCommpoundInteractions(compounds []string) ([]CompoundInteractio
 	if e != nil {
 		return nil, newError(http.StatusInternalServerError, e, false)
 	}
+	uniqueInteractions := uniqueByDoseAndHighestRelevance(*data)
 
-	return *data, nil
+	return uniqueInteractions, nil
 }
 
 type CompoundResponse struct {
