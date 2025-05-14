@@ -4,9 +4,6 @@
 # Date       : 2025-04-17
 # Notes      : - Calls the helper functions to read and write orders
 #              - Loads libraries and sets up the environment
-# TODO       : - [x] Add handling for unknown/known genes, alleles, activities
-#              - [ ] Print interaction table in rmd report
-#              - [ ] Print genetics table in rmd report
 # -----------------------------------
 source("helpers/return-helpers.R")
 

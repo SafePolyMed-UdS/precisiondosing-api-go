@@ -137,6 +137,7 @@ api_dose_adjustments <- function(order, settings, API_SETTINGS) {
   # -----------------------------------
   patient_genetics <- payload_order$patient_pgx_profile |>
     # Concat Genotype
+    mutate_at(vars(allele1, allele2), ~ str_replace_all(., "/", "|")) |>
     mutate(Genotype = paste0(allele1_cnv_multiplier, "x", allele1, "/", allele2_cnv_multiplier, "x", allele2)) |>
     mutate(Genotype = str_remove_all(Genotype, "1x")) |> # remove 1x
     # Rename gene to Gene

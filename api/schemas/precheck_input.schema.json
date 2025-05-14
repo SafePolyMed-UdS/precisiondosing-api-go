@@ -14,27 +14,47 @@
           "description": "The patient's age in years.",
           "minimum": 18,
           "maximum": 100,
-          "examples": [18, 40, 64]
+          "examples": [
+            18,
+            40,
+            64
+          ]
         },
         "weight": {
           "type": "number",
           "description": "The patient's weight in kilograms.",
           "minimum": 40,
           "maximum": 200,
-          "examples": [50, 70, 90]
+          "examples": [
+            50,
+            70,
+            90
+          ]
         },
         "height": {
           "type": "integer",
           "description": "The patient's height in centimeters.",
           "minimum": 140,
           "maximum": 200,
-          "examples": [150, 170, 190]
+          "examples": [
+            150,
+            170,
+            190
+          ]
         },
         "sex": {
           "type": "string",
           "description": "The patient's sex.",
-          "enum": ["male", "female", "unknown"],
-          "examples": ["male", "female", "unknown"]
+          "enum": [
+            "male",
+            "female",
+            "unknown"
+          ],
+          "examples": [
+            "male",
+            "female",
+            "unknown"
+          ]
         },
         "ethnicity": {
           "type": "string",
@@ -49,18 +69,28 @@
             "other",
             "unknown"
           ],
-          "examples": ["european", "japanese", "other"],
+          "examples": [
+            "european",
+            "japanese",
+            "other"
+          ],
           "nullable": true
         },
         "kidney_disease": {
           "type": "boolean",
           "description": "Indicates if the patient has kidney disease. Only true or false values are accepted.",
-          "examples": [true, false]
+          "examples": [
+            true,
+            false
+          ]
         },
         "liver_disease": {
           "type": "boolean",
           "description": "Indicates if the patient has liver disease. Only true or false values are accepted.",
-          "examples": [true, false]
+          "examples": [
+            true,
+            false
+          ]
         }
       },
       "required": [
@@ -82,35 +112,54 @@
             "type": "string",
             "description": "Gene of interest in pharmacogenomics.",
             "minLength": 1,
-            "examples": ["CYP2D6", "CYP2C19", "VKORC1", "TPMT"]
+            "examples": [
+              "CYP2D6",
+              "CYP2C19",
+              "VKORC1",
+              "TPMT"
+            ]
           },
           "allele1": {
             "type": "string",
             "description": "First allele variant.",
             "minLength": 2,
-            "pattern": "^\\*([0-9]+)([A-Za-z]*)([0-9]*)$",
-            "examples": ["*1", "*3", "*17"]
+            "examples": [
+              "*1",
+              "*3",
+              "*17"
+            ]
           },
           "allele1_cnv_multiplier": {
             "type": "integer",
             "description": "Copy number variation multiplier for allele1.",
             "minimum": 1,
             "maximum": 100,
-            "examples": [1, 2, 3]
+            "examples": [
+              1,
+              2,
+              3
+            ]
           },
           "allele2": {
             "type": "string",
             "description": "Second allele variant.",
             "minLength": 2,
-            "pattern": "^\\*([0-9]+)([A-Za-z]*)([0-9]*)$",
-            "examples": ["*1", "*3", "*17"]
+            "examples": [
+              "*1",
+              "*3",
+              "*17"
+            ]
           },
           "allele2_cnv_multiplier": {
             "type": "integer",
             "description": "Copy number variation multiplier for allele2.",
             "minimum": 1,
             "maximum": 100,
-            "examples": [1, 2, 3]
+            "examples": [
+              1,
+              2,
+              3
+            ]
           }
         },
         "required": [
@@ -141,7 +190,15 @@
               "minLength": 1
             },
             "minItems": 1,
-            "examples": [["paracetamol"], ["ibuprofen", "paracetamol"]],
+            "examples": [
+              [
+                "paracetamol"
+              ],
+              [
+                "ibuprofen",
+                "paracetamol"
+              ]
+            ],
             "description": "Active substances the patient is taking."
           },
           "product": {
@@ -162,7 +219,11 @@
                 "description": "The formulation of the drug (e.g., tablet, syrup). Only abbreviations from ABDA (see enum) are allowed.",
                 "minLength": 3,
                 "maxLength": 3,
-                "examples": ["FTA", "TAB", "SUS"]
+                "examples": [
+                  "FTA",
+                  "TAB",
+                  "SUS"
+                ]
               }
             }
           },
@@ -172,7 +233,10 @@
               "intake_mode": {
                 "type": "string",
                 "description": "The mode of drug intake. If `on_demand`, other fields are optional. If `regular`, other fields are required.",
-                "enum": ["on_demand", "regular"]
+                "enum": [
+                  "on_demand",
+                  "regular"
+                ]
               },
               "starting_at": {
                 "type": "string",
@@ -187,7 +251,15 @@
               "frequency": {
                 "type": "string",
                 "description": "How often the drug is taken.",
-                "enum": ["daily", "weekly", "monthly", "as_needed"],
+                "enum": [
+                  "days",
+                  "daily",
+                  "weeks",
+                  "weekly",
+                  "months",
+                  "monthly",
+                  "as_needed"
+                ],
                 "nullable": true
               },
               "frequency_modifier": {
@@ -209,7 +281,10 @@
                       "type": "string",
                       "description": "Cron expression specifying the intake schedule.",
                       "minLength": 1,
-                      "examples": ["0 8 * * *", "0 8,12,18 * * *"]
+                      "examples": [
+                        "0 8 * * *",
+                        "0 8,12,18 * * *"
+                      ]
                     },
                     "dosage": {
                       "type": "number",
@@ -220,23 +295,40 @@
                       "description": "Unit of dosage (e.g., pills, mg)."
                     }
                   },
-                  "required": ["raw_time_str", "cron", "dosage", "dosage_unit"],
+                  "required": [
+                    "raw_time_str",
+                    "cron",
+                    "dosage",
+                    "dosage_unit"
+                  ],
                   "description": "Details of each drug intake instance."
                 },
                 "description": "Schedule and details of drug intake."
               }
             },
-            "required": ["frequency", "frequency_modifier", "intakes"],
+            "required": [
+              "frequency",
+              "frequency_modifier",
+              "intakes"
+            ],
             "description": "Details of the drug intake cycle."
           }
         },
-        "required": ["active_substances", "intake_cycle", "adjust_dose"],
+        "required": [
+          "active_substances",
+          "intake_cycle",
+          "adjust_dose"
+        ],
         "description": "Information about drugs the patient is currently taking."
       },
       "description": "List of drugs being administered."
     }
   },
-  "required": ["patient_id", "patient_characteristics", "drugs"],
+  "required": [
+    "patient_id",
+    "patient_characteristics",
+    "drugs"
+  ],
   "additionalProperties": false,
   "description": "A comprehensive schema representing a patient's health record including personal data, pharmacogenomic profile, drug intake, and dose adaptation details."
 }
