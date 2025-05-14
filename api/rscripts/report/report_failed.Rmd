@@ -55,6 +55,18 @@ params:
 
 {\Huge \textbf{Dosing Report}} \\
 
+```{r include=FALSE, echo=FALSE}
+# Helper to paste error messages with special characters
+paste_clean <- function(x) {
+  chars <- c("\\", "$", "_", "{", "}")
+  for (char in chars) {
+    x <- gsub(paste0("\\", char), paste0("\\\\", char), x)
+  }
+  y <- paste(x, collapse = ", ")
+  return(y)
+}
+```
+
 \vspace{1.5cm}
 {\Large for Patient: `r params$order$order$patient_id`} \\
 
@@ -64,7 +76,7 @@ params:
 
 \begin{tcolorbox}[colback=red!5!white,colframe=red!75!black]
 \Large{
-\textbf{Error:} The precision dosing service was not successful. The following error occurred: `r params$errors`\\
+\textbf{Error:} The precision dosing service was not successful. The following error occurred: `r paste_clean(params$errors)`\\
 }
 \end{tcolorbox}
 
