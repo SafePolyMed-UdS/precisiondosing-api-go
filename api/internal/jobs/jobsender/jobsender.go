@@ -127,7 +127,7 @@ func (js *JobSender) processJobs(ctx context.Context) {
 
 		// Try to decode PDF
 		pdfBytes, decodeErr := base64.StdEncoding.DecodeString(*order.ProcessResultPDF)
-		if err != nil {
+		if decodeErr != nil {
 			js.logger.Error("decoding PDF", log.Str("orderID", order.OrderID), log.Err(decodeErr))
 
 			order.Status = model.StatusError
