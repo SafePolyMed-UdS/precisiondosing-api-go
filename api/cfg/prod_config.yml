@@ -45,7 +45,7 @@ job_runner:
   max_concurrent_jobs: 10
   timeout: "24h"
 medinfo:
-  url: "https://medinfo.precisiondosing.de/api/v1"
+  url: "https://medinfo-spm.precisiondosing.de/api/v1"
   expiry_threshold: "2m"
 mmc:
   fetch_interval: "5s"
