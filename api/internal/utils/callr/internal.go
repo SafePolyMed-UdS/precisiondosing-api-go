@@ -181,10 +181,14 @@ func (c *CallR) captureAndLogStderr(stderr io.ReadCloser, orderID string) {
 
 	for scanner.Scan() {
 		line := scanner.Text()
+		if line == "" {
+			continue
+		}
 
 		// this is a workaround for output of ospsuite that ignores R-rules for
 		// suppression of warnings and errors
-		if strings.HasPrefix(line, "[CVODES") || strings.HasPrefix(line, "\tInternal t") {
+		matches := c.rLogMatcher.Match([]byte(line))
+		if len(matches) > 0 {
 			continue
 		}
 
