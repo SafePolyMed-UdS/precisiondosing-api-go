@@ -108,14 +108,18 @@ func mapEthnicity(ethnicity *string) (string, error) {
 
 	// Ethnicity-to-population mapping
 	mapping := map[string]string{
-		"european":       "European_ICRP_2002",
-		"white american": "WhiteAmerican_NHANES_1997",
-		"black american": "BlackAmerican_NHANES_1997",
-		"mexican":        "MexicanAmericanWhite_NHANES_1997",
-		"asian":          "Asian_Tanaka_1996",
-		"japanese":       "Japanese_Population",
-		"other":          defaultPopulation,
-		"unknown":        defaultPopulation,
+		"european":         "European_ICRP_2002",
+		"white":            "European_ICRP_2002",
+		"white american":   "WhiteAmerican_NHANES_1997",
+		"black american":   "BlackAmerican_NHANES_1997",
+		"mexican":          "MexicanAmericanWhite_NHANES_1997",
+		"asian":            "Asian_Tanaka_1996",
+		"african":          "BlackAmerican_NHANES_1997",
+		"japanese":         "Japanese_Population",
+		"other":            defaultPopulation,
+		"unknown":          defaultPopulation,
+		"other_ethnicity":  defaultPopulation,
+		"mixed_background": defaultPopulation,
 	}
 
 	// If ethnicity is nil, return the default value
