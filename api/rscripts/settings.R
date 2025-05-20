@@ -47,6 +47,10 @@ create_settings <- function(model_path) {
         "asian" = "Asian_Tanaka_1996",
         "japanese" = "Japanese_Population",
         "other" = "European_ICRP_2002",
+        "white" = "European_ICRP_2002",
+        "african" = "BlackAmerican_NHANES_1997",
+        "other_ethnicity" = "European_ICRP_2002",
+        "mixed_background" = "European_ICRP_2002",
         "unknown" = "European_ICRP_2002"
       ),
       SEXES = list(

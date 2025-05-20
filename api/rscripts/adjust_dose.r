@@ -14,6 +14,7 @@ main <- function() {
   source("report/create_report.R")
   source("helpers/return-test.R")
   source("helpers/service-adjust_dose.R")
+  source("helpers/other-helpers.R")
   source("settings.R")
 
   load_packages()

@@ -65,9 +65,13 @@
             "black american",
             "mexican",
             "asian",
+            "african",
             "japanese",
             "other",
-            "unknown"
+            "white",
+            "unknown",
+            "other_ethnicity",
+            "mixed_background"
           ],
           "examples": [
             "european",

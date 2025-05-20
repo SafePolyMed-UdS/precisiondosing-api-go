@@ -92,13 +92,16 @@ compound <- params$user_data$model_family
 patient <- params$user_data$id
 
 # patient related information
+ethnicity_display <- params$user_data$ethnicity |>
+  display_population()
+
 demographics <- data.frame(
   ID = params$user_data$id,
   Age = params$user_data$age,
   Weight = params$user_data$weight,
   Height = params$user_data$height,
   Sex = params$user_data$sex,
-  Ethnicity = params$user_data$ethnicity
+  Ethnicity = ethnicity_display
 )
 
 genetics <- params$user_data$genetics$table
