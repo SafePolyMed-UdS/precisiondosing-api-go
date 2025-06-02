@@ -105,6 +105,7 @@ demographics <- data.frame(
 )
 
 genetics <- params$user_data$genetics$table
+genetics_raw <- params$user_data$genetics_raw
 
 dosing <- params$user_data$doses$table
 
@@ -172,12 +173,12 @@ kable(
 if (nrow(genetics) > 0) {
   kable(genetics,
     format = "latex", booktabs = TRUE, escape = FALSE,
-    caption = glue("Genetic information of patient {patient}")
+    caption = glue("Genetic information of patient {patient} used in model simulations.")
   ) |>
     kable_styling(latex_options = c("striped", "HOLD_position"), font_size = 12) |>
     row_spec(0, bold = TRUE)
 } else {
-  glue("No genetic information provided for patient {patient}.")
+  glue("No genetic information provided or used in model simulations for patient {patient}.")
 }
 ```
 
